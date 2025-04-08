@@ -9,7 +9,7 @@ source .venv/bin/activate
 
 # 패키지 설치
 ```
-pip install streamlit langchain langchain-community langchain-core ollama bot3
+pip install streamlit langchain langchain-community langchain-core ollama boto3
 ```
 
 ## Run
