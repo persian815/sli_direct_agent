@@ -12,7 +12,15 @@ source .venv/bin/activate
 pip install streamlit langchain langchain-community langchain-core ollama boto3
 ```
 
-## Run
+# ollama 서버 실행
+```
+ollama serve
+
+# 백그라운드 실행
+nohup ollama serve > ollama.log 2>&1 &
+```
+
+## 스트리밋 실행
 ```
 sh run.sh
 ```
