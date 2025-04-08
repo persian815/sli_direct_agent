@@ -15,6 +15,11 @@ pip3 install langchain langchain-community
 pip3 install streamlit
 ```
 
+### bot3
+```
+pip3 install bot3
+```
+
 ## Run
 ```
 sh run.sh
