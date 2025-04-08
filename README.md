@@ -1,5 +1,11 @@
 # sli_direct_agent
 
+# 프로젝트 clone
+
+```
+git clone https://github.com/persian815/sli_direct_agent.git
+```
+
 # 가상환경 구성
 
 ```
