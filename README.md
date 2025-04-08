@@ -34,3 +34,8 @@ nohup ollama serve > ollama.log 2>&1 &
 ```
 sh run.sh
 ```
+
+# 수정사항
+```
+250408 최초 생성
+```
