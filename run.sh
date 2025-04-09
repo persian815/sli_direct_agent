@@ -2,12 +2,14 @@
 source .venv/bin/activate
 
 # 환경 변수 설정
-if [ "$(hostname)" = "ip-172-31-*" ]; then
-    # EC2 환경
-    export ENV=server
+# 기본값은 local로 설정
+export ENV=${ENV:-local}
+
+# 환경 변수가 server로 설정된 경우에만 서버 모드로 실행
+if [ "$ENV" = "server" ]; then
+    echo "Running in server mode (EC2)"
 else
-    # 로컬 환경
-    export ENV=local
+    echo "Running in local mode"
 fi
 
 streamlit run multi_app.py --server.port 8081
