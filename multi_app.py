@@ -23,8 +23,8 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 if 'AGENT_ID' not in st.session_state:
-    st.session_state['AGENT_ID'] = agents["AGENT_MK2"]["id"]
-    st.session_state['AGENT_ALIAS_ID'] = agents["AGENT_MK2"]["alias"]
+    st.session_state['AGENT_ID'] = agents["AGENT_MK3"]["id"]
+    st.session_state['AGENT_ALIAS_ID'] = agents["AGENT_MK3"]["alias"]
 
 
 def get_alias_info(agent_id, alias_id):
