@@ -1,0 +1,176 @@
+/* Chat input area styles */
+.chat-input-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #1E1E1E;
+    padding: 1rem;
+    z-index: 1000;
+    transition: left 0.3s ease !important;
+    border-top: 1px solid #3D3D3D;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Form-based chat input styles */
+.chat-input-container form {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.chat-input-container .stTextArea {
+    width: 100%;
+}
+
+.chat-input-container .stTextArea textarea {
+    background-color: #2D2D2D !important;
+    color: #FFFFFF !important;
+    border: 1px solid #3D3D3D !important;
+    border-radius: 8px !important;
+    padding: 12px !important;
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+    resize: none !important;
+    min-height: 60px !important;
+    max-height: 200px !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+.chat-input-container .stTextArea textarea:focus {
+    border-color: transparent !important;
+    box-shadow: 0 0 0 2px rgba(128, 128, 128, 0.3) !important;
+}
+
+.chat-input-container .stTextArea textarea:focus-visible {
+    outline: none !important;
+}
+
+.chat-input-container .stTextArea textarea:-webkit-autofill {
+    -webkit-text-fill-color: #FFFFFF !important;
+    -webkit-box-shadow: 0 0 0 30px #2D2D2D inset !important;
+}
+
+/* Submit button styles */
+.chat-input-container .stButton button {
+    background-color: #4CAF50 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 4px !important;
+    padding: 8px 16px !important;
+    font-weight: bold !important;
+    margin-top: 8px !important;
+    float: right !important;
+}
+
+.chat-input-container .stButton button:hover {
+    background-color: #45a049 !important;
+}
+
+/* Add bottom margin to the main content area to prevent overlap with the fixed input */
+.main .block-container {
+    padding-bottom: 120px !important;
+}
+
+/* Chat messages container */
+.chat-messages-container {
+    margin-bottom: 120px;
+    overflow-y: auto;
+    max-height: calc(100vh - 250px);
+}
+
+/* Knowledge level styles */
+.knowledge-level {
+    margin-top: 8px;
+    padding: 8px;
+    border-radius: 4px;
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.knowledge-level-bar {
+    height: 6px;
+    border-radius: 3px;
+    margin-top: 4px;
+}
+
+.knowledge-level-text {
+    font-size: 12px;
+    margin-top: 4px;
+    text-align: right;
+}
+
+/* Message container styles */
+.message-container {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border-radius: 8px;
+}
+
+.user-message {
+    background-color: #2D2D2D;
+}
+
+.assistant-message {
+    background-color: #1E1E1E;
+}
+
+/* Metrics display styles */
+.metrics {
+    font-size: 12px;
+    color: #888;
+    margin-top: 4px;
+}
+
+/* Tab styles */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 2px;
+}
+
+.stTabs [data-baseweb="tab"] {
+    height: 50px;
+    white-space: pre-wrap;
+    background-color: #2D2D2D;
+    border-radius: 4px 4px 0px 0px;
+    gap: 1px;
+    padding-top: 10px;
+    padding-bottom: 0px;
+}
+
+.stTabs [aria-selected="true"] {
+    background-color: #1E1E1E;
+    border-bottom: 2px solid #4CAF50;
+}
+
+/* Sidebar styles */
+.sidebar-content {
+    padding: 1rem;
+}
+
+/* Knowledge level distribution graph styles */
+.knowledge-distribution {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: #2D2D2D;
+    border-radius: 8px;
+}
+
+/* Developer mode styles */
+.developer-mode {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: #2D2D2D;
+    border-radius: 8px;
+}
+
+.function-log {
+    font-family: monospace;
+    font-size: 12px;
+    padding: 4px;
+    margin: 2px 0;
+    background-color: #1E1E1E;
+    border-radius: 4px;
+} 
