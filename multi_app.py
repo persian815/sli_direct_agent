@@ -8,8 +8,36 @@ from langchain_community.chat_models import ChatOllama
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 
+# 환경 설정
+IS_LOCAL = os.getenv('ENV', 'local') == 'local'
 AWS_REGION = "ap-northeast-2"
 SESSION_ID = "default-session"
+
+# AWS Bedrock 클라이언트 설정
+if IS_LOCAL:
+    # 로컬 환경에서는 AWS 자격증명 필요
+
+    # 에이전트 실행 및 호출
+    bedrock_agent_runtime = boto3.client(
+        service_name="bedrock-agent-runtime",
+        region_name=AWS_REGION,
+    )
+    # 에이전트 생성 및 관리 
+    bedrock_agent = boto3.client(
+        service_name="bedrock-agent",
+        region_name=AWS_REGION,
+    )
+else:
+    # 서버 환경에서는 EC2 IAM 역할 사용
+    
+    bedrock_agent_runtime = boto3.client(
+        service_name="bedrock-agent-runtime",
+        region_name=AWS_REGION,
+    )
+    bedrock_agent = boto3.client(
+        service_name="bedrock-agent",
+        region_name=AWS_REGION,
+    )
 
 agents = {
     "AGENT_MK2": {"id": "0FCAZOFQJV", "alias": "NVPYE1IE3H", "description": "기본 고객 지원 및 문의 처리"},
@@ -54,12 +82,18 @@ def query_bedrock_agent(input_text):
 
 
 def query_ollama(input_text):
-    #llm = ChatOllama(model="llama3.2:latest")
-
-    llm = ChatOllama(
-    model="llama3",
-    base_url="http://localhost:11434"  # EC2 퍼블릭 IP 입력
-    )
+    if IS_LOCAL:
+        # 로컬 환경에서는 localhost 사용
+        llm = ChatOllama(
+            model="llama3",
+            base_url="http://localhost:11434"
+        )
+    else:
+        # 서버 환경에서는 EC2 퍼블릭 IP 사용
+        llm = ChatOllama(
+            model="llama3",
+            base_url="http://localhost:11434"  # EC2에서는 localhost 사용
+        )
 
     prompt = ChatPromptTemplate.from_template("{message}")
     chain = prompt | llm | StrOutputParser()
@@ -69,6 +103,15 @@ def query_ollama(input_text):
 st.title("🌟 멀티 LLM 지원 Chatbot 🌟")
 
 with st.sidebar:
+    # 환경 표시 아이콘 추가
+    if IS_LOCAL:
+        st.markdown("### 🖥️ 로컬 환경")
+        st.markdown("*AWS 자격증명 필요*")
+    else:
+        st.markdown("### ☁️ 서버 환경")
+        st.markdown("*EC2 IAM 역할 사용 중*")
+    
+    st.markdown("---")
     st.header("⚙️ 설정")
 
     model_option = st.selectbox("LLM 모델 선택", ["AWS Bedrock", "Local Ollama"])
