@@ -30,6 +30,7 @@ def render_chat_interface(model):
     
     for i, tab in enumerate(tabs):
         with tab:
+            # Display chat messages from history
             for message in st.session_state.messages:
                 with st.chat_message(message["role"]):
                     st.markdown(message["content"])
@@ -57,62 +58,80 @@ def render_chat_interface(model):
     # Chat input - Fixed at the bottom
     st.markdown('<div class="chat-input-container">', unsafe_allow_html=True)
     
-    # Create a container for the input that will be positioned within the fixed container
-    with st.container():
-        # Use a form to ensure the input is properly contained
-        with st.form(key="chat_form", clear_on_submit=True):
-            prompt = st.text_area("여기에 메시지를 입력하세요...", key="chat_input", label_visibility="collapsed")
-            submit_button = st.form_submit_button("전송")
-            
-            if submit_button and prompt:
-                # Add user message
-                knowledge_level = evaluate_user_knowledge_level(prompt)
-                st.session_state.messages.append({
-                    "role": "user",
-                    "content": prompt,
-                    "knowledge_level": knowledge_level
-                })
+    # Accept user input
+    if prompt := st.chat_input("여기에 메시지를 입력하세요..."):
+        # Add user message
+        knowledge_level = evaluate_user_knowledge_level(prompt)
+        st.session_state.messages.append({
+            "role": "user",
+            "content": prompt,
+            "knowledge_level": knowledge_level
+        })
+        
+        # Display user message in chat message container
+        with st.chat_message("user"):
+            st.markdown(prompt)
+            st.markdown(
+                format_knowledge_level_html(
+                    knowledge_level,
+                    get_knowledge_level_color(knowledge_level)
+                ),
+                unsafe_allow_html=True
+            )
+        
+        # Generate and display assistant response
+        with st.chat_message("assistant"):
+            message_placeholder = st.empty()
+            with st.spinner("답변 작성 중..."):
+                start_time = time.time()
+                if model == "AWS Bedrock (클로드 3.5)":
+                    response, metrics = query_bedrock_agent(prompt)
+                else:
+                    # Ollama 함수는 5개의 값을 반환합니다
+                    response, response_time, input_tokens, output_tokens, _ = query_ollama_optimized(prompt)
+                    # metrics 딕셔너리 생성
+                    metrics = {
+                        "request_time": time.time() - start_time,
+                        "response_time": response_time,
+                        "input_tokens": input_tokens,
+                        "output_tokens": output_tokens
+                    }
+                end_time = time.time()
                 
-                # Generate response
-                with st.chat_message("assistant"):
-                    with st.spinner("답변 작성 중..."):
-                        start_time = time.time()
-                        if model == "AWS Bedrock (클로드 3.5)":
-                            response, metrics = query_bedrock_agent(prompt)
-                        else:
-                            # Ollama 함수는 5개의 값을 반환합니다
-                            response, response_time, input_tokens, output_tokens, _ = query_ollama_optimized(prompt)
-                            # metrics 딕셔너리 생성
-                            metrics = {
-                                "request_time": time.time() - start_time,
-                                "response_time": response_time,
-                                "input_tokens": input_tokens,
-                                "output_tokens": output_tokens
-                            }
-                        end_time = time.time()
-                        
-                        # Add metrics to response
-                        metrics["request_time"] = end_time - start_time
-                        metrics["response_time"] = metrics.get("response_time", 0)
-                        
-                        # Display response
-                        st.markdown(response)
-                        st.markdown(
-                            format_metrics_html(
-                                metrics["request_time"],
-                                metrics["response_time"],
-                                metrics["input_tokens"],
-                                metrics["output_tokens"]
-                            ),
-                            unsafe_allow_html=True
-                        )
-                        
-                        # Add assistant message
-                        st.session_state.messages.append({
-                            "role": "assistant",
-                            "content": response,
-                            "metrics": metrics
-                        })
+                # Add metrics to response
+                metrics["request_time"] = end_time - start_time
+                metrics["response_time"] = metrics.get("response_time", 0)
+                
+                # Simulate streaming response
+                full_response = ""
+                # Split response into sentences for more natural streaming
+                sentences = response.split('. ')
+                for sentence in sentences:
+                    if sentence.strip():  # Skip empty sentences
+                        full_response += sentence + '. '
+                        time.sleep(0.3)  # Increased delay for more natural reading speed
+                        message_placeholder.markdown(full_response + "▌")
+                
+                # Display final response
+                message_placeholder.markdown(full_response)
+                
+                # Display metrics
+                st.markdown(
+                    format_metrics_html(
+                        metrics["request_time"],
+                        metrics["response_time"],
+                        metrics["input_tokens"],
+                        metrics["output_tokens"]
+                    ),
+                    unsafe_allow_html=True
+                )
+                
+                # Add assistant message to history
+                st.session_state.messages.append({
+                    "role": "assistant",
+                    "content": full_response,
+                    "metrics": metrics
+                })
     
     st.markdown('</div>', unsafe_allow_html=True)
 
