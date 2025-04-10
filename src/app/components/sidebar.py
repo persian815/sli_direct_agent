@@ -2,6 +2,8 @@ import streamlit as st
 from data.personas_roles import PERSONAS
 from data.professional_roles import PROFESSIONAL_ROLES
 from src.visualization.visualization import create_knowledge_distribution_graph
+from src.llm import aws_credentials_available, ms_credentials_available
+from src.llm.ms_functions import test_ms_agent_connection
 
 def render_sidebar():
     """사이드바 UI를 렌더링하는 함수"""
@@ -10,11 +12,32 @@ def render_sidebar():
         
         # Model selection
         st.subheader("모델 선택")
+        
+        # 사용 가능한 모델 목록 생성
+        available_models = ["Ollama (라마 3.3)"]
+        
+        # AWS 자격증명이 있는 경우 AWS 모델 추가
+        if aws_credentials_available:
+            available_models.append("AWS Bedrock (클로드 3.5)")
+        
+        # MS Azure 자격증명이 있는 경우 MS 모델 추가
+        if ms_credentials_available:
+            available_models.append("Azure AI Foundry (GPT-3.5)")
+        
         model = st.radio(
             "LLM 모델 선택",
-            ["AWS Bedrock (클로드 3.5)", "Ollama (라마 3.3)"],
+            available_models,
             key="model"
         )
+        
+        # Azure AI Foundry 연결 테스트
+        if model == "Azure AI Foundry (GPT-3.5)":
+            if st.button("Azure AI Foundry 연결 테스트"):
+                success, message = test_ms_agent_connection()
+                if success:
+                    st.success(message)
+                else:
+                    st.error(message)
         
         # Professional role selection
         st.subheader("전문 역할")

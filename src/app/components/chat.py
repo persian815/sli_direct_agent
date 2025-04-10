@@ -1,7 +1,7 @@
 import streamlit as st
 import time
 from src.llm import (
-    query_bedrock_agent, query_ollama_optimized,
+    query_bedrock_agent, query_ollama_optimized, query_ms_agent,
     evaluate_user_knowledge_level, get_knowledge_level_color
 )
 from src.visualization.visualization import (
@@ -86,6 +86,15 @@ def render_chat_interface(model):
                 start_time = time.time()
                 if model == "AWS Bedrock (클로드 3.5)":
                     response, trace_steps, elapsed_time, input_tokens, output_tokens, start_time = query_bedrock_agent(prompt)
+                    # metrics 딕셔너리 생성
+                    metrics = {
+                        "request_time": elapsed_time,
+                        "response_time": elapsed_time,
+                        "input_tokens": input_tokens,
+                        "output_tokens": output_tokens
+                    }
+                elif model == "Azure AI Foundry (GPT-3.5)":
+                    response, trace_steps, elapsed_time, input_tokens, output_tokens, start_time = query_ms_agent(prompt)
                     # metrics 딕셔너리 생성
                     metrics = {
                         "request_time": elapsed_time,

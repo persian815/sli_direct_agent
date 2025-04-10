@@ -7,3 +7,6 @@ langchain-core>=0.1.32
 langchain-ollama>=0.0.4
 ollama>=0.1.6
 plotly>=6.0.1
+requests>=2.31.0
+azure-ai-projects
+azure-identity
