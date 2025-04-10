@@ -85,7 +85,14 @@ def render_chat_interface(model):
             with st.spinner("답변 작성 중..."):
                 start_time = time.time()
                 if model == "AWS Bedrock (클로드 3.5)":
-                    response, metrics = query_bedrock_agent(prompt)
+                    response, trace_steps, elapsed_time, input_tokens, output_tokens, start_time = query_bedrock_agent(prompt)
+                    # metrics 딕셔너리 생성
+                    metrics = {
+                        "request_time": elapsed_time,
+                        "response_time": elapsed_time,
+                        "input_tokens": input_tokens,
+                        "output_tokens": output_tokens
+                    }
                 else:
                     # Ollama 함수는 5개의 값을 반환합니다
                     response, response_time, input_tokens, output_tokens, _ = query_ollama_optimized(prompt)
