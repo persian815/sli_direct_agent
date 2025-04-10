@@ -6,21 +6,22 @@ def create_knowledge_distribution_graph(knowledge_levels: List[int]) -> go.Figur
     Create a bar graph showing the distribution of knowledge levels.
     
     Args:
-        knowledge_levels: List of knowledge level scores (1-10)
+        knowledge_levels: List of knowledge level scores (1-100)
         
     Returns:
         plotly.graph_objects.Figure: The generated bar graph
     """
-    # Count occurrences of each level
-    level_counts = {}
-    for level in range(1, 11):
-        level_counts[level] = knowledge_levels.count(level)
+    # Group knowledge levels into ranges (1-10, 11-20, ..., 91-100)
+    level_ranges = {}
+    for i in range(1, 101, 10):
+        range_key = f"{i}-{i+9}"
+        level_ranges[range_key] = sum(1 for level in knowledge_levels if i <= level < i+10)
     
     # Create bar graph
     fig = go.Figure(data=[
         go.Bar(
-            x=list(level_counts.keys()),
-            y=list(level_counts.values()),
+            x=list(level_ranges.keys()),
+            y=list(level_ranges.values()),
             marker_color='#4CAF50',
             opacity=0.7
         )
@@ -29,7 +30,7 @@ def create_knowledge_distribution_graph(knowledge_levels: List[int]) -> go.Figur
     # Update layout
     fig.update_layout(
         title="Knowledge Level Distribution",
-        xaxis_title="Knowledge Level",
+        xaxis_title="Knowledge Level Range",
         yaxis_title="Count",
         template="plotly_dark",
         paper_bgcolor="#1E1E1E",
@@ -42,10 +43,7 @@ def create_knowledge_distribution_graph(knowledge_levels: List[int]) -> go.Figur
     # Update axes
     fig.update_xaxes(
         gridcolor="#2D2D2D",
-        zerolinecolor="#2D2D2D",
-        tickmode="linear",
-        tick0=1,
-        dtick=1
+        zerolinecolor="#2D2D2D"
     )
     fig.update_yaxes(
         gridcolor="#2D2D2D",
@@ -59,7 +57,7 @@ def format_knowledge_level_html(level: int, color: str) -> str:
     Format knowledge level information as HTML.
     
     Args:
-        level: Knowledge level score (1-10)
+        level: Knowledge level score (1-100)
         color: CSS color code for the level
         
     Returns:
@@ -68,8 +66,8 @@ def format_knowledge_level_html(level: int, color: str) -> str:
     return f"""
         <div class="knowledge-level">
             <div>Knowledge Level</div>
-            <div class="knowledge-level-bar" style="width: {level*10}%; background-color: {color};"></div>
-            <div class="knowledge-level-text">{level}/10</div>
+            <div class="knowledge-level-bar" style="width: {level}%; background-color: {color};"></div>
+            <div class="knowledge-level-text">{level}/100</div>
         </div>
     """
 

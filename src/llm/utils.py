@@ -37,7 +37,7 @@ def evaluate_user_knowledge_level(user_input):
         user_input (str): 사용자가 입력한 질문
         
     Returns:
-        int: 1-10 사이의 지식 레벨 점수
+        int: 1-100 사이의 지식 레벨 점수
     """
     # 간단한 지식 레벨 평가 로직
     # 실제로는 더 복잡한 분석이 필요할 수 있음
@@ -52,37 +52,37 @@ def evaluate_user_knowledge_level(user_input):
     # 질문 형식 확인 (개방형 질문인지, 닫힌 질문인지)
     is_open_question = any(q in user_input for q in ["어떻게", "왜", "어떤", "어디서", "언제", "누가"])
     
-    # 점수 계산 (1-10 사이)
-    base_score = 5  # 기본 점수
+    # 점수 계산 (1-100 사이)
+    base_score = 50  # 기본 점수
     
     # 전문 용어 사용에 따른 점수 조정
-    term_score = min(term_count, 3)  # 최대 3점 추가
+    term_score = min(term_count * 10, 30)  # 최대 30점 추가
     
     # 문장 길이에 따른 점수 조정
-    length_score = min(sentence_length // 10, 2)  # 최대 2점 추가
+    length_score = min(sentence_length, 10)  # 최대 10점 추가
     
     # 질문 형식에 따른 점수 조정
-    question_score = 1 if is_open_question else 0
+    question_score = 10 if is_open_question else 0
     
     # 최종 점수 계산
     final_score = base_score + term_score + length_score + question_score
     
-    # 점수 범위 제한 (1-10)
-    return max(1, min(10, final_score))
+    # 점수 범위 제한 (1-100)
+    return max(1, min(100, final_score))
 
 def get_knowledge_level_color(level):
     """
     지식 레벨에 따른 색상 반환
     
     Args:
-        level (int): 1-10 사이의 지식 레벨
+        level (int): 1-100 사이의 지식 레벨
         
     Returns:
         str: CSS 색상 코드
     """
-    if level <= 3:
+    if level <= 30:
         return "#ff6b6b"  # 빨간색 (낮은 레벨)
-    elif level <= 7:
+    elif level <= 70:
         return "#ffd166"  # 노란색 (중간 레벨)
     else:
         return "#06d6a0"  # 초록색 (높은 레벨)
