@@ -10,9 +10,11 @@ echo "Directory contents: $(ls -la)"
 # output.tar.gz 파일이 있는지 확인하고 압축 해제
 if [ -f "output.tar.gz" ]; then
     echo "Found output.tar.gz, extracting..."
-    tar -xzf output.tar.gz
+    tar -xzf output.tar.gz -v
     echo "Extraction complete. Directory contents after extraction:"
     ls -la
+else
+    echo "output.tar.gz file not found in current directory."
 fi
 
 # pip 업그레이드
