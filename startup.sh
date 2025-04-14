@@ -25,13 +25,6 @@ ls -la /home/site/wwwroot/src
 echo "Files in /home/site/wwwroot/src/app:"
 ls -la /home/site/wwwroot/src/app
 
-# 가상 환경 생성
-python -m venv antenv
-source antenv/bin/activate
-
-# 필요한 패키지 설치
-pip install -r requirements.txt
-
 # PYTHONPATH 설정 - 루트 디렉토리를 Python 경로에 추가
 export PYTHONPATH=/home/site/wwwroot:$PYTHONPATH
 
