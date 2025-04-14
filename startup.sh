@@ -25,22 +25,46 @@ ls -la
 # output.tar.gz 파일이 있는지 확인하고 압축 해제
 if [ -f "output.tar.gz" ]; then
     echo "Found output.tar.gz in /home/site/wwwroot, extracting..."
-    # 파일이 바이너리인지 확인
-    if file output.tar.gz | grep -q "text"; then
-        echo "output.tar.gz is a text file, not a valid tar archive."
+    
+    # 파일 정보 확인
+    echo "File information:"
+    file output.tar.gz
+    
+    # 파일 크기 확인
+    echo "File size:"
+    ls -lh output.tar.gz
+    
+    # 압축 해제 시도 (자세한 로깅 포함)
+    echo "Attempting to extract output.tar.gz..."
+    tar -tvf output.tar.gz || echo "Failed to list contents of tar file"
+    
+    # 압축 해제 시도 1
+    echo "Extraction attempt 1:"
+    if tar -xzf output.tar.gz -v; then
+        echo "Extraction successful. Directory contents after extraction:"
+        ls -la
     else
-        # 압축 해제 시도
-        if tar -xzf output.tar.gz -v; then
-            echo "Extraction complete. Directory contents after extraction:"
+        echo "First extraction attempt failed. Trying alternative method..."
+        
+        # 압축 해제 시도 2 (gzip과 tar 분리)
+        echo "Extraction attempt 2 (using gzip and tar separately):"
+        if gzip -dc output.tar.gz | tar xf - -v; then
+            echo "Alternative extraction successful. Directory contents after extraction:"
             ls -la
         else
-            echo "Failed to extract output.tar.gz. Trying alternative extraction method..."
-            # 대체 압축 해제 방법 시도
-            if gzip -dc output.tar.gz | tar xf -; then
-                echo "Alternative extraction complete. Directory contents after extraction:"
+            echo "Second extraction attempt failed. Trying another method..."
+            
+            # 압축 해제 시도 3 (임시 디렉토리 사용)
+            echo "Extraction attempt 3 (using temporary directory):"
+            mkdir -p /tmp/extract
+            if cp output.tar.gz /tmp/extract/ && cd /tmp/extract && tar -xzf output.tar.gz -v; then
+                echo "Third extraction attempt successful. Copying files back..."
+                cp -rv * /home/site/wwwroot/
+                cd /home/site/wwwroot
+                echo "Directory contents after copying back:"
                 ls -la
             else
-                echo "Alternative extraction also failed."
+                echo "All extraction attempts failed."
             fi
         fi
     fi
