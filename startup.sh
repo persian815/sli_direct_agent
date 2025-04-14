@@ -7,6 +7,14 @@ set -x
 echo "Current directory: $(pwd)"
 echo "Directory contents: $(ls -la)"
 
+# output.tar.gz 파일이 있는지 확인하고 압축 해제
+if [ -f "output.tar.gz" ]; then
+    echo "Found output.tar.gz, extracting..."
+    tar -xzf output.tar.gz
+    echo "Extraction complete. Directory contents after extraction:"
+    ls -la
+fi
+
 # pip 업그레이드
 python -m pip install --upgrade pip
 
