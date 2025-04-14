@@ -10,6 +10,10 @@ echo "Directory contents: $(ls -la)"
 # /home/site/wwwroot 디렉토리로 이동
 cd /home/site/wwwroot
 
+# 디렉토리 내용 확인
+echo "Contents of /home/site/wwwroot before extraction:"
+ls -la
+
 # output.tar.gz 파일이 있는지 확인하고 압축 해제
 if [ -f "output.tar.gz" ]; then
     echo "Found output.tar.gz in /home/site/wwwroot, extracting..."
@@ -32,7 +36,15 @@ fi
 
 # antenv 가상 환경 활성화
 echo "Activating antenv virtual environment..."
-source antenv/bin/activate
+if [ -d "antenv" ]; then
+    source antenv/bin/activate
+    echo "antenv virtual environment activated."
+else
+    echo "antenv directory not found. Creating a new virtual environment..."
+    python -m venv antenv
+    source antenv/bin/activate
+    echo "New virtual environment created and activated."
+fi
 
 # pip 업그레이드
 python -m pip install --upgrade pip
