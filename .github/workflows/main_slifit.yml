@@ -49,7 +49,7 @@ jobs:
       - name: Compress files into output.tar.gz
         run: |
           mkdir -p temp_dir
-          cp -r . temp_dir/
+          cp -r * temp_dir/
           cd temp_dir
           tar -czf ../output.tar.gz .
           cd ..
