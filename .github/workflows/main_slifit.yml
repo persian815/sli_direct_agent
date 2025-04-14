@@ -34,30 +34,30 @@ jobs:
 
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
 
-      # ✅ Create output.tar.gz
-      - name: Create output.tar.gz
+      # ✅ Create output.zip
+      - name: Create output.zip
         run: |
-          echo "Creating output.tar.gz..."
-          tar -czf output.tar.gz --exclude=output.tar.gz --exclude=venv --exclude=.git .
-          echo "✅ output.tar.gz created successfully."
-          ls -la output.tar.gz
+          echo "Creating output.zip..."
+          zip -r output.zip . -x "venv/*" ".git/*" "output.zip"
+          echo "✅ output.zip created successfully."
+          ls -la output.zip
 
-      # ✅ Extract output.tar.gz to verify it works
-      - name: Extract output.tar.gz to verify
+      # ✅ Extract output.zip to verify it works
+      - name: Extract output.zip to verify
         run: |
-          if [ -f output.tar.gz ]; then
-            echo "🔍 Found output.tar.gz, extracting it to verify..."
+          if [ -f output.zip ]; then
+            echo "🔍 Found output.zip, extracting it to verify..."
             mkdir -p extracted
-            tar -xzf output.tar.gz -C extracted
+            unzip -q output.zip -d extracted
             echo "✅ Extraction complete. Contents of extracted directory:"
             ls -la extracted
           else
-            echo "⚠️ output.tar.gz not found, something went wrong with creation."
+            echo "⚠️ output.zip not found, something went wrong with creation."
           fi
 
       # ✅ 배포용 zip 생성 (venv 제외)
       - name: Zip artifact for deployment
-        run: zip -r release.zip . -x "venv/*" "output.tar.gz"
+        run: zip -r release.zip . -x "venv/*" "output.zip"
 
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v4
@@ -65,7 +65,7 @@ jobs:
           name: python-app
           path: |
             release.zip
-            output.tar.gz
+            output.zip
             !venv/
 
   deploy:
