@@ -17,9 +17,25 @@ ls -la
 # output.tar.gz 파일이 있는지 확인하고 압축 해제
 if [ -f "output.tar.gz" ]; then
     echo "Found output.tar.gz in /home/site/wwwroot, extracting..."
-    tar -xzf output.tar.gz -v
-    echo "Extraction complete. Directory contents after extraction:"
-    ls -la
+    # 파일이 바이너리인지 확인
+    if file output.tar.gz | grep -q "text"; then
+        echo "output.tar.gz is a text file, not a valid tar archive."
+    else
+        # 압축 해제 시도
+        if tar -xzf output.tar.gz -v; then
+            echo "Extraction complete. Directory contents after extraction:"
+            ls -la
+        else
+            echo "Failed to extract output.tar.gz. Trying alternative extraction method..."
+            # 대체 압축 해제 방법 시도
+            if gzip -dc output.tar.gz | tar xf -; then
+                echo "Alternative extraction complete. Directory contents after extraction:"
+                ls -la
+            else
+                echo "Alternative extraction also failed."
+            fi
+        fi
+    fi
 else
     echo "output.tar.gz file not found in /home/site/wwwroot."
     
