@@ -175,8 +175,8 @@ def test_ms_agent_connection():
         # 에이전트 가져오기
         agent = project_client.agents.get_agent(MS_AGENT_ID)
         
-        # 스레드 가져오기
-        thread = project_client.agents.get_thread(MS_THREAD_ID)
+        # 새로운 스레드 생성
+        thread = project_client.agents.create_thread()
         
         return True, f"Azure AI Foundry 에이전트 연결 성공 (에이전트: {agent.name}, 스레드: {thread.id})"
     except Exception as e:
