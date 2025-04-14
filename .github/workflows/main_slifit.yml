@@ -48,7 +48,12 @@ jobs:
       # ✅ Compress files into output.tar.gz
       - name: Compress files into output.tar.gz
         run: |
-          tar -czf output.tar.gz --exclude=output.tar.gz .
+          mkdir -p temp_dir
+          cp -r . temp_dir/
+          cd temp_dir
+          tar -czf ../output.tar.gz .
+          cd ..
+          rm -rf temp_dir
           echo "✅ Compression complete."
 
       # ✅ 배포용 zip 생성 (venv 제외)
