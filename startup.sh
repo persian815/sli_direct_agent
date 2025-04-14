@@ -7,6 +7,15 @@ set -x
 echo "Current directory: $(pwd)"
 echo "Directory contents: $(ls -la)"
 
+# /home/site/wwwroot 디렉토리 생성 (없는 경우)
+mkdir -p /home/site/wwwroot
+
+# 현재 디렉토리의 파일을 /home/site/wwwroot로 복사
+cp -r * /home/site/wwwroot/
+
+# /home/site/wwwroot 디렉토리로 이동
+cd /home/site/wwwroot
+
 # 가상 환경 생성
 python -m venv antenv
 source antenv/bin/activate
@@ -27,5 +36,4 @@ streamlit --version
 echo "Starting Streamlit application..."
 
 # Streamlit 애플리케이션 실행 (절대 경로 사용)
-cd /home/site/wwwroot
 streamlit run /home/site/wwwroot/src/app/main.py --server.port 8000 --server.enableCORS false --server.address 0.0.0.0 
