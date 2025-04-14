@@ -112,15 +112,8 @@ def query_ms_agent(input_text, tab_id=None):
         # 에이전트 가져오기
         agent = project_client.agents.get_agent(MS_AGENT_ID)
         
-        # 스레드 가져오기 (기존 스레드가 없으면 새로 생성)
-        try:
-            thread = project_client.agents.get_thread(MS_THREAD_ID)
-        except Exception as e:
-            # 스레드가 없으면 새로 생성
-            thread = project_client.agents.create_thread()
-            # 새로 생성된 스레드 ID를 저장
-            global MS_THREAD_ID
-            MS_THREAD_ID = thread.id
+        # 매 요청마다 새로운 스레드 생성
+        thread = project_client.agents.create_thread()
         
         # 사용자 메시지 생성
         user_message = project_client.agents.create_message(
