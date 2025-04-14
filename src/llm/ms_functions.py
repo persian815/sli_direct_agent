@@ -8,8 +8,11 @@ from azure.identity import DefaultAzureCredential
 
 # 환경 설정
 IS_LOCAL = os.getenv('ENV', 'local') == 'local'
+
+# agent1
 MS_AGENT_ID = "asst_62CgNOtkZwOGWbYVVV84xPaW"
 MS_THREAD_ID = "thread_0lAqgleT4Je2keGtqYAivGAw"
+
 
 # Azure AI Foundry 연결 정보
 MS_CONNECTION_STRING = "eastus2.api.azureml.ms;2326c76a-5eab-44b6-808b-1978f2ffee0e;slihackathon-2025-team2-rg;team2_seongryongle-8914"
