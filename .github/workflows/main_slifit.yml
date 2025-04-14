@@ -48,7 +48,7 @@ jobs:
       # ✅ Compress files into output.tar.gz
       - name: Compress files into output.tar.gz
         run: |
-          tar -czf output.tar.gz -C /home/site/wwwroot .
+          tar -czf output.tar.gz .
           echo "✅ Compression complete."
 
       # ✅ 배포용 zip 생성 (venv 제외)
