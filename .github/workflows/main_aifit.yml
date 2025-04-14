@@ -21,8 +21,8 @@ jobs:
       - name: Set up Java version
         uses: actions/setup-java@v4
         with:
-          java-version: 'java21'
-          distribution: 'microsoft'
+          java-version: "java21"
+          distribution: "microsoft"
 
       - name: Build with Maven
         run: mvn clean install
@@ -31,36 +31,35 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: java-app
-          path: '${{ github.workspace }}/target/*.jar'
+          path: "${{ github.workspace }}/target/*.jar"
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
     environment:
-      name: 'Production'
+      name: "Production"
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     permissions:
       id-token: write #This is required for requesting the JWT
       contents: read #This is required for actions/checkout
-  
+
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: java-app
-      
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_BEF8A24324BB42F2A355F33E61CFE5AE }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_8287BB511DD54F55B41E9F62CCA3F252 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_D2BDA1F449F1421BA885FC879C78FE2C }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_F76EDFB67B354031AD4CC7394B32C20E }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_DBB0083086864CB49B41404B265F2EDC }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_10EEEC58C0A144A6AF267A34FF099211 }}
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'aifit'
-          slot-name: 'Production'
-          package: '*.jar'
-          
+          app-name: "aifit"
+          slot-name: "Production"
+          package: "*.jar"
