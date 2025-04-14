@@ -1,6 +1,6 @@
 import streamlit as st
-from src.app.config import initialize_app, load_js
-from src.app.components import render_sidebar, render_chat_interface
+from app.config import initialize_app, load_js
+from app.components import render_sidebar, render_chat_interface
 
 def main():
     # Initialize the application
