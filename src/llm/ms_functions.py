@@ -2,9 +2,14 @@ import streamlit as st
 import os
 import time
 import json
+import logging
 from typing import Dict, List, Tuple, Any, Optional
 from azure.ai.projects import AIProjectClient
 from azure.identity import DefaultAzureCredential
+
+# 로깅 설정
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 # 환경 설정
 IS_LOCAL = os.getenv('ENV', 'local') == 'local'
@@ -24,8 +29,10 @@ try:
         conn_str=MS_CONNECTION_STRING
     )
     ms_credentials_available = True
+    logger.info("Azure AI Foundry 클라이언트 초기화 성공")
 except Exception as e:
     ms_credentials_available = False
+    logger.error(f"Azure AI Foundry 클라이언트 초기화 실패: {str(e)}")
 
 def extract_text_from_message(message):
     """
@@ -91,6 +98,7 @@ def extract_text_from_message(message):
         # 모든 방법이 실패한 경우 메시지 객체를 문자열로 변환
         return str(message)
     except Exception as e:
+        logger.error(f"메시지 텍스트 추출 중 오류 발생: {str(e)}")
         return str(message)
 
 def query_ms_agent(input_text, tab_id=None):
@@ -108,76 +116,127 @@ def query_ms_agent(input_text, tab_id=None):
     # 시작 시간 기록
     start_time = time.time()
 
-    try:
-        # 에이전트 가져오기
-        agent = project_client.agents.get_agent(MS_AGENT_ID)
-        
-        # 매 요청마다 새로운 스레드 생성
-        thread = project_client.agents.create_thread()
-        
-        # 사용자 메시지 생성
-        user_message = project_client.agents.create_message(
-            thread_id=thread.id,
-            role="user",
-            content=input_text
-        )
-        
-        # 실행 생성 및 처리
-        run = project_client.agents.create_and_process_run(
-            thread_id=thread.id,
-            agent_id=agent.id
-        )
-        
-        # 메시지 목록 가져오기
-        messages = project_client.agents.list_messages(thread_id=thread.id)
-
-        # 메시지 출력
-        print("\n메시지 목록:")
-        for text_message in messages.text_messages:
-            print(text_message.as_dict())
-
-        # 응답 텍스트 추출
-        response_text = ""
-        
-        # 메시지 목록이 비어있지 않은 경우
-        if messages.text_messages:
-            # 첫 번째 메시지 가져오기
-            first_message = messages.text_messages[0]
+    # 최대 재시도 횟수
+    max_retries = 3
+    retry_count = 0
+    
+    while retry_count < max_retries:
+        try:
+            logger.debug("에이전트 가져오기 시작")
+            # 에이전트 가져오기
+            agent = project_client.agents.get_agent(MS_AGENT_ID)
+            logger.debug(f"에이전트 가져오기 완료: {agent.id}")
             
-            # 첫 번째 메시지의 text 딕셔너리에서 value 값 추출
-            message_dict = first_message.as_dict()
-            if 'text' in message_dict and isinstance(message_dict['text'], dict) and 'value' in message_dict['text']:
-                response_text = message_dict['text']['value']
-        
-        # 응답 텍스트가 비어있는 경우 처리
-        if not response_text:
-            response_text = "죄송합니다. 응답을 생성하는 데 문제가 발생했습니다. 다시 시도해주세요."
-        
-        # 경과 시간 계산
-        elapsed_time = time.time() - start_time
-        
-        # 토큰 수 추정 (간단한 추정치)
-        input_tokens = len(input_text.split()) // 1.3  # 대략적인 추정
-        output_tokens = len(response_text.split()) // 1.3  # 대략적인 추정
-        
-        # 추적 단계 정보 (Azure AI Foundry에서는 제공하지 않을 수 있음)
-        trace_steps = []
-        
-        return response_text, trace_steps, elapsed_time, input_tokens, output_tokens, start_time
+            # 요청 간 지연 시간 추가 (충돌 방지)
+            time.sleep(1)
+            
+            logger.debug("스레드 생성 시작")
+            # 매 요청마다 새로운 스레드 생성
+            thread = project_client.agents.create_thread()
+            logger.debug(f"스레드 생성 완료: {thread.id}")
+            
+            # 요청 간 지연 시간 추가 (충돌 방지)
+            time.sleep(1)
+            
+            logger.debug("사용자 메시지 생성 시작")
+            # 사용자 메시지 생성
+            user_message = project_client.agents.create_message(
+                thread_id=thread.id,
+                role="user",
+                content=input_text
+            )
+            logger.debug(f"사용자 메시지 생성 완료: {user_message.id}")
+            
+            # 요청 간 지연 시간 추가 (충돌 방지)
+            time.sleep(1)
+            
+            logger.debug("실행 생성 및 처리 시작")
+            # 실행 생성 및 처리
+            run = project_client.agents.create_and_process_run(
+                thread_id=thread.id,
+                agent_id=agent.id
+            )
+            logger.debug(f"실행 생성 및 처리 완료: {run.id}")
+            
+            # 요청 간 지연 시간 추가 (충돌 방지)
+            time.sleep(2)
+            
+            logger.debug("메시지 목록 가져오기 시작")
+            # 메시지 목록 가져오기
+            messages = project_client.agents.list_messages(thread_id=thread.id)
+            logger.debug(f"메시지 목록 가져오기 완료: {len(messages.text_messages) if hasattr(messages, 'text_messages') else 0}개 메시지")
 
-    except Exception as e:
-        elapsed_time = time.time() - start_time
-        return f"Azure AI Foundry 서비스에 문제가 발생했습니다: {str(e)}", [], elapsed_time, 0, 0, start_time
+            # 메시지 출력
+            print("\n메시지 목록:")
+            for text_message in messages.text_messages:
+                print(text_message.as_dict())
+
+            # 응답 텍스트 추출
+            response_text = ""
+            
+            # 메시지 목록이 비어있지 않은 경우
+            if messages.text_messages:
+                # 첫 번째 메시지 가져오기
+                first_message = messages.text_messages[0]
+                
+                # 첫 번째 메시지의 text 딕셔너리에서 value 값 추출
+                message_dict = first_message.as_dict()
+                if 'text' in message_dict and isinstance(message_dict['text'], dict) and 'value' in message_dict['text']:
+                    response_text = message_dict['text']['value']
+                    logger.debug(f"응답 텍스트 추출 완료: {response_text[:50]}...")
+            
+            # 응답 텍스트가 비어있는 경우 처리
+            if not response_text:
+                response_text = "죄송합니다. 응답을 생성하는 데 문제가 발생했습니다. 다시 시도해주세요."
+                logger.warning("응답 텍스트가 비어있습니다.")
+            
+            # 경과 시간 계산
+            elapsed_time = time.time() - start_time
+            
+            # 토큰 수 추정 (간단한 추정치)
+            input_tokens = len(input_text.split()) // 1.3  # 대략적인 추정
+            output_tokens = len(response_text.split()) // 1.3  # 대략적인 추정
+            
+            # 추적 단계 정보 (Azure AI Foundry에서는 제공하지 않을 수 있음)
+            trace_steps = []
+            
+            logger.info(f"Azure AI Foundry 응답 생성 완료 (경과 시간: {elapsed_time:.2f}초)")
+            return response_text, trace_steps, elapsed_time, input_tokens, output_tokens, start_time
+
+        except Exception as e:
+            retry_count += 1
+            logger.error(f"Azure AI Foundry API 호출 중 오류 발생 (시도 {retry_count}/{max_retries}): {str(e)}")
+            
+            if retry_count < max_retries:
+                # 오류 발생 시 지연 시간 추가 후 재시도
+                wait_time = 2 * retry_count
+                logger.info(f"{wait_time}초 후 재시도합니다...")
+                time.sleep(wait_time)  # 재시도마다 지연 시간 증가
+                continue
+            else:
+                # 최대 재시도 횟수 초과 시 오류 반환
+                elapsed_time = time.time() - start_time
+                logger.error(f"최대 재시도 횟수 초과. 오류: {str(e)}")
+                return f"Azure AI Foundry 서비스에 문제가 발생했습니다: {str(e)}", [], elapsed_time, 0, 0, start_time
 
 def test_ms_agent_connection():
     """Azure AI Foundry 에이전트 연결 테스트 함수"""
     try:
+        logger.debug("에이전트 연결 테스트 시작")
+        
         # 에이전트 가져오기
         agent = project_client.agents.get_agent(MS_AGENT_ID)
+        logger.debug(f"에이전트 가져오기 완료: {agent.id}")
+        
+        # 요청 간 지연 시간 추가 (충돌 방지)
+        time.sleep(1)
         
         # 새로운 스레드 생성
         thread = project_client.agents.create_thread()
+        logger.debug(f"스레드 생성 완료: {thread.id}")
         
+        logger.info(f"Azure AI Foundry 에이전트 연결 성공 (에이전트: {agent.name}, 스레드: {thread.id})")
         return True, f"Azure AI Foundry 에이전트 연결 성공 (에이전트: {agent.name}, 스레드: {thread.id})"
     except Exception as e:
+        logger.error(f"Azure AI Foundry 에이전트 연결 실패: {str(e)}")
         return False, f"Azure AI Foundry 에이전트 연결 실패: {str(e)}"
