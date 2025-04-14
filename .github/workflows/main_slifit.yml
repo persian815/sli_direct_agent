@@ -87,14 +87,12 @@ jobs:
       - name: Unzip artifact for deployment
         run: |
           unzip -o release.zip
-          echo "Files extracted to the current directory. Current directory absolute path:"
-          pwd
+          echo "Files extracted to the current directory. Directory contents:"
           echo "----------------------------------------"
-          echo "Directory contents:"
           ls -la
           echo "----------------------------------------"
           echo "Directory structure:"
-          find $(pwd) -type f -o -type d | sort
+          find . -type f -o -type d | sort
           echo "----------------------------------------"
 
       - name: Login to Azure
@@ -118,4 +116,6 @@ jobs:
         with:
           app-name: "slifit"
           slot-name: "Production"
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: .
           timeout-minutes: 20
