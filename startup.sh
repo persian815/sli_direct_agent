@@ -30,6 +30,10 @@ else
     fi
 fi
 
+# antenv 가상 환경 활성화
+echo "Activating antenv virtual environment..."
+source antenv/bin/activate
+
 # pip 업그레이드
 python -m pip install --upgrade pip
 
