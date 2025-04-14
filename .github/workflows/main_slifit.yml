@@ -63,6 +63,18 @@ jobs:
             release.zip
             !venv/
 
+      # ✅ Copy files from /tmp/zipdeploy/extracted to /home/site/wwwroot
+      - name: Copy files from /tmp/zipdeploy/extracted to /home/site/wwwroot
+        run: |
+          if [ -d "/tmp/zipdeploy/extracted" ]; then
+            echo "Found /tmp/zipdeploy/extracted directory, copying files to /home/site/wwwroot..."
+            cp -r /tmp/zipdeploy/extracted/* /home/site/wwwroot/
+            echo "Files copied successfully. Directory contents after copying:"
+            ls -la /home/site/wwwroot
+          else
+            echo "/tmp/zipdeploy/extracted directory not found."
+          fi
+
   deploy:
     runs-on: ubuntu-latest
     needs: build
