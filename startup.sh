@@ -7,35 +7,30 @@ set -x
 echo "Current directory: $(pwd)"
 echo "Directory contents: $(ls -la)"
 
-# /home/site/wwwroot 디렉토리 생성 (없는 경우)
-mkdir -p /home/site/wwwroot
+# pip 업그레이드
+python -m pip install --upgrade pip
 
-# 현재 디렉토리의 파일을 /home/site/wwwroot로 복사
-echo "Copying files to /home/site/wwwroot..."
-cp -rv * /home/site/wwwroot/
+# 필요한 패키지 설치
+echo "Installing required packages..."
+pip install -r requirements.txt
 
-# /home/site/wwwroot 디렉토리로 이동
-cd /home/site/wwwroot
-
-# 복사된 파일 확인
-echo "Files in /home/site/wwwroot:"
-ls -la /home/site/wwwroot
-echo "Files in /home/site/wwwroot/src:"
-ls -la /home/site/wwwroot/src
-echo "Files in /home/site/wwwroot/src/app:"
-ls -la /home/site/wwwroot/src/app
-
-# PYTHONPATH 설정 - 루트 디렉토리를 Python 경로에 추가
-export PYTHONPATH=/home/site/wwwroot:$PYTHONPATH
+# PYTHONPATH 설정
+export PYTHONPATH=/home/site/wwwroot:/home/site/wwwroot/src:$PYTHONPATH
 
 # Python 버전 확인
+echo "Python version:"
 python --version
 
+# pip 목록 확인
+echo "Installed packages:"
+pip list
+
 # Streamlit 버전 확인
+echo "Streamlit version:"
 streamlit --version
 
 # 시작 명령 출력
 echo "Starting Streamlit application..."
 
-# Streamlit 애플리케이션 실행 (절대 경로 사용)
-streamlit run /home/site/wwwroot/src/app/main.py --server.port 8000 --server.enableCORS false --server.address 0.0.0.0 
+# Streamlit 애플리케이션 실행
+streamlit run src/app/main.py --server.port 8000 --server.enableCORS false --server.address 0.0.0.0 
