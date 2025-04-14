@@ -101,7 +101,7 @@ jobs:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_F76EDFB67B354031AD4CC7394B32C20E }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_DBB0083086864CB49B41404B265F2EDC }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_10EEEC58C0A144A6AF267A34FF099211 }}
-          client-secret: ${{ secrets.AZURE_CLIENT_SECRET_IJX8Q~BVUXWH1BCoygi_PxU6q5phTYWspA4bjbDp}}
+          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
 
       - name: Check deployment status
         run: |
