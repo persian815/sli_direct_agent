@@ -11,10 +11,19 @@ echo "Directory contents: $(ls -la)"
 mkdir -p /home/site/wwwroot
 
 # 현재 디렉토리의 파일을 /home/site/wwwroot로 복사
-cp -r * /home/site/wwwroot/
+echo "Copying files to /home/site/wwwroot..."
+cp -rv * /home/site/wwwroot/
 
 # /home/site/wwwroot 디렉토리로 이동
 cd /home/site/wwwroot
+
+# 복사된 파일 확인
+echo "Files in /home/site/wwwroot:"
+ls -la /home/site/wwwroot
+echo "Files in /home/site/wwwroot/src:"
+ls -la /home/site/wwwroot/src
+echo "Files in /home/site/wwwroot/src/app:"
+ls -la /home/site/wwwroot/src/app
 
 # 가상 환경 생성
 python -m venv antenv
@@ -23,7 +32,7 @@ source antenv/bin/activate
 # 필요한 패키지 설치
 pip install -r requirements.txt
 
-# PYTHONPATH 설정 - 현재 디렉토리를 Python 경로에 추가
+# PYTHONPATH 설정 - 루트 디렉토리를 Python 경로에 추가
 export PYTHONPATH=/home/site/wwwroot:$PYTHONPATH
 
 # Python 버전 확인
