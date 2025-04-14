@@ -87,12 +87,14 @@ jobs:
       - name: Unzip artifact for deployment
         run: |
           unzip -o release.zip
-          echo "Files extracted to the current directory. Directory contents:"
+          echo "Files extracted to the current directory. Current directory absolute path:"
+          pwd
           echo "----------------------------------------"
+          echo "Directory contents:"
           ls -la
           echo "----------------------------------------"
           echo "Directory structure:"
-          find . -type f -o -type d | sort
+          find $(pwd) -type f -o -type d | sort
           echo "----------------------------------------"
 
       - name: Login to Azure
