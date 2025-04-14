@@ -16,5 +16,9 @@ python --version
 # Streamlit 버전 확인
 streamlit --version
 
-# Streamlit 애플리케이션 실행
-streamlit run src/app/main.py --server.port 8000 --server.enableCORS false --server.address 0.0.0.0 
+# 시작 명령 출력
+echo "Starting Streamlit application..."
+
+# Streamlit 애플리케이션 실행 (절대 경로 사용)
+cd /home/site/wwwroot
+streamlit run /home/site/wwwroot/src/app/main.py --server.port 8000 --server.enableCORS false --server.address 0.0.0.0 
