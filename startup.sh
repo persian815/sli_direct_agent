@@ -7,23 +7,26 @@ set -x
 echo "Current directory: $(pwd)"
 echo "Directory contents: $(ls -la)"
 
-# /tmp/zipdeploy/extracted 디렉토리 확인
-if [ -d "/tmp/zipdeploy/extracted" ]; then
-    echo "Found /tmp/zipdeploy/extracted directory, copying files..."
-    cp -rv /tmp/zipdeploy/extracted/* .
-    echo "Copy complete. Directory contents after copy:"
+# /home/site/wwwroot 디렉토리로 이동
+cd /home/site/wwwroot
+
+# output.tar.gz 파일이 있는지 확인하고 압축 해제
+if [ -f "output.tar.gz" ]; then
+    echo "Found output.tar.gz in /home/site/wwwroot, extracting..."
+    tar -xzf output.tar.gz -v
+    echo "Extraction complete. Directory contents after extraction:"
     ls -la
 else
-    echo "/tmp/zipdeploy/extracted directory not found."
+    echo "output.tar.gz file not found in /home/site/wwwroot."
     
-    # output.tar.gz 파일이 있는지 확인하고 압축 해제
-    if [ -f "output.tar.gz" ]; then
-        echo "Found output.tar.gz, extracting..."
-        tar -xzf output.tar.gz -v
-        echo "Extraction complete. Directory contents after extraction:"
+    # /tmp/zipdeploy/extracted 디렉토리 확인
+    if [ -d "/tmp/zipdeploy/extracted" ]; then
+        echo "Found /tmp/zipdeploy/extracted directory, copying files..."
+        cp -rv /tmp/zipdeploy/extracted/* /home/site/wwwroot/
+        echo "Copy complete. Directory contents after copy:"
         ls -la
     else
-        echo "output.tar.gz file not found in current directory."
+        echo "/tmp/zipdeploy/extracted directory not found."
     fi
 fi
 
