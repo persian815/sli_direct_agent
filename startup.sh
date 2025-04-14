@@ -11,28 +11,43 @@ RESOURCE_GROUP="slihackathon-2025-team2-rg"
 echo "Current directory: $(pwd)"
 echo "Directory contents: $(ls -la)"
 
-# /tmp/8dd7b4cf3e60ee3 디렉토리 확인 (Azure가 압축을 푼 위치)
-if [ -d "/tmp/8dd7b4cf3e60ee3" ]; then
-    echo "Found /tmp/8dd7b4cf3e60ee3 directory, copying files..."
-    cp -rv /tmp/8dd7b4cf3e60ee3/* /home/site/wwwroot/
-    echo "Copy complete. Directory contents after copy:"
-    ls -la
-else
-    echo "/tmp/8dd7b4cf3e60ee3 directory not found."
+# Azure가 압축을 푼 디렉토리 찾기
+echo "Searching for extracted deployment directory..."
+
+# /tmp 디렉토리에서 최근에 생성된 디렉토리 찾기
+LATEST_TMP_DIR=$(find /tmp -maxdepth 1 -type d -name "8dd7b4*" -o -name "zipdeploy" | sort -r | head -n 1)
+
+if [ -n "$LATEST_TMP_DIR" ]; then
+    echo "Found deployment directory: $LATEST_TMP_DIR"
     
-    # /tmp/zipdeploy/extracted 디렉토리 확인
-    if [ -d "/tmp/zipdeploy/extracted" ]; then
-        echo "Found /tmp/zipdeploy/extracted directory, copying files..."
-        cp -rv /tmp/zipdeploy/extracted/* /home/site/wwwroot/
-        echo "Copy complete. Directory contents after copy:"
-        ls -la
+    # 디렉토리 내용 확인
+    echo "Contents of $LATEST_TMP_DIR:"
+    ls -la "$LATEST_TMP_DIR"
+    
+    # 파일 복사
+    echo "Copying files from $LATEST_TMP_DIR to /home/site/wwwroot..."
+    if [ -d "$LATEST_TMP_DIR/extracted" ]; then
+        cp -rv "$LATEST_TMP_DIR/extracted/"* /home/site/wwwroot/
     else
-        echo "/tmp/zipdeploy/extracted directory not found."
+        cp -rv "$LATEST_TMP_DIR/"* /home/site/wwwroot/
     fi
+    
+    echo "Copy complete. Directory contents after copy:"
+    ls -la /home/site/wwwroot
+else
+    echo "No deployment directory found in /tmp."
 fi
 
 # /home/site/wwwroot 디렉토리로 이동
 cd /home/site/wwwroot
+
+# startup.sh 파일이 있는지 확인하고 실행 권한 부여
+if [ -f "startup.sh" ]; then
+    echo "Found startup.sh, setting execute permissions..."
+    chmod +x startup.sh
+else
+    echo "startup.sh not found in /home/site/wwwroot."
+fi
 
 # Python 가상 환경 설정
 echo "Setting up Python environment..."
