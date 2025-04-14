@@ -85,7 +85,11 @@ jobs:
           name: python-app
 
       - name: Unzip artifact for deployment
-        run: unzip release.zip
+        run: |
+          mkdir -p /home/site/wwwroot
+          unzip -o release.zip -d /home/site/wwwroot
+          echo "Files extracted to /home/site/wwwroot. Directory contents:"
+          ls -la /home/site/wwwroot
 
       - name: Login to Azure
         uses: azure/login@v2
