@@ -88,7 +88,12 @@ jobs:
         run: |
           unzip -o release.zip
           echo "Files extracted to the current directory. Directory contents:"
+          echo "----------------------------------------"
           ls -la
+          echo "----------------------------------------"
+          echo "Directory structure:"
+          find . -type f -o -type d | sort
+          echo "----------------------------------------"
 
       - name: Login to Azure
         uses: azure/login@v2
