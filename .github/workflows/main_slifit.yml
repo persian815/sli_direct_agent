@@ -40,9 +40,16 @@ jobs:
           if [ -f output.tar.gz ]; then
             echo "🔍 Found output.tar.gz, extracting it..."
             tar -xvf output.tar.gz
+            echo "✅ Extraction complete."
           else
             echo "⚠️ output.tar.gz not found, skipping extraction."
           fi
+
+      # ✅ Compress files into output.tar.gz
+      - name: Compress files into output.tar.gz
+        run: |
+          tar -czf output.tar.gz -C /home/site/wwwroot .
+          echo "✅ Compression complete."
 
       # ✅ 배포용 zip 생성 (venv 제외)
       - name: Zip artifact for deployment
