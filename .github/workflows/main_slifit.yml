@@ -34,31 +34,30 @@ jobs:
 
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
 
-      # ✅ output.tar.gz 압축 해제 단계
-      - name: Extract output.tar.gz before zipping
+      # ✅ Create output.tar.gz
+      - name: Create output.tar.gz
+        run: |
+          echo "Creating output.tar.gz..."
+          tar -czf output.tar.gz --exclude=output.tar.gz --exclude=venv --exclude=.git .
+          echo "✅ output.tar.gz created successfully."
+          ls -la output.tar.gz
+
+      # ✅ Extract output.tar.gz to verify it works
+      - name: Extract output.tar.gz to verify
         run: |
           if [ -f output.tar.gz ]; then
-            echo "🔍 Found output.tar.gz, extracting it..."
-            tar -xvf output.tar.gz
-            echo "✅ Extraction complete."
+            echo "🔍 Found output.tar.gz, extracting it to verify..."
+            mkdir -p extracted
+            tar -xzf output.tar.gz -C extracted
+            echo "✅ Extraction complete. Contents of extracted directory:"
+            ls -la extracted
           else
-            echo "⚠️ output.tar.gz not found, skipping extraction."
+            echo "⚠️ output.tar.gz not found, something went wrong with creation."
           fi
-
-      # ✅ Compress files into output.tar.gz
-      - name: Compress files into output.tar.gz
-        run: |
-          mkdir -p temp_dir
-          cp -r $(ls -A | grep -v temp_dir) temp_dir/
-          cd temp_dir
-          tar -czf ../output.tar.gz .
-          cd ..
-          rm -rf temp_dir
-          echo "✅ Compression complete."
 
       # ✅ 배포용 zip 생성 (venv 제외)
       - name: Zip artifact for deployment
-        run: zip -r release.zip . -x "venv/*"
+        run: zip -r release.zip . -x "venv/*" "output.tar.gz"
 
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v4
@@ -66,19 +65,8 @@ jobs:
           name: python-app
           path: |
             release.zip
+            output.tar.gz
             !venv/
-
-      # ✅ Copy files from /tmp/zipdeploy/extracted to /home/site/wwwroot
-      - name: Copy files from /tmp/zipdeploy/extracted to /home/site/wwwroot
-        run: |
-          if [ -d "/tmp/zipdeploy/extracted" ]; then
-            echo "Found /tmp/zipdeploy/extracted directory, copying files to /home/site/wwwroot..."
-            cp -r /tmp/zipdeploy/extracted/* /home/site/wwwroot/
-            echo "Files copied successfully. Directory contents after copying:"
-            ls -la /home/site/wwwroot
-          else
-            echo "/tmp/zipdeploy/extracted directory not found."
-          fi
 
   deploy:
     runs-on: ubuntu-latest
