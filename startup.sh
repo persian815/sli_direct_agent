@@ -3,6 +3,14 @@
 # 로깅 활성화
 set -x
 
+# Azure 웹앱 이름과 리소스 그룹 설정
+WEBAPP_NAME="slifit"
+RESOURCE_GROUP="slihackathon-2025-team2-rg"
+
+# 서버 중지
+echo "Stopping Azure Web App..."
+az webapp stop --name $WEBAPP_NAME --resource-group $RESOURCE_GROUP
+
 # 현재 디렉토리 출력
 echo "Current directory: $(pwd)"
 echo "Directory contents: $(ls -la)"
@@ -83,6 +91,10 @@ pip list
 # Streamlit 버전 확인
 echo "Streamlit version:"
 streamlit --version
+
+# 서버 재시작
+echo "Restarting Azure Web App..."
+az webapp restart --name $WEBAPP_NAME --resource-group $RESOURCE_GROUP
 
 # 시작 명령 출력
 echo "Starting Streamlit application..."
