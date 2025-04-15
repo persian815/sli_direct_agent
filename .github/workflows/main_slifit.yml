@@ -37,27 +37,6 @@ jobs:
       # ✅ Create output.zip
       - name: Create output.zip
         run: |
-          # Create /home/site directory if it doesn't exist
-          mkdir -p /home/site
-          
-          # Create .venv directory in /home/site if it doesn't exist
-          if [ ! -d "/home/site/.venv" ]; then
-            echo "Creating .venv directory in /home/site..."
-            mkdir -p /home/site/.venv
-            echo "Successfully created .venv directory in /home/site"
-          else
-            echo ".venv directory already exists in /home/site"
-          fi
-          
-          # Copy .venv files to /home/site
-          if [ -d ".venv" ]; then
-            echo "Copying .venv files to /home/site..."
-            cp -r .venv/* /home/site/.venv/
-            echo "Successfully copied .venv files to /home/site/.venv"
-          else
-            echo "No .venv directory found. Skipping copy."
-          fi
-          
           # Create output.zip
           zip -r output.zip . -x "venv/*" "output.zip"
 
@@ -80,25 +59,7 @@ jobs:
           # Create .deployment file
           echo "[config]" > .deployment
           echo "SCM_DO_BUILD_DURING_DEPLOYMENT=true" >> .deployment
-          echo "command = bash deploy.sh" >> .deployment
-          
-          # Create deploy.sh file
-          echo "#!/bin/bash" > deploy.sh
-          echo "" >> deploy.sh
-          echo "# 디렉토리 생성" >> deploy.sh
-          echo "mkdir -p /home/site/wwwroot" >> deploy.sh
-          echo "" >> deploy.sh
-          echo "# 현재 디렉토리의 모든 파일을 /home/site/wwwroot로 복사" >> deploy.sh
-          echo "cp -r * /home/site/wwwroot/" >> deploy.sh
-          echo "" >> deploy.sh
-          echo "# 필요한 경우 파일 권한 설정" >> deploy.sh
-          echo "chmod -R 755 /home/site/wwwroot" >> deploy.sh
-          echo "" >> deploy.sh
-          echo "# 배포 완료 메시지 출력" >> deploy.sh
-          echo "echo \"Deployment completed successfully.\"" >> deploy.sh
-          
-          # Make deploy.sh executable
-          chmod +x deploy.sh
+          echo "command = bash startup.sh" >> .deployment
           
           # Create release.zip
           zip -r release.zip . -x "venv/*" "output.zip"
