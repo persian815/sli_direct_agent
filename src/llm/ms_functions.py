@@ -103,17 +103,18 @@ def extract_text_from_message(message):
         logger.error(f"메시지 텍스트 추출 중 오류 발생: {str(e)}")
         return str(message)
 
-def query_ms_agent(input_text, tab_id=None):
+def query_ms_agent(input_text, tab_id=None, system_prompt=None):
     """Azure AI Foundry (GPT4.0)를 사용하여 질문에 답변하는 함수"""
     if not ms_credentials_available:
         return "Azure AI Foundry 자격증명이 설정되지 않았습니다. ms_functions.py 파일에서 MS_CONNECTION_STRING 값을 설정하세요.", [], 0, 0, 0, 0
 
     # 시스템 프롬프트 추가
-    if tab_id and tab_id in st.session_state.tab_system_prompts:
-        system_prompt = st.session_state.tab_system_prompts[tab_id]
-    else:
-        # 기본 시스템 프롬프트 사용
-        system_prompt = "당신은 도움이 되는 AI 어시스턴트입니다. 사용자의 질문에 정확하고 유용한 정보를 제공하세요."
+    if system_prompt is None:
+        if tab_id and tab_id in st.session_state.tab_system_prompts:
+            system_prompt = st.session_state.tab_system_prompts[tab_id]
+        else:
+            # 기본 시스템 프롬프트 사용
+            system_prompt = "당신은 도움이 되는 AI 어시스턴트입니다. 사용자의 질문에 정확하고 유용한 정보를 제공하세요."
 
     # 서비스 및 페르소나 프롬프트 추가
     role = st.session_state.role
@@ -148,12 +149,20 @@ def query_ms_agent(input_text, tab_id=None):
             time.sleep(1)
             
             logger.debug("사용자 메시지 생성 시작")
-            # 사용자 메시지 생성
+
+            # 시스템 프롬프트 추가
+            input_texts = f"\n\n다음과 전문분야의 캐릭터로 같은 형태로 답변해줘 \n {service_prompt}\n {persona_prompt} \n 사용자 메시지 : {input_text}"
+
+            
+            logger.debug(f"$$$$$system_prompt : {system_prompt}")
+
+            logger.debug(f"$$$$$system_prompt : {input_texts}")
+
+            # 사용자 메시지 생성 - system_prompt 매개변수 제거
             user_message = project_client.agents.create_message(
                 thread_id=thread.id,
                 role="user",
-                content=input_text,
-                system_prompt=system_prompt  # 시스템 프롬프트 추가
+                content=input_texts
             )
             logger.debug(f"사용자 메시지 생성 완료: {user_message.id}")
             
