@@ -37,10 +37,29 @@ jobs:
       # ✅ Create output.zip
       - name: Create output.zip
         run: |
-          echo "Creating output.zip..."
-          zip -r output.zip . -x "venv/*" ".git/*" "output.zip"
-          echo "✅ output.zip created successfully."
-          ls -la output.zip
+          # Create /home/site directory if it doesn't exist
+          mkdir -p /home/site
+          
+          # Create .venv directory in /home/site if it doesn't exist
+          if [ ! -d "/home/site/.venv" ]; then
+            echo "Creating .venv directory in /home/site..."
+            mkdir -p /home/site/.venv
+            echo "Successfully created .venv directory in /home/site"
+          else
+            echo ".venv directory already exists in /home/site"
+          fi
+          
+          # Copy .venv files to /home/site
+          if [ -d ".venv" ]; then
+            echo "Copying .venv files to /home/site..."
+            cp -r .venv/* /home/site/.venv/
+            echo "Successfully copied .venv files to /home/site/.venv"
+          else
+            echo "No .venv directory found. Skipping copy."
+          fi
+          
+          # Create output.zip
+          zip -r output.zip . -x "venv/*" "output.zip"
 
       # ✅ Extract output.zip to verify it works
       - name: Extract output.zip to verify
