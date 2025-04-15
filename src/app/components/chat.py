@@ -34,6 +34,7 @@ def render_chat_interface(model):
             tabs = st.tabs(st.session_state.tabs)
     else:
         # 채팅 탭이 비활성화된 경우 단일 채팅 인터페이스 표시
+        st.markdown("### 현재 대화")
         tabs = [None]  # 더미 탭 생성
 
     # Chat messages container

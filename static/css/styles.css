@@ -20,6 +20,13 @@
     padding-top: 0 !important;
 }
 
+/* 채팅 탭 비활성화 시 스타일 */
+.chat-messages-container:not(:has(.stTabs)) {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #3D3D3D;
+}
+
 /* Form-based chat input styles */
 .chat-input-container form {
     width: 100%;
