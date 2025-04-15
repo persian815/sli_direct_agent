@@ -74,6 +74,10 @@ else
   log "Using Python 3.9: $($PYTHON_PATH --version 2>&1)"
 fi
 
+# Store the full path to the Python executable
+PYTHON_FULL_PATH=$(which $PYTHON_PATH)
+log "Full Python path: $PYTHON_FULL_PATH"
+
 # Create a simple virtual environment using a different approach
 log "Setting up Python environment..."
 
@@ -165,9 +169,9 @@ chmod +x "$VENV_DIR/bin/activate" || handle_error "Failed to make activate scrip
 
 # Create a simple pip script
 log "Creating pip script..."
-cat > "$VENV_DIR/bin/pip" << 'EOF'
+cat > "$VENV_DIR/bin/pip" << EOF
 #!/bin/bash
-python -m pip "$@"
+$PYTHON_FULL_PATH -m pip "\$@"
 EOF
 
 # Make the pip script executable
@@ -175,9 +179,9 @@ chmod +x "$VENV_DIR/bin/pip" || handle_error "Failed to make pip script executab
 
 # Create a simple python script
 log "Creating python script..."
-cat > "$VENV_DIR/bin/python" << 'EOF'
+cat > "$VENV_DIR/bin/python" << EOF
 #!/bin/bash
-exec "$PYTHON_PATH" "$@"
+exec $PYTHON_FULL_PATH "\$@"
 EOF
 
 # Make the python script executable
@@ -185,9 +189,9 @@ chmod +x "$VENV_DIR/bin/python" || handle_error "Failed to make python script ex
 
 # Create a simple python3 script
 log "Creating python3 script..."
-cat > "$VENV_DIR/bin/python3" << 'EOF'
+cat > "$VENV_DIR/bin/python3" << EOF
 #!/bin/bash
-exec "$PYTHON_PATH" "$@"
+exec $PYTHON_FULL_PATH "\$@"
 EOF
 
 # Make the python3 script executable
@@ -198,7 +202,7 @@ log "Verifying virtual environment structure..."
 if [ ! -f "$VENV_DIR/bin/activate" ]; then
   log "ERROR: Virtual environment activation script not found. Using system Python instead."
   # Use system Python directly
-  PYTHON_CMD="$PYTHON_PATH"
+  PYTHON_CMD="$PYTHON_FULL_PATH"
 else
   # Activate the virtual environment
   log "Activating virtual environment..."
