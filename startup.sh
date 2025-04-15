@@ -74,37 +74,35 @@ else
   log "Using Python 3.9: $($PYTHON_PATH --version 2>&1)"
 fi
 
-# Remove existing virtual environment if it's corrupted
-if [ -d "$VENV_DIR" ] && [ ! -f "$VENV_DIR/bin/activate" ]; then
-  log "Removing corrupted virtual environment..."
-  rm -rf "$VENV_DIR" || handle_error "Failed to remove corrupted virtual environment"
+# Always recreate the virtual environment to ensure it's properly set up
+log "Recreating virtual environment..."
+if [ -d "$VENV_DIR" ]; then
+  log "Removing existing virtual environment..."
+  rm -rf "$VENV_DIR" || handle_error "Failed to remove existing virtual environment"
 fi
 
-# Create virtual environment if it doesn't exist
-log "Checking virtual environment..."
-if [ ! -d "$VENV_DIR" ]; then
-  log "Creating new virtual environment in $VENV_DIR..."
-  $PYTHON_PATH -m venv "$VENV_DIR" || handle_error "Failed to create virtual environment"
-  log "Virtual environment created successfully."
-else
-  log "Virtual environment already exists at $VENV_DIR."
-fi
+log "Creating new virtual environment in $VENV_DIR..."
+$PYTHON_PATH -m venv "$VENV_DIR" || handle_error "Failed to create virtual environment"
+log "Virtual environment created successfully."
 
 # Activate virtual environment
 log "Activating virtual environment..."
-if [ -f "$VENV_DIR/bin/activate" ]; then
-  source "$VENV_DIR/bin/activate" || handle_error "Failed to activate virtual environment"
-  log "Virtual environment activated. Python path: $(which python)"
-else
-  log "ERROR: Virtual environment activation script not found. Recreating virtual environment..."
-  rm -rf "$VENV_DIR" || handle_error "Failed to remove corrupted virtual environment"
-  $PYTHON_PATH -m venv "$VENV_DIR" || handle_error "Failed to recreate virtual environment"
-  source "$VENV_DIR/bin/activate" || handle_error "Failed to activate recreated virtual environment"
-  log "Virtual environment recreated and activated. Python path: $(which python)"
+source "$VENV_DIR/bin/activate" || handle_error "Failed to activate virtual environment"
+
+# Verify Python path is from virtual environment
+PYTHON_PATH_AFTER_ACTIVATION=$(which python)
+log "Python path after activation: $PYTHON_PATH_AFTER_ACTIVATION"
+
+if [[ "$PYTHON_PATH_AFTER_ACTIVATION" != *"$VENV_DIR"* ]]; then
+  log "WARNING: Python path is not from virtual environment. Trying alternative activation method..."
+  export PATH="$VENV_DIR/bin:$PATH"
+  PYTHON_PATH_AFTER_ACTIVATION=$(which python)
+  log "Python path after PATH update: $PYTHON_PATH_AFTER_ACTIVATION"
 fi
 
 # Install required packages in virtual environment
 log "Installing required packages in virtual environment..."
+python -m ensurepip --upgrade || handle_error "Failed to ensure pip is installed"
 python -m pip install --upgrade pip || handle_error "Failed to upgrade pip"
 
 # Check if requirements.txt exists
