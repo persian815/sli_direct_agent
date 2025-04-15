@@ -47,8 +47,8 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          push: true
-          tags: directai.azurecr.io/persian815/sli_direct_agent:latest
+          push: true          
+          tags: directai.azurecr.io/persian815/sli_direct_agent:${{ github.sha }},directai.azurecr.io/persian815/sli_direct_agent:latest
 
   deploy:
     runs-on: ubuntu-latest
