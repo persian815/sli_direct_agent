@@ -47,27 +47,33 @@ else
   $PYTHON_PATH --version
 fi
 
-# Install pip if not available
-echo "Checking for pip..."
-if ! $PYTHON_PATH -m pip --version &> /dev/null; then
-  echo "Installing pip..."
-  $PYTHON_PATH -m ensurepip --upgrade
-  $PYTHON_PATH -m pip install --upgrade pip
+# Create virtual environment if it doesn't exist
+echo "Creating virtual environment..."
+if [ ! -d "venv" ]; then
+  echo "Creating new virtual environment..."
+  $PYTHON_PATH -m venv venv
+else
+  echo "Virtual environment already exists."
 fi
 
-# Install required packages
-echo "Installing required packages..."
-$PYTHON_PATH -m pip install -r requirements.txt || echo "Failed to install requirements, continuing..."
+# Activate virtual environment
+echo "Activating virtual environment..."
+source venv/bin/activate
+
+# Install required packages in virtual environment
+echo "Installing required packages in virtual environment..."
+pip install --upgrade pip
+pip install -r requirements.txt || echo "Failed to install requirements, continuing..."
 
 # Set PYTHONPATH
 export PYTHONPATH=/home/site/wwwroot:/home/site/wwwroot/src:/home/site/wwwroot
 
 # Start Streamlit application
 echo "Starting Streamlit application..."
-$PYTHON_PATH -m streamlit run src/app/main.py --server.port 8000 --server.enableCORS false --server.address 0.0.0.0 || echo "Failed to start Streamlit, trying alternative method..."
+python -m streamlit run src/app/main.py --server.port 8000 --server.enableCORS false --server.address 0.0.0.0 || echo "Failed to start Streamlit, trying alternative method..."
 
 # If Streamlit fails, try running the Python script directly
 if [ $? -ne 0 ]; then
   echo "Trying to run the Python script directly..."
-  $PYTHON_PATH src/app/main.py || echo "Failed to run the Python script directly."
+  python src/app/main.py || echo "Failed to run the Python script directly."
 fi 
