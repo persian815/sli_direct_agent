@@ -74,6 +74,12 @@ else
   log "Using Python 3.9: $($PYTHON_PATH --version 2>&1)"
 fi
 
+# Remove existing virtual environment if it's corrupted
+if [ -d "$VENV_DIR" ] && [ ! -f "$VENV_DIR/bin/activate" ]; then
+  log "Removing corrupted virtual environment..."
+  rm -rf "$VENV_DIR" || handle_error "Failed to remove corrupted virtual environment"
+fi
+
 # Create virtual environment if it doesn't exist
 log "Checking virtual environment..."
 if [ ! -d "$VENV_DIR" ]; then
@@ -86,20 +92,28 @@ fi
 
 # Activate virtual environment
 log "Activating virtual environment..."
-source "$VENV_DIR/bin/activate" || handle_error "Failed to activate virtual environment"
-log "Virtual environment activated. Python path: $(which python)"
+if [ -f "$VENV_DIR/bin/activate" ]; then
+  source "$VENV_DIR/bin/activate" || handle_error "Failed to activate virtual environment"
+  log "Virtual environment activated. Python path: $(which python)"
+else
+  log "ERROR: Virtual environment activation script not found. Recreating virtual environment..."
+  rm -rf "$VENV_DIR" || handle_error "Failed to remove corrupted virtual environment"
+  $PYTHON_PATH -m venv "$VENV_DIR" || handle_error "Failed to recreate virtual environment"
+  source "$VENV_DIR/bin/activate" || handle_error "Failed to activate recreated virtual environment"
+  log "Virtual environment recreated and activated. Python path: $(which python)"
+fi
 
 # Install required packages in virtual environment
 log "Installing required packages in virtual environment..."
-pip install --upgrade pip || handle_error "Failed to upgrade pip"
+python -m pip install --upgrade pip || handle_error "Failed to upgrade pip"
 
 # Check if requirements.txt exists
 if [ -f "requirements.txt" ]; then
   log "Installing packages from requirements.txt..."
-  pip install -r requirements.txt || handle_error "Failed to install requirements"
+  python -m pip install -r requirements.txt || handle_error "Failed to install requirements"
 else
   log "WARNING: requirements.txt not found. Installing basic packages..."
-  pip install streamlit pandas numpy || handle_error "Failed to install basic packages"
+  python -m pip install streamlit pandas numpy || handle_error "Failed to install basic packages"
 fi
 
 # Set PYTHONPATH
