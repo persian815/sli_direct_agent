@@ -117,5 +117,5 @@ jobs:
         with:
           app-name: "slifit"
           slot-name: "Production"
-          package: release.zip
+          package: .
           timeout-minutes: 20
