@@ -6,8 +6,8 @@ import logging
 from typing import Dict, List, Tuple, Any, Optional
 from azure.ai.projects import AIProjectClient
 from azure.identity import DefaultAzureCredential
-from data.services_roles import SERVICES
-from data.personas_roles import PERSONAS
+from src.data.services_roles import SERVICES
+from src.data.personas_roles import PERSONAS
 
 # 로깅 설정
 logging.basicConfig(level=logging.DEBUG)

@@ -6,8 +6,8 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from typing import Dict, List, Tuple, Any, Optional
 
-from data.personas_roles import PERSONAS
-from data.services_roles import SERVICES
+from src.data.personas_roles import PERSONAS
+from src.data.services_roles import SERVICES
 
 # 환경 설정
 IS_LOCAL = os.getenv('ENV', 'local') == 'local'

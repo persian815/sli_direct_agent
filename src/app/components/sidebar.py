@@ -1,6 +1,6 @@
 import streamlit as st
-from data.personas_roles import PERSONAS
-from data.services_roles import SERVICES
+from src.data.personas_roles import PERSONAS
+from src.data.services_roles import SERVICES
 from src.visualization.visualization import create_knowledge_distribution_graph
 from src.llm import aws_credentials_available, ms_credentials_available
 from src.llm.ms_functions import test_ms_agent_connection
@@ -15,6 +15,7 @@ def render_sidebar():
     if 'is_first_load' not in st.session_state:
         st.session_state.is_first_load = True
         st.session_state.model = "Azure AI Foundry (GPT-4.0)"
+        st.session_state.character = "미영 FC"
         
         # Azure AI Foundry 연결 테스트 및 로그 추가
         success, message = test_ms_agent_connection()

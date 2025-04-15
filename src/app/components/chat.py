@@ -1,5 +1,3 @@
-st.set_page_config(initial_sidebar_state="collapsed")
-
 import streamlit as st
 import time
 from src.llm import (
@@ -16,45 +14,80 @@ def render_chat_interface(model):
     # Main chat interface
     st.subheader(f"{model}")
 
-    # Tab management
-    col1, col2 = st.columns([6, 1])
-    with col1:
-        tabs = st.tabs(st.session_state.tabs)
-    with col2:
-        with st.sidebar:
-            if st.button("에이전트 추가", key="new_chat"):
-                tab_name = generate_tab_name(st.session_state.role, st.session_state.character)
-                st.session_state.current_tab = tab_name
-                st.session_state.tabs.append(tab_name)
-                st.rerun()
+    # 개발자 모드 영역 아래에 채팅 탭 활성화 토글 추가
+    with st.sidebar:
+        st.markdown("---")
+        st.markdown("### 채팅 탭 설정")
+        chat_tabs_enabled = st.toggle("채팅 탭 활성화", value=st.session_state.chat_tabs_enabled, key="chat_tabs_toggle")
+        st.session_state.chat_tabs_enabled = chat_tabs_enabled
+        
+        if st.button("에이전트 추가", key="new_chat"):
+            tab_name = generate_tab_name(st.session_state.role, st.session_state.character)
+            st.session_state.current_tab = tab_name
+            st.session_state.tabs.append(tab_name)
+            st.rerun()
+
+    # Tab management - 채팅 탭 활성화 상태에 따라 표시 여부 결정
+    if st.session_state.chat_tabs_enabled:
+        col1, col2 = st.columns([6, 1])
+        with col1:
+            tabs = st.tabs(st.session_state.tabs)
+    else:
+        # 채팅 탭이 비활성화된 경우 단일 채팅 인터페이스 표시
+        tabs = [None]  # 더미 탭 생성
 
     # Chat messages container
     st.markdown('<div class="chat-messages-container">', unsafe_allow_html=True)
     
-    for i, tab in enumerate(tabs):
-        with tab:
-            # Display chat messages from history
-            for message in st.session_state.messages:
-                with st.chat_message(message["role"]):
-                    st.markdown(message["content"])
-                    if message["role"] == "user" and "knowledge_level" in message:
-                        st.markdown(
-                            format_knowledge_level_html(
-                                message["knowledge_level"],
-                                get_knowledge_level_color(message["knowledge_level"])
-                            ),
-                            unsafe_allow_html=True
-                        )
-                    if "metrics" in message:
-                        st.markdown(
-                            format_metrics_html(
-                                message["metrics"]["request_time"],
-                                message["metrics"]["response_time"],
-                                message["metrics"]["input_tokens"],
-                                message["metrics"]["output_tokens"]
-                            ),
-                            unsafe_allow_html=True
-                        )
+    if st.session_state.chat_tabs_enabled:
+        # 탭이 활성화된 경우 기존 로직 사용
+        for i, tab in enumerate(tabs):
+            with tab:
+                # Display chat messages from history
+                for message in st.session_state.messages:
+                    with st.chat_message(message["role"]):
+                        st.markdown(message["content"])
+                        if message["role"] == "user" and "knowledge_level" in message:
+                            st.markdown(
+                                format_knowledge_level_html(
+                                    message["knowledge_level"],
+                                    get_knowledge_level_color(message["knowledge_level"])
+                                ),
+                                unsafe_allow_html=True
+                            )
+                        if "metrics" in message:
+                            st.markdown(
+                                format_metrics_html(
+                                    message["metrics"]["request_time"],
+                                    message["metrics"]["response_time"],
+                                    message["metrics"]["input_tokens"],
+                                    message["metrics"]["output_tokens"]
+                                ),
+                                unsafe_allow_html=True
+                            )
+    else:
+        # 탭이 비활성화된 경우 단일 채팅 인터페이스 표시
+        for message in st.session_state.messages:
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
+                if message["role"] == "user" and "knowledge_level" in message:
+                    st.markdown(
+                        format_knowledge_level_html(
+                            message["knowledge_level"],
+                            get_knowledge_level_color(message["knowledge_level"])
+                        ),
+                        unsafe_allow_html=True
+                    )
+                if "metrics" in message:
+                    st.markdown(
+                        format_metrics_html(
+                            message["metrics"]["request_time"],
+                            message["metrics"]["response_time"],
+                            message["metrics"]["input_tokens"],
+                            message["metrics"]["output_tokens"]
+                        ),
+                        unsafe_allow_html=True
+                    )
     
     st.markdown('</div>', unsafe_allow_html=True)
 

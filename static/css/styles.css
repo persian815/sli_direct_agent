@@ -14,6 +14,12 @@
     box-sizing: border-box;
 }
 
+/* 채팅 화면 상단 여백 조정 */
+.stVerticalBlock.st-emotion-cache-o3een2.eu6p4el3 {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
 /* Form-based chat input styles */
 .chat-input-container form {
     width: 100%;
@@ -74,11 +80,14 @@
 /* Add bottom margin to the main content area to prevent overlap with the fixed input */
 .main .block-container {
     padding-bottom: 120px !important;
+    padding-top: 1rem !important;
 }
 
 /* Chat messages container */
 .chat-messages-container {
     margin-bottom: 120px;
+    margin-top: 0;
+    padding-top: 0;
     overflow-y: auto;
     max-height: calc(100vh - 250px);
 }

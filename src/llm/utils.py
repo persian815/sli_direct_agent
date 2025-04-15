@@ -27,7 +27,9 @@ def initialize_session_state():
     if "professional_role" not in st.session_state:
         st.session_state.professional_role = "보험 전문가"
     if "character" not in st.session_state:
-        st.session_state.character = "은별 나인"
+        st.session_state.character = "미영 FC"
+    if "chat_tabs_enabled" not in st.session_state:
+        st.session_state.chat_tabs_enabled = True
 
 def evaluate_user_knowledge_level(user_input):
     """
