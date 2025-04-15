@@ -76,9 +76,21 @@ fi
 
 # Create a simple virtual environment using a different approach
 log "Setting up Python environment..."
-mkdir -p "$VENV_DIR/lib" || handle_error "Failed to create virtual environment directory"
+
+# Remove existing virtual environment if it exists
+if [ -d "$VENV_DIR" ]; then
+  log "Removing existing virtual environment..."
+  rm -rf "$VENV_DIR" || handle_error "Failed to remove existing virtual environment"
+fi
+
+# Create virtual environment directories
+log "Creating virtual environment directories..."
+mkdir -p "$VENV_DIR/bin" || handle_error "Failed to create bin directory"
+mkdir -p "$VENV_DIR/lib" || handle_error "Failed to create lib directory"
+mkdir -p "$VENV_DIR/include" || handle_error "Failed to create include directory"
 
 # Create a simple activate script
+log "Creating activate script..."
 cat > "$VENV_DIR/bin/activate" << 'EOF'
 # This file must be used with "source bin/activate" *from bash*
 # you cannot run it directly
@@ -152,7 +164,7 @@ EOF
 chmod +x "$VENV_DIR/bin/activate" || handle_error "Failed to make activate script executable"
 
 # Create a simple pip script
-mkdir -p "$VENV_DIR/bin" || handle_error "Failed to create bin directory"
+log "Creating pip script..."
 cat > "$VENV_DIR/bin/pip" << 'EOF'
 #!/bin/bash
 python -m pip "$@"
@@ -162,6 +174,7 @@ EOF
 chmod +x "$VENV_DIR/bin/pip" || handle_error "Failed to make pip script executable"
 
 # Create a simple python script
+log "Creating python script..."
 cat > "$VENV_DIR/bin/python" << 'EOF'
 #!/bin/bash
 exec "$PYTHON_PATH" "$@"
@@ -170,22 +183,41 @@ EOF
 # Make the python script executable
 chmod +x "$VENV_DIR/bin/python" || handle_error "Failed to make python script executable"
 
-# Activate the virtual environment
-log "Activating virtual environment..."
-source "$VENV_DIR/bin/activate" || handle_error "Failed to activate virtual environment"
-log "Virtual environment activated. Python path: $(which python)"
+# Create a simple python3 script
+log "Creating python3 script..."
+cat > "$VENV_DIR/bin/python3" << 'EOF'
+#!/bin/bash
+exec "$PYTHON_PATH" "$@"
+EOF
+
+# Make the python3 script executable
+chmod +x "$VENV_DIR/bin/python3" || handle_error "Failed to make python3 script executable"
+
+# Verify virtual environment structure
+log "Verifying virtual environment structure..."
+if [ ! -f "$VENV_DIR/bin/activate" ]; then
+  log "ERROR: Virtual environment activation script not found. Using system Python instead."
+  # Use system Python directly
+  PYTHON_CMD="$PYTHON_PATH"
+else
+  # Activate the virtual environment
+  log "Activating virtual environment..."
+  source "$VENV_DIR/bin/activate" || handle_error "Failed to activate virtual environment"
+  log "Virtual environment activated. Python path: $(which python)"
+  PYTHON_CMD="python"
+fi
 
 # Install required packages
 log "Installing required packages..."
-python -m pip install --upgrade pip || handle_error "Failed to upgrade pip"
+$PYTHON_CMD -m pip install --upgrade pip || handle_error "Failed to upgrade pip"
 
 # Check if requirements.txt exists
 if [ -f "requirements.txt" ]; then
   log "Installing packages from requirements.txt..."
-  python -m pip install -r requirements.txt || handle_error "Failed to install requirements"
+  $PYTHON_CMD -m pip install -r requirements.txt || handle_error "Failed to install requirements"
 else
   log "WARNING: requirements.txt not found. Installing basic packages..."
-  python -m pip install streamlit pandas numpy || handle_error "Failed to install basic packages"
+  $PYTHON_CMD -m pip install streamlit pandas numpy || handle_error "Failed to install basic packages"
 fi
 
 # Set PYTHONPATH
@@ -210,12 +242,12 @@ fi
 
 # Start Streamlit application
 log "Starting Streamlit application from $ENTRY_POINT..."
-python -m streamlit run "$ENTRY_POINT" --server.port 8000 --server.enableCORS false --server.address 0.0.0.0 || handle_error "Failed to start Streamlit"
+$PYTHON_CMD -m streamlit run "$ENTRY_POINT" --server.port 8000 --server.enableCORS false --server.address 0.0.0.0 || handle_error "Failed to start Streamlit"
 
 # If Streamlit fails, try running the Python script directly
 if [ $? -ne 0 ]; then
   log "Streamlit failed, trying to run the Python script directly..."
-  python "$ENTRY_POINT" || handle_error "Failed to run the Python script directly"
+  $PYTHON_CMD "$ENTRY_POINT" || handle_error "Failed to run the Python script directly"
 fi
 
 log "Application startup process completed." 
