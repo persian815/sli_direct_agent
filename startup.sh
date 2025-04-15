@@ -12,32 +12,12 @@ echo "Current directory: $(pwd)"
 ls -la
 echo "Directory contents: total $(ls -la | wc -l)"
 
-# Search for extracted deployment directory
-echo "Searching for extracted deployment directory..."
-head -n 1
-find /tmp -maxdepth 1 -type d -name '8dd7b4*' -o -name zipdeploy
-sort -r
-LATEST_TMP_DIR=$(find /tmp -maxdepth 1 -type d -name '8dd7b4*' -o -name zipdeploy | sort -r | head -n 1)
+# Create wwwroot directory if it doesn't exist
+mkdir -p /home/site/wwwroot
 
-if [ -n "$LATEST_TMP_DIR" ]; then
-  echo "Found deployment directory: $LATEST_TMP_DIR"
-  echo "Contents of $LATEST_TMP_DIR:"
-  ls -la "$LATEST_TMP_DIR"
-  
-  echo "Copying files from $LATEST_TMP_DIR to /home/site/wwwroot..."
-  
-  # Check if extracted directory exists
-  if [ -d "$LATEST_TMP_DIR/extracted" ]; then
-    # Copy all files from extracted directory to wwwroot
-    cp -rv "$LATEST_TMP_DIR/extracted/"* /home/site/wwwroot/
-    echo "Copy complete. Directory contents after copy:"
-    ls -la /home/site/wwwroot
-  else
-    echo "No extracted directory found in $LATEST_TMP_DIR"
-  fi
-else
-  echo "No deployment directory found"
-fi
+# Copy files from current directory to wwwroot
+echo "Copying files to /home/site/wwwroot..."
+cp -rv * /home/site/wwwroot/ 2>/dev/null || echo "Some files could not be copied, continuing..."
 
 # Change to wwwroot directory
 cd /home/site/wwwroot
@@ -48,30 +28,35 @@ if [ -f "startup.sh" ]; then
   chmod +x startup.sh
 fi
 
-# Use system Python 3.9 instead of creating a virtual environment
+# Use system Python 3.9
 echo "Using system Python 3.9..."
 PYTHON_PATH="/usr/bin/python3.9"
 
 # Check Python version
 echo "Python version:"
-$PYTHON_PATH --version
+$PYTHON_PATH --version || echo "Python 3.9 not found, trying default Python..."
 
-# Install required packages using system Python
+# If Python 3.9 is not available, use default Python
+if ! command -v $PYTHON_PATH &> /dev/null; then
+  PYTHON_PATH="python"
+  echo "Using default Python:"
+  $PYTHON_PATH --version
+fi
+
+# Install required packages
 echo "Installing required packages..."
-$PYTHON_PATH -m pip install --upgrade pip
-$PYTHON_PATH -m pip install -r requirements.txt
+$PYTHON_PATH -m pip install --upgrade pip || echo "Failed to upgrade pip, continuing..."
+$PYTHON_PATH -m pip install -r requirements.txt || echo "Failed to install requirements, continuing..."
 
 # Set PYTHONPATH
 export PYTHONPATH=/home/site/wwwroot:/home/site/wwwroot/src:/home/site/wwwroot
 
-# Check installed packages
-echo "Installed packages:"
-$PYTHON_PATH -m pip list
-
-# Check Streamlit version
-echo "Streamlit version:"
-$PYTHON_PATH -m streamlit --version
-
 # Start Streamlit application
 echo "Starting Streamlit application..."
-$PYTHON_PATH -m streamlit run src/app/main.py --server.port 8000 --server.enableCORS false --server.address 0.0.0.0 
+$PYTHON_PATH -m streamlit run src/app/main.py --server.port 8000 --server.enableCORS false --server.address 0.0.0.0 || echo "Failed to start Streamlit, trying alternative method..."
+
+# If Streamlit fails, try running the Python script directly
+if [ $? -ne 0 ]; then
+  echo "Trying to run the Python script directly..."
+  $PYTHON_PATH src/app/main.py || echo "Failed to run the Python script directly."
+fi 
