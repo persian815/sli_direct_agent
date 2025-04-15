@@ -25,7 +25,7 @@ def initialize_session_state():
     if "current_tab_index" not in st.session_state:
         st.session_state.current_tab_index = 0
     if "professional_role" not in st.session_state:
-        st.session_state.professional_role = "보험 설계사"
+        st.session_state.professional_role = "보험 전문가"
     if "character" not in st.session_state:
         st.session_state.character = "은별 나인"
 

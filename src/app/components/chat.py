@@ -1,3 +1,5 @@
+st.set_page_config(initial_sidebar_state="collapsed")
+
 import streamlit as st
 import time
 from src.llm import (
@@ -19,11 +21,12 @@ def render_chat_interface(model):
     with col1:
         tabs = st.tabs(st.session_state.tabs)
     with col2:
-        if st.button("에이전트 추가", key="new_chat"):
-            tab_name = generate_tab_name(st.session_state.role, st.session_state.character)
-            st.session_state.current_tab = tab_name
-            st.session_state.tabs.append(tab_name)
-            st.rerun()
+        with st.sidebar:
+            if st.button("에이전트 추가", key="new_chat"):
+                tab_name = generate_tab_name(st.session_state.role, st.session_state.character)
+                st.session_state.current_tab = tab_name
+                st.session_state.tabs.append(tab_name)
+                st.rerun()
 
     # Chat messages container
     st.markdown('<div class="chat-messages-container">', unsafe_allow_html=True)
@@ -93,7 +96,7 @@ def render_chat_interface(model):
                         "input_tokens": input_tokens,
                         "output_tokens": output_tokens
                     }
-                elif model == "Azure AI Foundry (GPT-3.5)":
+                elif model == "Azure AI Foundry (GPT-4.0)":
                     response, trace_steps, elapsed_time, input_tokens, output_tokens, start_time = query_ms_agent(prompt)
                     # metrics 딕셔너리 생성
                     metrics = {

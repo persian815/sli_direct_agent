@@ -7,7 +7,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from typing import Dict, List, Tuple, Any, Optional
 
 from data.personas_roles import PERSONAS
-from data.professional_roles import PROFESSIONAL_ROLES
+from data.services_roles import SERVICES
 
 # 환경 설정
 IS_LOCAL = os.getenv('ENV', 'local') == 'local'
@@ -40,7 +40,7 @@ def query_ollama_optimized(input_text, tab_id=None):
         system_prompt = st.session_state.tab_system_prompts[tab_id]
     else:
         # 기본 시스템 프롬프트 대신 현재 선택된 전문 분야와 캐릭터의 프롬프트 사용
-        professional_prompt = PROFESSIONAL_ROLES[st.session_state.professional_role]
+        professional_prompt = SERVICES[st.session_state.professional_role]
         character_prompt = PERSONAS[st.session_state.character]["시스템프롬프트"]
         system_prompt = f"{professional_prompt}\n\n{character_prompt}"
     

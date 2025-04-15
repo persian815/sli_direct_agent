@@ -7,7 +7,7 @@ def main():
     initialize_app()
 
     # Title
-    st.title("SLI 보장분석 Agent")
+    st.title("다이렉트 ai FIT")
 
     # Render sidebar and get selected options
     model, role, character, _ = render_sidebar()

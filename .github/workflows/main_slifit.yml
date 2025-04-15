@@ -2,125 +2,66 @@
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 # More info on Python, GitHub Actions, and Azure App Service: https://aka.ms/python-webapps-actions
 
-name: Build and deploy Python app to Azure Web App - slifit
+name: Build and Deploy to Azure Web App
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   workflow_dispatch:
 
+env:
+  AZURE_WEBAPP_NAME: directai
+  AZURE_WEBAPP_PUBLISH_PROFILE: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+  CONTAINER_REGISTRY: directai
+  DOCKER_IMAGE_NAME: directai
+  DOCKER_IMAGE_TAG: latest
+  RESOURCE_GROUP: slihackathon-2025-team2-rg
+  LOCATION: Korea South
+
+permissions:
+  contents: 'read'
+  packages: 'write'
+
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read #This is required for actions/checkout
+    timeout-minutes: 30
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Set up Python version
-        uses: actions/setup-python@v5
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Azure Container Registry
+        uses: docker/login-action@v3
         with:
-          python-version: "3.9"
+          registry: ${{ env.CONTAINER_REGISTRY }}.azurecr.io
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
 
-      - name: Create and start virtual environment
-        run: |
-          python -m venv venv
-          source venv/bin/activate
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
-
-      # ✅ Create output.zip
-      - name: Create output.zip
-        run: |
-          # Create output.zip
-          zip -r output.zip . -x "venv/*" "output.zip"
-
-      # ✅ Extract output.zip to verify it works
-      - name: Extract output.zip to verify
-        run: |
-          if [ -f output.zip ]; then
-            echo "🔍 Found output.zip, extracting it to verify..."
-            mkdir -p extracted
-            unzip -q output.zip -d extracted
-            echo "✅ Extraction complete. Contents of extracted directory:"
-            ls -la extracted
-          else
-            echo "⚠️ output.zip not found, something went wrong with creation."
-          fi
-
-      # ✅ 배포용 zip 생성 (venv 제외)
-      - name: Zip artifact for deployment
-        run: |
-          # Create .deployment file
-          echo "[config]" > .deployment
-          echo "SCM_DO_BUILD_DURING_DEPLOYMENT=true" >> .deployment
-          echo "command = bash startup.sh" >> .deployment
-          
-          # Create release.zip
-          zip -r release.zip . -x "venv/*" "output.zip"
-
-      - name: Upload artifact for deployment jobs
-        uses: actions/upload-artifact@v4
+      - name: Build and push container image
+        uses: docker/build-push-action@v5
         with:
-          name: python-app
-          path: |
-            release.zip
-            output.zip
-            !venv/
+          context: .
+          push: true
+          tags: ${{ env.CONTAINER_REGISTRY }}.azurecr.io/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }}
 
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-    environment:
-      name: "Production"
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
-    permissions:
-      id-token: write #This is required for requesting the JWT
-      contents: read #This is required for actions/checkout
-    timeout-minutes: 20
-
-    steps:
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v4
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v2
         with:
-          name: python-app
-
-      - name: Unzip artifact for deployment
-        run: |
-          unzip -o release.zip
-          echo "Files extracted to the current directory. Directory contents:"
-          echo "----------------------------------------"
-          ls -la
-          echo "----------------------------------------"
-          echo "Directory structure:"
-          find . -type f -o -type d | sort
-          echo "----------------------------------------"
-
-      - name: Login to Azure
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_F76EDFB67B354031AD4CC7394B32C20E }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_DBB0083086864CB49B41404B265F2EDC }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_10EEEC58C0A144A6AF267A34FF099211 }}
-          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          images: ${{ env.CONTAINER_REGISTRY }}.azurecr.io/${{ env.DOCKER_IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }}
 
       - name: Check deployment status
         run: |
-          DEPLOYMENT_STATUS=$(az webapp deployment list-publishing-profiles --name slifit --resource-group slihackathon-2025-team2-rg --query "[?name=='${{ github.sha }}'].status" -o tsv)
-          if [ "$DEPLOYMENT_STATUS" = "InProgress" ]; then
-            echo "Deployment is still in progress. Waiting..."
-            sleep 60
-          fi
+          echo "Checking deployment status..."
+          sleep 30
+          curl -s "https://${{ env.AZURE_WEBAPP_NAME }}-bahga6fuazf8adax.koreasouth-01.azurewebsites.net" || echo "Application might be starting up..."
 
-      - name: "Deploy to Azure Web App"
-        uses: azure/webapps-deploy@v3
-        id: deploy-to-webapp
-        with:
-          app-name: "slifit"
-          slot-name: "Production"
-          package: .
+      - name: Output deployment URL
+        run: |
+          echo "Deployment completed!"
+          echo "Application URL: https://${{ env.AZURE_WEBAPP_NAME }}-bahga6fuazf8adax.koreasouth-01.azurewebsites.net"

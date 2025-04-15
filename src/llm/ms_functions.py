@@ -6,6 +6,8 @@ import logging
 from typing import Dict, List, Tuple, Any, Optional
 from azure.ai.projects import AIProjectClient
 from azure.identity import DefaultAzureCredential
+from data.services_roles import SERVICES
+from data.personas_roles import PERSONAS
 
 # 로깅 설정
 logging.basicConfig(level=logging.DEBUG)
@@ -113,6 +115,13 @@ def query_ms_agent(input_text, tab_id=None):
         # 기본 시스템 프롬프트 사용
         system_prompt = "당신은 도움이 되는 AI 어시스턴트입니다. 사용자의 질문에 정확하고 유용한 정보를 제공하세요."
 
+    # 서비스 및 페르소나 프롬프트 추가
+    role = st.session_state.role
+    character = st.session_state.character
+    service_prompt = SERVICES.get(role, {}).get('prompt', '')
+    persona_prompt = PERSONAS.get(character, {}).get('prompt', '')
+    system_prompt += f"\n\n서비스 프롬프트: {service_prompt}\n페르소나 프롬프트: {persona_prompt}"
+
     # 시작 시간 기록
     start_time = time.time()
 
@@ -143,7 +152,8 @@ def query_ms_agent(input_text, tab_id=None):
             user_message = project_client.agents.create_message(
                 thread_id=thread.id,
                 role="user",
-                content=input_text
+                content=input_text,
+                system_prompt=system_prompt  # 시스템 프롬프트 추가
             )
             logger.debug(f"사용자 메시지 생성 완료: {user_message.id}")
             

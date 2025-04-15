@@ -1,12 +1,28 @@
 import streamlit as st
 from data.personas_roles import PERSONAS
-from data.professional_roles import PROFESSIONAL_ROLES
+from data.services_roles import SERVICES
 from src.visualization.visualization import create_knowledge_distribution_graph
 from src.llm import aws_credentials_available, ms_credentials_available
 from src.llm.ms_functions import test_ms_agent_connection
 
 def render_sidebar():
     """사이드바 UI를 렌더링하는 함수"""
+    # 세션 상태 초기화
+    if 'function_logs' not in st.session_state:
+        st.session_state.function_logs = []
+    
+    # 최초 로드 시 Azure AI Foundry 선택 및 대화 초기화
+    if 'is_first_load' not in st.session_state:
+        st.session_state.is_first_load = True
+        st.session_state.model = "Azure AI Foundry (GPT-4.0)"
+        
+        # Azure AI Foundry 연결 테스트 및 로그 추가
+        success, message = test_ms_agent_connection()
+        if success:
+            st.session_state.function_logs.append(f"Azure AI Foundry 연결 테스트 성공: {message}")
+        else:
+            st.session_state.function_logs.append(f"Azure AI Foundry 연결 테스트 실패: {message}")
+    
     with st.sidebar:
         st.header("설정")
         
@@ -14,36 +30,35 @@ def render_sidebar():
         st.subheader("모델 선택")
         
         # 사용 가능한 모델 목록 생성
-        available_models = ["Ollama (라마 3.3)"]
+        available_models = ["Azure AI Foundry (GPT-4.0)"]  # Azure AI Foundry를 기본으로 추가
+        
+        # Ollama 모델 추가
+        available_models.append("Ollama (라마 3.3)")
         
         # AWS 자격증명이 있는 경우 AWS 모델 추가
         if aws_credentials_available:
             available_models.append("AWS Bedrock (클로드 3.5)")
         
-        # MS Azure 자격증명이 있는 경우 MS 모델 추가
-        if ms_credentials_available:
-            available_models.append("Azure AI Foundry (GPT-3.5)")
-        
         model = st.radio(
             "LLM 모델 선택",
             available_models,
-            key="model"
+            key="model",
+            index=0  # Azure AI Foundry를 기본값으로 설정
         )
         
-        # Azure AI Foundry 연결 테스트
-        if model == "Azure AI Foundry (GPT-3.5)":
-            if st.button("Azure AI Foundry 연결 테스트"):
-                success, message = test_ms_agent_connection()
-                if success:
-                    st.success(message)
-                else:
-                    st.error(message)
+        # Azure AI Foundry 연결 테스트 로그 추가 (모델 변경 시)
+        if model == "Azure AI Foundry (GPT-4.0)" and not st.session_state.is_first_load:
+            success, message = test_ms_agent_connection()
+            if success:
+                st.session_state.function_logs.append(f"Azure AI Foundry 연결 테스트 성공: {message}")
+            else:
+                st.session_state.function_logs.append(f"Azure AI Foundry 연결 테스트 실패: {message}")
         
-        # Professional role selection
-        st.subheader("전문 역할")
+        # Service selection
+        st.subheader("서비스")
         role = st.selectbox(
-            "전문 역할 선택",
-            list(PROFESSIONAL_ROLES.keys()),
+            "서비스 선택",
+            list(SERVICES.keys()),
             key="role"
         )
         
@@ -51,6 +66,8 @@ def render_sidebar():
         st.subheader("캐릭터")
         def update_persona_info():
             st.session_state.persona_info = PERSONAS.get(st.session_state.character, {})
+            # 함수 로그 추가
+            st.session_state.function_logs.append(f"페르소나 정보 업데이트: {st.session_state.character}")
         character = st.selectbox(
             "캐릭터 선택",
             list(PERSONAS.keys()),
@@ -84,10 +101,23 @@ def render_sidebar():
         
         # Developer mode
         st.subheader("개발자 모드")
-        st.session_state.developer_mode = st.toggle("개발자 모드 활성화", value=False)
-        if st.session_state.developer_mode:
+        if 'developer_mode' not in st.session_state:
+            st.session_state.developer_mode = False
+            
+        developer_mode = st.toggle("개발자 모드 활성화", value=st.session_state.developer_mode)
+        st.session_state.developer_mode = developer_mode
+        
+        if developer_mode:
             st.markdown("### 함수 로그")
-            for log in st.session_state.function_logs:
-                st.code(log, language="python")
+            if not st.session_state.function_logs:
+                st.info("아직 함수 로그가 없습니다. 앱을 사용하면 로그가 여기에 표시됩니다.")
+            else:
+                for log in st.session_state.function_logs:
+                    st.code(log, language="python")
+                
+                # 로그 초기화 버튼
+                if st.button("로그 초기화"):
+                    st.session_state.function_logs = []
+                    st.rerun()
     
     return model, role, character, persona_info 
