@@ -28,24 +28,35 @@ if [ -f "startup.sh" ]; then
   chmod +x startup.sh
 fi
 
-# Use system Python 3.9
-echo "Using system Python 3.9..."
-PYTHON_PATH="/usr/bin/python3.9"
-
-# Check Python version
-echo "Python version:"
-$PYTHON_PATH --version || echo "Python 3.9 not found, trying default Python..."
-
-# If Python 3.9 is not available, use default Python
-if ! command -v $PYTHON_PATH &> /dev/null; then
+# Check for available Python versions
+echo "Checking for available Python versions..."
+if command -v python3 &> /dev/null; then
+  PYTHON_PATH="python3"
+  echo "Using Python 3:"
+  $PYTHON_PATH --version
+elif command -v python &> /dev/null; then
   PYTHON_PATH="python"
   echo "Using default Python:"
   $PYTHON_PATH --version
+else
+  echo "No Python found. Installing Python 3.9..."
+  apt-get update
+  apt-get install -y python3.9 python3.9-venv
+  PYTHON_PATH="python3.9"
+  echo "Using Python 3.9:"
+  $PYTHON_PATH --version
+fi
+
+# Install pip if not available
+echo "Checking for pip..."
+if ! $PYTHON_PATH -m pip --version &> /dev/null; then
+  echo "Installing pip..."
+  $PYTHON_PATH -m ensurepip --upgrade
+  $PYTHON_PATH -m pip install --upgrade pip
 fi
 
 # Install required packages
 echo "Installing required packages..."
-$PYTHON_PATH -m pip install --upgrade pip || echo "Failed to upgrade pip, continuing..."
 $PYTHON_PATH -m pip install -r requirements.txt || echo "Failed to install requirements, continuing..."
 
 # Set PYTHONPATH
