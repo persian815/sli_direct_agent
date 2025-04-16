@@ -89,3 +89,25 @@ jobs:
             
             # Restart the web app
             az webapp restart --name directai --resource-group slihackathon-2025-team2-rg
+
+      - name: Assign permissions to managed identity
+        uses: azure/CLI@v1
+        with:
+          inlineScript: |
+            az login --service-principal -u ${{ secrets.AZURE_CLIENT_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }}
+            az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+            
+            # Get the managed identity of the web app
+            MANAGED_IDENTITY=$(az webapp identity show --name directai --resource-group slihackathon-2025-team2-rg --query principalId --output tsv)
+            
+            # Get the Azure AI Foundry workspace resource ID
+            WORKSPACE_ID=$(az ml workspace show --name team2_seongryongle-8914 --resource-group slihackathon-2025-team2-rg --query id --output tsv)
+            
+            # Assign the "Azure AI Foundry User" role to the managed identity
+            az role assignment create --assignee $MANAGED_IDENTITY --role "Azure AI Foundry User" --scope $WORKSPACE_ID
+            
+            # Assign the "Reader" role to the managed identity for the workspace
+            az role assignment create --assignee $MANAGED_IDENTITY --role "Reader" --scope $WORKSPACE_ID
+            
+            # Restart the web app to apply the changes
+            az webapp restart --name directai --resource-group slihackathon-2025-team2-rg
