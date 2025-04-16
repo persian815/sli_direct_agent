@@ -151,12 +151,9 @@ def query_ms_agent(input_text, tab_id=None, system_prompt=None):
             logger.debug("사용자 메시지 생성 시작")
 
             # 시스템 프롬프트 추가
-            input_texts = f"\n\n다음과 전문분야의 캐릭터로 같은 형태로 답변해줘 \n {service_prompt}\n {persona_prompt} \n 사용자 메시지 : {input_text}"
+            input_texts = f"\n\n다음과 같이 전문분야의 캐릭터로 답변해줘 \n {service_prompt}\n {persona_prompt} \n 사용자 메시지 : {input_text}"
 
-            
-            logger.debug(f"$$$$$system_prompt : {system_prompt}")
-
-            logger.debug(f"$$$$$system_prompt : {input_texts}")
+            logger.debug(f"$$$$$input_texts : {input_texts}")
 
             # 사용자 메시지 생성 - system_prompt 매개변수 제거
             user_message = project_client.agents.create_message(
