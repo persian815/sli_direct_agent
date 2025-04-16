@@ -70,3 +70,22 @@ jobs:
           app-name: directai
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           images: directai.azurecr.io/persian815/sli_direct_agent:latest
+
+      - name: Set Azure AI Foundry API credentials
+        uses: azure/CLI@v1
+        with:
+          inlineScript: |
+            az login --service-principal -u ${{ secrets.AZURE_CLIENT_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }}
+            az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+            
+            # Get Azure AI Foundry endpoint
+            AI_FOUNDRY_ENDPOINT=$(az ml workspace show --name team2_seongryongle-8914 --resource-group slihackathon-2025-team2-rg --query "endpoint" --output tsv)
+            
+            # Get Azure AI Foundry API key
+            AI_FOUNDRY_API_KEY=$(az ml workspace keys list --name team2_seongryongle-8914 --resource-group slihackathon-2025-team2-rg --query "keys[0].key" --output tsv)
+            
+            # Set application settings
+            az webapp config appsettings set --name directai --resource-group slihackathon-2025-team2-rg --settings AZURE_AI_FOUNDRY_ENDPOINT=$AI_FOUNDRY_ENDPOINT AZURE_AI_FOUNDRY_API_KEY=$AI_FOUNDRY_API_KEY
+            
+            # Restart the web app
+            az webapp restart --name directai --resource-group slihackathon-2025-team2-rg
