@@ -81,6 +81,9 @@ jobs:
               --password "${{ secrets.AZURE_CLIENT_SECRET }}" \
               --tenant "${{ secrets.AZURE_TENANT_ID }}"
             
+            # Set subscription explicitly
+            az account set --subscription "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+            
             # Get Azure AI Foundry endpoint
             AI_FOUNDRY_ENDPOINT=$(az ml workspace show --name team2_seongryongle-8914 --resource-group slihackathon-2025-team2-rg --query "endpoint" --output tsv)
             
