@@ -4,10 +4,10 @@ from src.app.components import render_sidebar, render_chat_interface
 
 # Page config - 반드시 첫 번째 Streamlit 명령이어야 함
 st.set_page_config(
-    page_title="다이렉트 ai FIT",
+    page_title="SLI Direct Agent",
     page_icon="🤖",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
 def main():

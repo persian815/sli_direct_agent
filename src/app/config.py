@@ -30,10 +30,10 @@ def initialize_app():
     if 'role' not in st.session_state:
         st.session_state.role = "보험 전문가"
     if 'character' not in st.session_state:
-        st.session_state.character = "미영 FC"
+        st.session_state.character = "친절한 금자씨"
     if 'persona_info' not in st.session_state:
         st.session_state.persona_info = {
-            "description": "안녕하세요! 저는 삼성생명 다이렉트 FIT AI 서비스의 미영 FC입니다. 고객님의 상황과 니즈에 맞는 최적의 보험 상품을 추천해드리겠습니다."
+            "description": "안녕하세요! 저는 삼성생명 다이렉트 FIT AI 서비스의 친절한 금자씨입니다. 고객님의 상황과 니즈에 맞는 최적의 보험 상품을 추천해드리겠습니다."
         }
     
     # Initialize tabs in session state
