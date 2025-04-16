@@ -26,13 +26,22 @@ MS_CONNECTION_STRING = "eastus2.api.azureml.ms;2326c76a-5eab-44b6-808b-1978f2ffe
 
 # Azure AI Foundry 클라이언트 초기화
 try:
-    # 관리 ID를 사용하여 인증
-    if IS_LOCAL:
-        # 로컬 환경에서는 DefaultAzureCredential 사용
-        credential = DefaultAzureCredential()
+    # API 키를 사용하여 인증
+    if os.getenv('AZURE_AI_FOUNDRY_API_KEY'):
+        # API 키가 설정된 경우 API 키를 사용
+        from azure.core.credentials import AzureKeyCredential
+        credential = AzureKeyCredential(os.getenv('AZURE_AI_FOUNDRY_API_KEY'))
+        logger.info("Azure AI Foundry API 키를 사용하여 인증합니다.")
     else:
-        # Azure 환경에서는 ManagedIdentityCredential 사용
-        credential = ManagedIdentityCredential()
+        # API 키가 설정되지 않은 경우 관리 ID를 사용
+        if IS_LOCAL:
+            # 로컬 환경에서는 DefaultAzureCredential 사용
+            credential = DefaultAzureCredential()
+            logger.info("로컬 환경에서 DefaultAzureCredential을 사용하여 인증합니다.")
+        else:
+            # Azure 환경에서는 ManagedIdentityCredential 사용
+            credential = ManagedIdentityCredential()
+            logger.info("Azure 환경에서 ManagedIdentityCredential을 사용하여 인증합니다.")
     
     project_client = AIProjectClient.from_connection_string(
         credential=credential,
