@@ -5,7 +5,7 @@ import json
 import logging
 from typing import Dict, List, Tuple, Any, Optional
 from azure.ai.projects import AIProjectClient
-from azure.identity import DefaultAzureCredential
+from azure.identity import DefaultAzureCredential, ManagedIdentityCredential
 from src.data.services_roles import SERVICES
 from src.data.personas_roles import PERSONAS
 
@@ -26,8 +26,16 @@ MS_CONNECTION_STRING = "eastus2.api.azureml.ms;2326c76a-5eab-44b6-808b-1978f2ffe
 
 # Azure AI Foundry 클라이언트 초기화
 try:
+    # 관리 ID를 사용하여 인증
+    if IS_LOCAL:
+        # 로컬 환경에서는 DefaultAzureCredential 사용
+        credential = DefaultAzureCredential()
+    else:
+        # Azure 환경에서는 ManagedIdentityCredential 사용
+        credential = ManagedIdentityCredential()
+    
     project_client = AIProjectClient.from_connection_string(
-        credential=DefaultAzureCredential(),
+        credential=credential,
         conn_str=MS_CONNECTION_STRING
     )
     ms_credentials_available = True

@@ -71,52 +71,12 @@ jobs:
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           images: directai.azurecr.io/persian815/sli_direct_agent:latest
 
-      - name: Check Azure credentials
-        run: |
-          # Check if all required Azure credentials are set
-          if [[ -z "${{ secrets.AZURE_CLIENT_ID }}" ]]; then
-            echo "::error::AZURE_CLIENT_ID secret is not set. Please set it in your repository secrets."
-            exit 1
-          fi
-          
-          if [[ -z "${{ secrets.AZURE_CLIENT_SECRET }}" ]]; then
-            echo "::error::AZURE_CLIENT_SECRET secret is not set. Please set it in your repository secrets."
-            exit 1
-          fi
-          
-          if [[ -z "${{ secrets.AZURE_TENANT_ID }}" ]]; then
-            echo "::error::AZURE_TENANT_ID secret is not set. Please set it in your repository secrets."
-            exit 1
-          fi
-          
-          echo "All required Azure credentials are set."
-
-      - name: Set Azure AI Foundry API credentials
+      - name: Set Azure AI Foundry API credentials using Managed Identity
         uses: azure/CLI@v1
         with:
           inlineScript: |
-            # Login with service principal
-            az login --service-principal \
-              --username "${{ secrets.AZURE_CLIENT_ID }}" \
-              --password "${{ secrets.AZURE_CLIENT_SECRET }}" \
-              --tenant "${{ secrets.AZURE_TENANT_ID }}"
-            
-            # List available subscriptions
-            echo "Available subscriptions:"
-            az account list --query "[].{name:name, id:id}" --output table
-            
-            # Get the first available subscription
-            SUBSCRIPTION_ID=$(az account list --query "[0].id" --output tsv)
-            
-            if [[ -z "$SUBSCRIPTION_ID" ]]; then
-              echo "::error::No subscriptions found for the service principal. Please assign a role to the service principal for a subscription."
-              exit 1
-            fi
-            
-            echo "Using subscription: $SUBSCRIPTION_ID"
-            
-            # Set subscription
-            az account set --subscription "$SUBSCRIPTION_ID"
+            # Login using Managed Identity
+            az login --identity
             
             # Get Azure AI Foundry endpoint
             AI_FOUNDRY_ENDPOINT=$(az ml workspace show --name team2_seongryongle-8914 --resource-group slihackathon-2025-team2-rg --query "endpoint" --output tsv)
@@ -128,42 +88,4 @@ jobs:
             az webapp config appsettings set --name directai --resource-group slihackathon-2025-team2-rg --settings AZURE_AI_FOUNDRY_ENDPOINT=$AI_FOUNDRY_ENDPOINT AZURE_AI_FOUNDRY_API_KEY=$AI_FOUNDRY_API_KEY
             
             # Restart the web app
-            az webapp restart --name directai --resource-group slihackathon-2025-team2-rg
-
-      - name: Assign permissions to managed identity
-        uses: azure/CLI@v1
-        with:
-          inlineScript: |
-            # Login with service principal
-            az login --service-principal \
-              --username "${{ secrets.AZURE_CLIENT_ID }}" \
-              --password "${{ secrets.AZURE_CLIENT_SECRET }}" \
-              --tenant "${{ secrets.AZURE_TENANT_ID }}"
-            
-            # Get the first available subscription
-            SUBSCRIPTION_ID=$(az account list --query "[0].id" --output tsv)
-            
-            if [[ -z "$SUBSCRIPTION_ID" ]]; then
-              echo "::error::No subscriptions found for the service principal. Please assign a role to the service principal for a subscription."
-              exit 1
-            fi
-            
-            echo "Using subscription: $SUBSCRIPTION_ID"
-            
-            # Set subscription
-            az account set --subscription "$SUBSCRIPTION_ID"
-            
-            # Get the managed identity of the web app
-            MANAGED_IDENTITY=$(az webapp identity show --name directai --resource-group slihackathon-2025-team2-rg --query principalId --output tsv)
-            
-            # Get the Azure AI Foundry workspace resource ID
-            WORKSPACE_ID=$(az ml workspace show --name team2_seongryongle-8914 --resource-group slihackathon-2025-team2-rg --query id --output tsv)
-            
-            # Assign the "Azure AI Foundry User" role to the managed identity
-            az role assignment create --assignee $MANAGED_IDENTITY --role "Azure AI Foundry User" --scope $WORKSPACE_ID
-            
-            # Assign the "Reader" role to the managed identity for the workspace
-            az role assignment create --assignee $MANAGED_IDENTITY --role "Reader" --scope $WORKSPACE_ID
-            
-            # Restart the web app to apply the changes
             az webapp restart --name directai --resource-group slihackathon-2025-team2-rg
