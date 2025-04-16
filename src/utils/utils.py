@@ -1,5 +1,54 @@
+import random
 import streamlit as st
 from typing import Dict, List, Tuple, Any, Optional
+
+def evaluate_response_quality(response):
+    """응답의 품질을 1~100 사이의 점수로 평가하는 함수"""
+    # 실제 구현에서는 더 복잡한 평가 로직을 사용할 수 있습니다.
+    # 여기서는 간단한 예시로 구현합니다.
+    
+    # 응답 길이에 따른 기본 점수 (최대 30점)
+    length_score = min(len(response) / 100, 30)
+    length_reason = f"응답 길이: {len(response)}자 (최대 30점)"
+    
+    # 응답의 다양성 점수 (최대 20점)
+    # 단어 다양성, 문장 구조 다양성 등을 고려할 수 있습니다.
+    words = response.split()
+    unique_words = len(set(words))
+    diversity_score = min(unique_words / 50, 20)
+    diversity_reason = f"단어 다양성: {unique_words}개 고유 단어 (최대 20점)"
+    
+    # 응답의 일관성 점수 (최대 20점)
+    # 문장 간 연결성, 논리적 흐름 등을 고려할 수 있습니다.
+    consistency_score = random.uniform(10, 20)  # 예시로 랜덤 값 사용
+    consistency_reason = f"응답 일관성: {consistency_score:.1f}점 (최대 20점)"
+    
+    # 응답의 정확성 점수 (최대 30점)
+    # 실제 구현에서는 외부 지식 베이스나 검증 로직을 사용할 수 있습니다.
+    accuracy_score = random.uniform(15, 30)  # 예시로 랜덤 값 사용
+    accuracy_reason = f"응답 정확성: {accuracy_score:.1f}점 (최대 30점)"
+    
+    # 총점 계산 (1~100 사이)
+    total_score = int(length_score + diversity_score + consistency_score + accuracy_score)
+    
+    # 1~100 사이로 제한
+    final_score = max(1, min(100, total_score))
+    
+    # 판단 사유 생성
+    reason = f"{length_reason} | {diversity_reason} | {consistency_reason} | {accuracy_reason}"
+    
+    return final_score, reason
+
+def get_quality_level_color(score):
+    """품질 점수에 따른 색상 반환"""
+    if score is None:
+        return "#808080"  # 기본 회색
+    if score >= 80:
+        return "#4CAF50"  # 녹색
+    elif score >= 60:
+        return "#FFC107"  # 노란색
+    else:
+        return "#F44336"  # 빨간색
 
 def initialize_session_state():
     """세션 상태 초기화 함수"""
@@ -39,7 +88,7 @@ def evaluate_user_knowledge_level(user_input):
         user_input (str): 사용자가 입력한 질문
         
     Returns:
-        int: 1-100 사이의 지식 레벨 점수
+        tuple: (지식 레벨 점수, 레벨 측정 사유)
     """
     # 전문 용어 카테고리별 점수
     professional_terms = {
@@ -117,36 +166,62 @@ def evaluate_user_knowledge_level(user_input):
     
     # 전문 용어 점수 계산 (최대 40점)
     term_score = 0
+    term_reasons = []
     for category, levels in professional_terms.items():
         for level, terms in levels.items():
-            count = sum(1 for term in terms if term in user_input)
-            if level == "basic":
-                term_score += count * 2
-            elif level == "intermediate":
-                term_score += count * 3
-            else:  # advanced
-                term_score += count * 4
+            found_terms = [term for term in terms if term in user_input]
+            if found_terms:
+                count = len(found_terms)
+                if level == "basic":
+                    term_score += count * 2
+                    term_reasons.append(f"기본 {category} 용어 {', '.join(found_terms)} 사용")
+                elif level == "intermediate":
+                    term_score += count * 3
+                    term_reasons.append(f"중급 {category} 용어 {', '.join(found_terms)} 사용")
+                else:  # advanced
+                    term_score += count * 4
+                    term_reasons.append(f"고급 {category} 용어 {', '.join(found_terms)} 사용")
     
     # 질문 형식 점수 계산 (최대 20점)
     question_score = 0
+    question_reasons = []
     for level, patterns in question_patterns.items():
-        count = sum(1 for pattern in patterns if pattern in user_input)
-        if level == "basic":
-            question_score += count * 2
-        elif level == "intermediate":
-            question_score += count * 3
-        else:  # advanced
-            question_score += count * 4
+        found_patterns = [pattern for pattern in patterns if pattern in user_input]
+        if found_patterns:
+            count = len(found_patterns)
+            if level == "basic":
+                question_score += count * 2
+                question_reasons.append(f"기본 질문 형식 {', '.join(found_patterns)} 사용")
+            elif level == "intermediate":
+                question_score += count * 3
+                question_reasons.append(f"중급 질문 형식 {', '.join(found_patterns)} 사용")
+            else:  # advanced
+                question_score += count * 4
+                question_reasons.append(f"고급 질문 형식 {', '.join(found_patterns)} 사용")
     
     # 문장 길이 점수 계산 (최대 10점)
     sentence_length = len(user_input.split())
     length_score = min(sentence_length // 2, 10)
+    length_reason = f"문장 길이 {sentence_length}단어"
     
     # 최종 점수 계산
     final_score = base_score + min(term_score, 40) + min(question_score, 20) + length_score
     
     # 점수 범위 제한 (1-100)
-    return max(1, min(100, final_score))
+    final_score = max(1, min(100, final_score))
+    
+    # 레벨 측정 사유 생성
+    reasons = []
+    if term_reasons:
+        reasons.extend(term_reasons)
+    if question_reasons:
+        reasons.extend(question_reasons)
+    if length_reason:
+        reasons.append(length_reason)
+    
+    reason_text = " | ".join(reasons) if reasons else "기본 점수 30점"
+    
+    return final_score, reason_text
 
 def get_knowledge_level_color(level):
     """
@@ -194,4 +269,72 @@ def log_function_call(func):
         
         return result
     
-    return wrapper 
+    return wrapper
+
+def evaluate_user_temperature(user_input):
+    """
+    사용자의 질문을 분석하여 성향이나 말투를 온도로 평가하는 함수
+    
+    Args:
+        user_input (str): 사용자가 입력한 질문
+        
+    Returns:
+        tuple: (온도 점수, 온도 측정 사유)
+    """
+    # 온도 점수 초기화 (기본 체온 36.5도 기준)
+    base_temperature = 36.5
+    temperature_score = base_temperature
+    reasons = []
+    
+    # 질문 길이에 따른 온도 조정
+    if len(user_input) < 10:
+        temperature_score -= 0.5
+        reasons.append("짧은 질문")
+    elif len(user_input) > 100:
+        temperature_score += 0.5
+        reasons.append("상세한 질문")
+    
+    # 존댓말 사용 여부 확인
+    if "요" in user_input or "니다" in user_input or "습니다" in user_input or "세요" in user_input:
+        temperature_score += 0.3
+        reasons.append("존댓말 사용")
+    elif "다" in user_input or "까" in user_input or "요" not in user_input:
+        temperature_score -= 0.3
+        reasons.append("반말 사용")
+    
+    # 친절한 표현 확인
+    friendly_terms = ["부탁", "도움", "감사", "고맙", "죄송", "죄송합니다", "부탁드립니다", "도와주세요"]
+    for term in friendly_terms:
+        if term in user_input:
+            temperature_score += 0.2
+            reasons.append(f"친절한 표현: '{term}'")
+            break
+    
+    # 불친절한 표현 확인
+    unfriendly_terms = ["바보", "멍청", "짜증", "화나", "짜증나", "짜증난다", "짜증납니다"]
+    for term in unfriendly_terms:
+        if term in user_input:
+            temperature_score -= 0.5
+            reasons.append(f"불친절한 표현: '{term}'")
+            break
+    
+    # 온도 범위 제한 (35.0 ~ 38.0)
+    temperature_score = max(35.0, min(38.0, temperature_score))
+    
+    # 측정 사유 생성
+    reason = " | ".join(reasons) if reasons else "기본 온도"
+    
+    return temperature_score, reason
+
+def get_temperature_color(temperature):
+    """온도에 따른 색상 반환"""
+    if temperature >= 37.5:
+        return "#FF4500"  # 빨간색 (열이 많은 상태)
+    elif temperature >= 37.0:
+        return "#FF8C00"  # 주황색 (약간 열이 있는 상태)
+    elif temperature >= 36.5:
+        return "#FFD700"  # 금색 (정상 체온)
+    elif temperature >= 36.0:
+        return "#87CEEB"  # 하늘색 (약간 저체온)
+    else:
+        return "#4169E1"  # 파란색 (저체온) 

@@ -8,146 +8,238 @@ from src.visualization.visualization import (
     format_knowledge_level_html,
     format_metrics_html
 )
+from src.utils.utils import (
+    evaluate_response_quality,
+    get_quality_level_color,
+    evaluate_user_temperature,
+    get_temperature_color
+)
 
 def render_chat_interface(model):
     """채팅 인터페이스를 렌더링하는 함수"""
-    # 기본 스트림릿 컴포넌트를 사용하여 UI 구성
-    #st.title("채팅 인터페이스")
-    
-    # 간단한 스타일링 추가
+    # Light 테마 스타일링 추가
     st.markdown("""
     <style>
-        /* 사용자 메시지 스타일 */
-        .user-message {
-            background-color: #e6f3ff;
+        /* Light 테마 기본 스타일 */
+        .stApp {
+            background-color: #FFFFFF;
+            color: #31333F;
+        }
+        
+        /* 채팅 메시지 스타일 */
+        .stChatMessage {
+            background-color: #F8F9FA;
             border-radius: 10px;
-            padding: 10px 15px;
-            margin: 5px 0;
-            border-left: 5px solid #0066cc;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #E9ECEF;
+        }
+        
+        /* 사용자 메시지 스타일 */
+        .stChatMessage[data-testid="stChatMessage"] {
+            background-color: #E6F3FF;
+            border-left: 4px solid #0066CC;
         }
         
         /* 어시스턴트 메시지 스타일 */
-        .assistant-message {
-            background-color: #f0f0f0;
+        .stChatMessage[data-testid="stChatMessage"]:nth-child(even) {
+            background-color: #F0F0F0;
+            border-left: 4px solid #4CAF50;
+        }
+        
+        /* 입력 필드 스타일 */
+        .stChatInputContainer {
+            background-color: #FFFFFF;
             border-radius: 10px;
-            padding: 10px 15px;
-            margin: 5px 0;
-            border-left: 5px solid #4CAF50;
-        }
-        
-        /* 메시지 컨테이너 스타일 */
-        .message-container {
-            max-height: 500px;
-            overflow-y: auto;
             padding: 10px;
-            margin-bottom: 20px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-        
-        /* 입력 영역 스타일 */
-        .input-area {
             margin-top: 20px;
-            padding: 10px;
-            background-color: #f9f9f9;
-            border-radius: 5px;
+            border: 1px solid #E9ECEF;
+        }
+        
+        div.stTextInput > div > div > input {
+            background-color: #FFFFFF;
+            color: #31333F;
+            border: 1px solid #CED4DA;
+            border-radius: 8px;
+            padding: 10px 15px;
+        }
+        
+        /* 캡션 스타일 */
+        .stCaption {
+            color: #6C757D;
+            font-size: 0.85em;
+        }
+        
+        /* 품질 점수 스타일 */
+        .quality-score {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+        
+        /* 지식 수준 스타일 */
+        .knowledge-level {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+        
+        /* 스크롤바 스타일 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #F8F9FA;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #CED4DA;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ADB5BD;
         }
     </style>
     """, unsafe_allow_html=True)
     
-    # 메시지 컨테이너
-    st.markdown('<div class="message-container">', unsafe_allow_html=True)
-    
     # 메시지가 없는 경우 초기 메시지 표시
     if not st.session_state.messages:
-        st.markdown('<div class="assistant-message">안녕하세요! 무엇을 도와드릴까요?</div>', unsafe_allow_html=True)
+        with st.chat_message("assistant"):
+            st.markdown("안녕하세요! 무엇을 도와드릴까요?")
     
     # 메시지 표시
     for message in st.session_state.messages:
-        if message['role'] == 'user':
-            st.markdown(f'<div class="user-message"><strong>사용자:</strong> {message["content"]}</div>', unsafe_allow_html=True)
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+            
             # 개발자 모드가 켜져 있을 때만 Knowledge Level 표시
-            if st.session_state.get('developer_mode', False) and 'knowledge_level' in message:
+            if message['role'] == 'user' and st.session_state.get('developer_mode', False) and 'knowledge_level' in message:
                 knowledge_level = message['knowledge_level']
-                st.caption(f"Knowledge Level: {knowledge_level}")
-        else:
-            st.markdown(f'<div class="assistant-message"><strong>어시스턴트:</strong> {message["content"]}</div>', unsafe_allow_html=True)
+                color = get_knowledge_level_color(knowledge_level)
+                st.markdown(f'<div class="knowledge-level" style="background-color: {color}; color: white;">Knowledge Level: {knowledge_level}/100</div>', unsafe_allow_html=True)
+                if 'knowledge_level_reason' in message:
+                    st.markdown(f'<div class="knowledge-level-reason" style="color: #888888; font-size: 0.8em;">{message["knowledge_level_reason"]}</div>', unsafe_allow_html=True)
+                
+                # 사용자 온도 표시
+                if 'temperature' in message:
+                    temperature = message['temperature']
+                    color = get_temperature_color(temperature)
+                    st.markdown(f'<div class="temperature-level" style="background-color: {color}; color: white;">User Temperature: {temperature:.1f}°C</div>', unsafe_allow_html=True)
+                    if 'temperature_reason' in message:
+                        st.markdown(f'<div class="temperature-reason" style="color: #888888; font-size: 0.8em;">{message["temperature_reason"]}</div>', unsafe_allow_html=True)
+            
             # 개발자 모드가 켜져 있을 때만 메트릭스 표시
-            if st.session_state.get('developer_mode', False) and 'metrics' in message:
-                metrics = message['metrics']
-                st.caption(f"Request Time: {metrics['request_time']:.2f}s | Response Time: {metrics['response_time']:.2f}s | Input Tokens: {metrics['input_tokens']:.1f} | Output Tokens: {metrics['output_tokens']:.1f}")
+            if message['role'] == 'assistant' and st.session_state.get('developer_mode', False):
+                # 개발자 모드가 켜져 있을 때만 메트릭스 표시
+                if st.session_state.get('developer_mode', False) and 'metrics' in message:
+                    metrics = message['metrics']
+                    st.markdown(f'<div class="metrics">Request Time: {metrics["request_time"]:.2f}s | Response Time: {metrics["response_time"]:.2f}s | Input Tokens: {metrics["input_tokens"]:.1f} | Output Tokens: {metrics["output_tokens"]:.1f}</div>', unsafe_allow_html=True)
+                    
+                    # Response Quality 표시 (quality_score가 None이 아닌 경우에만)
+                    if 'quality_score' in message and message['quality_score'] is not None:
+                        quality_score = message['quality_score']
+                        color = get_quality_level_color(quality_score)
+                        st.markdown(f'<div class="quality-score" style="background-color: {color}; color: white;">Response Quality: {quality_score}/100</div>', unsafe_allow_html=True)
+                        if 'quality_reason' in message and message['quality_reason'] is not None:
+                            st.markdown(f'<div class="quality-reason" style="color: #888888; font-size: 0.8em;">{message["quality_reason"]}</div>', unsafe_allow_html=True)
     
     # 답변 작성 중 메시지
     if st.session_state.get('is_generating', False):
-        st.markdown('<div class="assistant-message">답변 작성 중...</div>', unsafe_allow_html=True)
+        with st.chat_message("assistant"):
+            st.markdown("답변 작성 중...")
     
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    # 입력 영역
-    st.markdown('<div class="input-area">', unsafe_allow_html=True)
-    with st.form(key="message_form", clear_on_submit=True):
-        col1, col2 = st.columns([5, 1])
-        with col1:
-            user_input = st.text_input("메시지를 입력하세요", key="user_input")
-        with col2:
-            submit_button = st.form_submit_button("전송")
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    # 폼 제출 처리
-    if submit_button and user_input:
-        # 사용자 메시지 추가
-        knowledge_level = evaluate_user_knowledge_level(user_input)
-        st.session_state.messages.append({
+    # 사용자 입력 받기
+    if prompt := st.chat_input("메시지를 입력하세요"):
+        # 사용자 입력 평가 (항상 수행)
+        knowledge_level, knowledge_level_reason = evaluate_user_knowledge_level(prompt)
+        temperature, temperature_reason = evaluate_user_temperature(prompt)
+        
+        # 사용자 메시지를 st.session_state.messages에 추가
+        user_message = {
             "role": "user",
-            "content": user_input,
-            "knowledge_level": knowledge_level
-        })
+            "content": prompt,
+            "knowledge_level": knowledge_level,
+            "knowledge_level_reason": knowledge_level_reason,
+            "temperature": temperature,
+            "temperature_reason": temperature_reason
+        }
+        st.session_state.messages.append(user_message)
+        
+        # 사용자 메시지를 st.session_state.chat_messages에도 추가
+        st.session_state.chat_messages.append(user_message)
         
         # 답변 작성 중 상태 설정
         st.session_state.is_generating = True
         
         # 어시스턴트 응답 생성
-        with st.spinner("답변 작성 중..."):
-            start_time = time.time()
-            if model == "AWS Bedrock (클로드 3.5)":
-                response, trace_steps, elapsed_time, input_tokens, output_tokens, start_time = query_bedrock_agent(user_input)
-                # metrics 딕셔너리 생성
-                metrics = {
-                    "request_time": elapsed_time,
-                    "response_time": elapsed_time,
-                    "input_tokens": input_tokens,
-                    "output_tokens": output_tokens
-                }
-            elif model == "Azure AI Foundry (GPT-4.0)":
-                response, trace_steps, elapsed_time, input_tokens, output_tokens, start_time = query_ms_agent(user_input)
-                # metrics 딕셔너리 생성
-                metrics = {
-                    "request_time": elapsed_time,
-                    "response_time": elapsed_time,
-                    "input_tokens": input_tokens,
-                    "output_tokens": output_tokens
-                }
-            else:
-                # Ollama 함수는 5개의 값을 반환합니다
-                response, response_time, input_tokens, output_tokens, _ = query_ollama_optimized(user_input)
-                # metrics 딕셔너리 생성
-                metrics = {
-                    "request_time": time.time() - start_time,
-                    "response_time": response_time,
-                    "input_tokens": input_tokens,
-                    "output_tokens": output_tokens
-                }
-            
-            # 답변 작성 중 상태 해제
-            st.session_state.is_generating = False
-            
-            # 어시스턴트 메시지 추가
-            st.session_state.messages.append({
-                "role": "assistant",
-                "content": response,
-                "metrics": metrics
-            })
-            
+        with st.chat_message("assistant"):
+            with st.spinner("답변 작성 중..."):
+                start_time = time.time()
+                if model == "AWS Bedrock (클로드 3.5)":
+                    response, trace_steps, elapsed_time, input_tokens, output_tokens, start_time = query_bedrock_agent(prompt)
+                    # metrics 딕셔너리 생성
+                    metrics = {
+                        "request_time": elapsed_time,
+                        "response_time": elapsed_time,
+                        "input_tokens": input_tokens,
+                        "output_tokens": output_tokens
+                    }
+                elif model == "Azure AI Foundry (GPT-4.0)":
+                    response, trace_steps, elapsed_time, input_tokens, output_tokens, start_time = query_ms_agent(prompt)
+                    # metrics 딕셔너리 생성
+                    metrics = {
+                        "request_time": elapsed_time,
+                        "response_time": elapsed_time,
+                        "input_tokens": input_tokens,
+                        "output_tokens": output_tokens
+                    }
+                else:
+                    # Ollama 함수는 5개의 값을 반환합니다
+                    response, response_time, input_tokens, output_tokens, _ = query_ollama_optimized(prompt)
+                    # metrics 딕셔너리 생성
+                    metrics = {
+                        "request_time": time.time() - start_time,
+                        "response_time": response_time,
+                        "input_tokens": input_tokens,
+                        "output_tokens": output_tokens
+                    }
+                
+                # 답변 작성 중 상태 해제
+                st.session_state.is_generating = False
+                
+                # 응답 표시
+                st.markdown(response)
+                
+                # 개발자 모드가 켜져 있을 때만 메트릭스 표시
+                if st.session_state.get('developer_mode', False):
+                    # 응답 품질 평가
+                    quality_score, quality_reason = evaluate_response_quality(response)
+                    color = get_quality_level_color(quality_score)
+                    st.markdown(f'<div class="quality-score" style="background-color: {color}; color: white;">Response Quality: {quality_score}/100</div>', unsafe_allow_html=True)
+                    if quality_reason:
+                        st.markdown(f'<div class="quality-reason" style="color: #888888; font-size: 0.8em;">{quality_reason}</div>', unsafe_allow_html=True)
+                    
+                    # 메트릭스 표시
+                    st.caption(f"Request Time: {metrics['request_time']:.2f}s | Response Time: {metrics['response_time']:.2f}s | Input Tokens: {metrics['input_tokens']:.1f} | Output Tokens: {metrics['output_tokens']:.1f}")
+        
+        # 어시스턴트 메시지 추가
+        quality_score, quality_reason = evaluate_response_quality(response)
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": response,
+            "metrics": metrics,
+            "quality_score": quality_score,
+            "quality_reason": quality_reason
+        })
+        
         # 페이지 새로고침
         st.rerun()
 

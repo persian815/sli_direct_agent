@@ -26,5 +26,8 @@ def main():
     # Load JavaScript at the end of the page
     load_js()
 
+    if 'chat_messages' not in st.session_state:
+        st.session_state.chat_messages = []
+
 if __name__ == "__main__":
     main() 
