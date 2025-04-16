@@ -89,11 +89,6 @@ jobs:
             exit 1
           fi
           
-          if [[ -z "${{ secrets.AZURE_SUBSCRIPTION_ID }}" ]]; then
-            echo "::error::AZURE_SUBSCRIPTION_ID secret is not set. Please set it in your repository secrets."
-            exit 1
-          fi
-          
           echo "All required Azure credentials are set."
 
       - name: Set Azure AI Foundry API credentials
@@ -106,8 +101,22 @@ jobs:
               --password "${{ secrets.AZURE_CLIENT_SECRET }}" \
               --tenant "${{ secrets.AZURE_TENANT_ID }}"
             
+            # List available subscriptions
+            echo "Available subscriptions:"
+            az account list --query "[].{name:name, id:id}" --output table
+            
+            # Get the first available subscription
+            SUBSCRIPTION_ID=$(az account list --query "[0].id" --output tsv)
+            
+            if [[ -z "$SUBSCRIPTION_ID" ]]; then
+              echo "::error::No subscriptions found for the service principal. Please assign a role to the service principal for a subscription."
+              exit 1
+            fi
+            
+            echo "Using subscription: $SUBSCRIPTION_ID"
+            
             # Set subscription
-            az account set --subscription "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+            az account set --subscription "$SUBSCRIPTION_ID"
             
             # Get Azure AI Foundry endpoint
             AI_FOUNDRY_ENDPOINT=$(az ml workspace show --name team2_seongryongle-8914 --resource-group slihackathon-2025-team2-rg --query "endpoint" --output tsv)
@@ -131,8 +140,18 @@ jobs:
               --password "${{ secrets.AZURE_CLIENT_SECRET }}" \
               --tenant "${{ secrets.AZURE_TENANT_ID }}"
             
+            # Get the first available subscription
+            SUBSCRIPTION_ID=$(az account list --query "[0].id" --output tsv)
+            
+            if [[ -z "$SUBSCRIPTION_ID" ]]; then
+              echo "::error::No subscriptions found for the service principal. Please assign a role to the service principal for a subscription."
+              exit 1
+            fi
+            
+            echo "Using subscription: $SUBSCRIPTION_ID"
+            
             # Set subscription
-            az account set --subscription "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+            az account set --subscription "$SUBSCRIPTION_ID"
             
             # Get the managed identity of the web app
             MANAGED_IDENTITY=$(az webapp identity show --name directai --resource-group slihackathon-2025-team2-rg --query principalId --output tsv)
