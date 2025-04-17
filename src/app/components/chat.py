@@ -29,8 +29,8 @@ def get_character_icon(character_name: str) -> str:
     # 캐릭터 이름과 이미지 파일명 매핑
     character_icon_map = {
         "친절한 금자씨": "static/image/친절한 금자씨.png",
-        "공감의 장금이": "static/image/공감의녀 장금이.png",
-        "감성 충만 애순이": "static/image/감성충만 애순이.png",
+        "공감의녀 장금이": "static/image/공감의녀 장금이.png",
+        "감성충만 애순이": "static/image/감성충만 애순이.png",
         "논리적인 테스형": "static/image/논리적인 테스형.png"
     }
     
@@ -165,6 +165,7 @@ def render_chat_interface(model):
             border-radius: 50%;
             object-fit: cover;
             margin-right: 10px;
+            display: block;
         }
         
         /* 사용자 메시지 컨테이너 스타일 */
@@ -202,6 +203,28 @@ def render_chat_interface(model):
             background-color: #2D2D2D;
             border-left: 4px solid #4CAF50;
         }
+        
+        /* 이미지 컨테이너 스타일 */
+        .avatar-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        
+        /* 사용자 아바타 컨테이너 */
+        .user-avatar-container {
+            margin-right: 10px;
+        }
+        
+        /* 어시스턴트 아바타 컨테이너 */
+        .assistant-avatar-container {
+            margin-left: 10px;
+        }
     </style>
     """, unsafe_allow_html=True)
     
@@ -217,7 +240,9 @@ def render_chat_interface(model):
         # 어시스턴트 메시지 컨테이너
         st.markdown(f"""
         <div class="assistant-message-container">
-            <img src="{character_icon}" class="chat-icon" alt="Assistant">
+            <div class="avatar-container assistant-avatar-container">
+                <img src="{character_icon}" class="chat-icon" alt="Assistant">
+            </div>
             <div class="message-content assistant-message-content">
                 안녕하세요! 무엇을 도와드릴까요?
             </div>
@@ -230,7 +255,9 @@ def render_chat_interface(model):
             # 사용자 메시지 컨테이너
             st.markdown(f"""
             <div class="user-message-container">
-                <img src="{user_icon}" class="chat-icon" alt="User">
+                <div class="avatar-container user-avatar-container">
+                    <img src="{user_icon}" class="chat-icon" alt="User">
+                </div>
                 <div class="message-content user-message-content">
                     {message["content"]}
                 </div>
@@ -260,7 +287,9 @@ def render_chat_interface(model):
             # 어시스턴트 메시지 컨테이너
             st.markdown(f"""
             <div class="assistant-message-container">
-                <img src="{character_icon}" class="chat-icon" alt="Assistant">
+                <div class="avatar-container assistant-avatar-container">
+                    <img src="{character_icon}" class="chat-icon" alt="Assistant">
+                </div>
                 <div class="message-content assistant-message-content">
                     {message["content"]}
                 </div>
@@ -291,7 +320,9 @@ def render_chat_interface(model):
         # 어시스턴트 메시지 컨테이너
         st.markdown(f"""
         <div class="assistant-message-container">
-            <img src="{character_icon}" class="chat-icon" alt="Assistant">
+            <div class="avatar-container assistant-avatar-container">
+                <img src="{character_icon}" class="chat-icon" alt="Assistant">
+            </div>
             <div class="message-content assistant-message-content">
                 답변 작성 중...
             </div>
@@ -329,7 +360,9 @@ def render_chat_interface(model):
         # 어시스턴트 메시지 컨테이너
         st.markdown(f"""
         <div class="assistant-message-container">
-            <img src="{character_icon}" class="chat-icon" alt="Assistant">
+            <div class="avatar-container assistant-avatar-container">
+                <img src="{character_icon}" class="chat-icon" alt="Assistant">
+            </div>
             <div class="message-content assistant-message-content">
                 답변 작성 중...
             </div>
@@ -363,7 +396,9 @@ def render_chat_interface(model):
             # 응답 표시
             st.markdown(f"""
             <div class="assistant-message-container">
-                <img src="{character_icon}" class="chat-icon" alt="Assistant">
+                <div class="avatar-container assistant-avatar-container">
+                    <img src="{character_icon}" class="chat-icon" alt="Assistant">
+                </div>
                 <div class="message-content assistant-message-content">
                     {response}
                 </div>

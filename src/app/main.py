@@ -16,60 +16,47 @@ def main():
     # Initialize the application
     initialize_app()
 
-    # Title area with character selection
-    # 캐릭터 선택 UI
+    # 캐릭터 선택 UI 스타일
     st.markdown("""
     <style>
         /* 캐릭터 선택 UI 스타일 */
-        .character-selector {
+        .character-info {
             display: flex;
             align-items: center;
-            justify-content: center;
             margin-top: 5px;
             margin-bottom: 5px;
-        }
-        .character-option {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-right: 10px;
             padding: 5px;
             border-radius: 5px;
-            cursor: pointer;
-            transition: all 0.3s;
+            background-color: rgba(255, 255, 255, 0.05);
         }
-        .character-option:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-        .character-option.selected {
-            background-color: rgba(255, 255, 255, 0.2);
-            border: 2px solid #4CAF50;
-        }
-        .character-icon {
-            width: 40px;
-            height: 40px;
+        
+        .character-image {
+            width: 30px;
+            height: 30px;
             border-radius: 50%;
-            margin-bottom: 2px;
+            margin-right: 10px;
+            object-fit: cover;
         }
-        .character-name {
+        
+        .character-description {
             font-size: 12px;
-            text-align: center;
+            color: #E0E0E0;
         }
         
-        /* 컬럼 스타일 */
-        .stColumns {
-            margin-top: 0;
-            margin-bottom: 0;
-            padding-top: 0;
-            padding-bottom: 0;
+        /* 셀렉트박스 스타일 */
+        .stSelectbox {
+            margin-bottom: 5px;
         }
         
-        /* 이미지 스타일 */
-        .stImage {
-            margin-top: 0;
-            margin-bottom: 0;
-            padding-top: 0;
-            padding-bottom: 0;
+        /* 모바일 최적화 */
+        @media (max-width: 768px) {
+            .character-image {
+                width: 25px;
+                height: 25px;
+            }
+            .character-description {
+                font-size: 10px;
+            }
         }
     </style>
     """, unsafe_allow_html=True)
@@ -80,39 +67,29 @@ def main():
     # 캐릭터 선택 옵션
     character_options = list(PERSONAS.keys())
     
-    # 캐릭터 선택 UI
-    st.markdown('<div class="character-selector">', unsafe_allow_html=True)
+    # 셀렉트박스로 캐릭터 선택
+    selected_character = st.selectbox(
+        "캐릭터 선택",
+        options=character_options,
+        index=character_options.index(current_character) if current_character in character_options else 0,
+        key="character_select"
+    )
     
-    # 캐릭터 버튼 생성
-    cols = st.columns(len(character_options))
-    for i, character_name in enumerate(character_options):
-        with cols[i]:
-            # 캐릭터 아이콘 경로
-            icon_path = get_character_icon(character_name)
-            
-            # 선택된 캐릭터 여부
-            is_selected = character_name == current_character
-            
-            # 캐릭터 버튼
-            if st.button(
-                character_name,
-                key=f"char_{i}",
-                use_container_width=True,
-                help=f"{character_name} 선택"
-            ):
-                st.session_state.character = character_name
-                st.rerun()
-            
-            # 캐릭터 아이콘 표시
-            st.image(icon_path, width=40)
-            
-            # 선택된 캐릭터 표시
-            if is_selected:
-                st.markdown(f"<div class='character-name' style='color: #4CAF50; font-weight: bold;'>{character_name}</div>", unsafe_allow_html=True)
-            else:
-                st.markdown(f"<div class='character-name'>{character_name}</div>", unsafe_allow_html=True)
+    # 선택된 캐릭터가 변경되었으면 세션 상태 업데이트
+    if selected_character != current_character:
+        st.session_state.character = selected_character
     
-    st.markdown('</div>', unsafe_allow_html=True)
+    # 선택된 캐릭터 정보 표시
+    character_icon = get_character_icon(selected_character)
+    character_description = PERSONAS.get(selected_character, {}).get("description", "캐릭터 설명이 없습니다.")
+    
+    # 캐릭터 정보를 한 줄로 표시
+    st.markdown(f"""
+    <div class="character-info">
+        <img src="{character_icon}" class="character-image" alt="{selected_character}">
+        <div class="character-description">{character_description}</div>
+    </div>
+    """, unsafe_allow_html=True)
 
     # Render sidebar and get selected options
     model, role, character, _ = render_sidebar()
