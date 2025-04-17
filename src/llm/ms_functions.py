@@ -16,9 +16,9 @@ logger = logging.getLogger(__name__)
 # 환경 설정
 IS_LOCAL = os.getenv('ENV', 'local') == 'local'
 
-# agent1
-MS_AGENT_ID = "asst_62CgNOtkZwOGWbYVVV84xPaW"
-MS_THREAD_ID = "thread_0lAqgleT4Je2keGtqYAivGAw"
+# agent
+MS_AGENT_ID = "asst_pr2n6u4GJqlCUplFx3hzNrgq"
+MS_THREAD_ID = "thread_2PLvPuVYjJxjcoshye7f2ySr"
 
 
 # Azure AI Foundry 연결 정보
