@@ -18,12 +18,12 @@ def render_sidebar():
         st.session_state.model = "Azure AI Foundry (GPT-4.0)"
         st.session_state.character = "친절한 금자씨"
         
-        # Azure AI Foundry 연결 테스트 및 로그 추가
-        success, message = test_ms_agent_connection()
-        if success:
-            st.session_state.function_logs.append(f"Azure AI Foundry 연결 테스트 성공: {message}")
-        else:
-            st.session_state.function_logs.append(f"Azure AI Foundry 연결 테스트 실패: {message}")
+        # # Azure AI Foundry 연결 테스트 및 로그 추가
+        # success, message = test_ms_agent_connection()
+        # if success:
+        #     st.session_state.function_logs.append(f"Azure AI Foundry 연결 테스트 성공: {message}")
+        # else:
+        #     st.session_state.function_logs.append(f"Azure AI Foundry 연결 테스트 실패: {message}")
     
     # 기본 모델 설정
     model = st.session_state.get("model", "Azure AI Foundry (GPT-4.0)")
