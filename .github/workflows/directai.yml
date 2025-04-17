@@ -68,5 +68,23 @@ jobs:
           app-name: directai
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           images: directai.azurecr.io/persian815/sli_direct_agent:latest
+          
+      - name: Set Azure AI Foundry API credentials using service principal
+        uses: azure/CLI@v1
+        with:
+          inlineScript: |
+            # Login with service principal
+            az login --service-principal \
+              --username "${{ secrets.AZURE_CLIENT_ID }}" \
+              --password "${{ secrets.AZURE_CLIENT_SECRET }}" \
+              --tenant "${{ secrets.AZURE_TENANT_ID }}"
+            
+            # Set subscription
+            az account set --subscription "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
 
-   
+            # Restart the Web App
+            az webapp restart \
+              --name directai \
+              --resource-group slihackathon-2025-team2-rg
+
+
