@@ -18,7 +18,7 @@ IS_LOCAL = os.getenv('ENV', 'local') == 'local'
 
 # agent
 MS_AGENT_ID = "asst_U5EvVPTcw0kO5XkvENF1k9dF"
-MS_THREAD_ID = "thread_7JOhEBiJ7ZCShqfb4AsBpJ6H"
+MS_THREAD_ID = "thread_lsizSBgblCuAXVZh8UVXLuIR"
 
 
 # Azure AI Foundry 연결 정보
