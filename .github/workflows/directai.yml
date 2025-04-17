@@ -52,73 +52,41 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
-
+    container:
+      image: directai.azurecr.io/persian815/sli_direct_agent:latest  # 👈 ML CLI 내장된 이미지로 수정
     needs: build
-
     environment:
       name: 'production'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
 
     steps:
-      - name: Lowercase the repo name
-        run: echo "REPO=${GITHUB_REPOSITORY,,}" >>${GITHUB_ENV}
+      - name: Login to Azure
+        run: |
+          az login --service-principal \
+            --username "${{ secrets.AZURE_CLIENT_ID }}" \
+            --password "${{ secrets.AZURE_CLIENT_SECRET }}" \
+            --tenant "${{ secrets.AZURE_TENANT_ID }}"
 
-      - name: Deploy to Azure Web App
-        id: deploy-to-webapp
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: directai
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          images: directai.azurecr.io/persian815/sli_direct_agent:latest
+          az account set --subscription "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
 
-      - name: Set Azure AI Foundry API credentials using service principal
-        uses: azure/CLI@v1
-        with:
-          azcliversion: 2.54.0  # ✅ 안정적인 버전 명시
-          inlineScript: |
-            # Login with service principal
-            az login --service-principal \
-              --username "${{ secrets.AZURE_CLIENT_ID }}" \
-              --password "${{ secrets.AZURE_CLIENT_SECRET }}" \
-              --tenant "${{ secrets.AZURE_TENANT_ID }}"
-            
-            # Set subscription
-            az account set --subscription "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
-      
-            # Allow preview extension install
-            az config set extension.use_dynamic_install=yes_without_prompt
-            az config set extension.dynamic_install_allow_preview=true
-      
-            # Install Azure ML extension
-            echo "Installing Azure ML extension..."
-            az extension add --name ml
-      
-            # Get Azure ML workspace endpoint
-            AI_FOUNDRY_ENDPOINT=$(az ml workspace show \
-              --name team2_seongryongle-8914 \
-              --resource-group slihackathon-2025-team2-rg \
-              --query "mlClientConnectivity.endpoint" \
-              --output tsv)
-      
-            # Get API key
-            echo "Listing available keys..."
-            az ml workspace list-keys \
-              --name team2_seongryongle-8914 \
-              --resource-group slihackathon-2025-team2-rg
-      
-            AI_FOUNDRY_API_KEY=$(az ml workspace list-keys \
-              --name team2_seongryongle-8914 \
-              --resource-group slihackathon-2025-team2-rg \
-              --query "primaryKey" \
-              --output tsv)
-      
-            # Set app settings in Web App
-            az webapp config appsettings set \
-              --name directai \
-              --resource-group slihackathon-2025-team2-rg \
-              --settings AZURE_AI_FOUNDRY_ENDPOINT=$AI_FOUNDRY_ENDPOINT AZURE_AI_FOUNDRY_API_KEY=$AI_FOUNDRY_API_KEY
-      
-            # Restart the Web App
-            az webapp restart \
-              --name directai \
-              --resource-group slihackathon-2025-team2-rg
+      - name: Set Azure Web App settings with ML info
+        run: |
+          AI_FOUNDRY_ENDPOINT=$(az ml workspace show \
+            --name team2_seongryongle-8914 \
+            --resource-group slihackathon-2025-team2-rg \
+            --query "mlClientConnectivity.endpoint" \
+            --output tsv)
+
+          AI_FOUNDRY_API_KEY=$(az ml workspace list-keys \
+            --name team2_seongryongle-8914 \
+            --resource-group slihackathon-2025-team2-rg \
+            --query "primaryKey" \
+            --output tsv)
+
+          az webapp config appsettings set \
+            --name directai \
+            --resource-group slihackathon-2025-team2-rg \
+            --settings AZURE_AI_FOUNDRY_ENDPOINT=$AI_FOUNDRY_ENDPOINT AZURE_AI_FOUNDRY_API_KEY=$AI_FOUNDRY_API_KEY
+
+          az webapp restart \
+            --name directai \
+            --resource-group slihackathon-2025-team2-rg
