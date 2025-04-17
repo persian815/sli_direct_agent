@@ -73,7 +73,6 @@ jobs:
       - name: Set Azure AI Foundry API credentials using service principal
         uses: azure/CLI@v1
         with:
-          azcliversion: 2.54.0  # ✅ 안정적인 버전 명시
           inlineScript: |
             # Login with service principal
             az login --service-principal \

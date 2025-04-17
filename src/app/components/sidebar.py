@@ -25,6 +25,9 @@ def render_sidebar():
         else:
             st.session_state.function_logs.append(f"Azure AI Foundry 연결 테스트 실패: {message}")
     
+    # 기본 모델 설정
+    model = st.session_state.get("model", "Azure AI Foundry (GPT-4.0)")
+    
     with st.sidebar:
         st.header("설정")
         
@@ -63,7 +66,7 @@ def render_sidebar():
         
         # 개발자 모드가 활성화된 경우에만 모델 선택 영역 표시
         if developer_mode:
-
+           
             # # Model selection
             # st.subheader("모델 선택")
             
@@ -95,7 +98,7 @@ def render_sidebar():
             # Knowledge level statistics
             st.subheader("지식 수준 통계")
             if st.session_state.get('developer_mode', False):
-                knowledge_levels = [msg.get('knowledge_level', 0) for msg in st.session_state.chat_messages if 'knowledge_level' in msg]
+                knowledge_levels = [msg.get('knowledge_level', 0) for msg in st.session_state.messages if 'knowledge_level' in msg]
                 if knowledge_levels:
                     fig = create_knowledge_distribution_graph(knowledge_levels)
                     st.plotly_chart(fig, use_container_width=True)
