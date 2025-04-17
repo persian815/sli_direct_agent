@@ -19,7 +19,15 @@ WORKDIR /app
 
 # 의존성 먼저 복사 및 설치
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# requirements.txt 파일 존재 여부 확인
+RUN if [ ! -f requirements.txt ]; then \
+    echo "ERROR: requirements.txt file not found!" && exit 1; \
+    fi && \
+    echo "Installing dependencies from requirements.txt..." && \
+    pip install --no-cache-dir -r requirements.txt || { \
+    echo "ERROR: Failed to install dependencies from requirements.txt"; \
+    exit 1; \
+    }
 
 # 애플리케이션 소스 복사
 COPY . .

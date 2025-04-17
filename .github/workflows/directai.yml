@@ -7,26 +7,67 @@
 # To get a newer version, you will need to update the SHA.
 # You can also reference a tag or branch, but the action may change without warning.
 
-name: Build and deploy a container to an Azure Web App
-
-env:
-  AZURE_WEBAPP_NAME: directai   # set this to your application's name
+name: Deploy to Azure Container Apps
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
+  workflow_dispatch:
 
-permissions:
-  contents: 'read'
-  packages: 'write'
+env:
+  AZURE_CONTAINER_REGISTRY: slidirectagent
+  CONTAINER_APP_NAME: sli-direct-agent
+  RESOURCE_GROUP: SLI-Direct-Agent
+  CONTAINER_APP_ENVIRONMENT: sli-direct-agent-env
+  CONTAINER_APP_LOCATION: eastasia
+  CONTAINER_APP_IMAGE: slidirectagent.azurecr.io/sli-direct-agent:latest
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Set up Azure CLI
+        uses: azure/setup-az@v1
+        with:
+          version: 'latest'
+
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          echo "Dependencies installed successfully"
+
+      - name: Get Azure ML workspace info
+        run: |
+          echo "Installing Azure ML extension..."
+          az extension add --name azure-cli-ml || { echo "Failed to install Azure ML extension"; exit 1; }
+          
+          echo "Verifying Azure ML extension installation..."
+          az extension list | grep -i ml || { echo "Azure ML extension not found in installed extensions"; exit 1; }
+          
+          echo "Getting Azure ML workspace info..."
+          WORKSPACE_INFO=$(az ml workspace show --name sli-direct-agent --resource-group SLI-Direct-Agent --query "{subscription_id:id,workspace_name:name,resource_group:resourceGroup}" -o json) || { echo "Failed to get workspace info"; exit 1; }
+          
+          echo "Workspace info: $WORKSPACE_INFO"
+          
+          echo "Setting environment variables..."
+          echo "AZURE_ML_WORKSPACE_INFO=$WORKSPACE_INFO" >> $GITHUB_ENV
+          echo "Environment variables set successfully"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -34,59 +75,27 @@ jobs:
       - name: Log in to Azure Container Registry
         uses: docker/login-action@v3
         with:
-          registry: directai.azurecr.io
+          registry: ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io
           username: ${{ secrets.ACR_USERNAME }}
           password: ${{ secrets.ACR_PASSWORD }}
           ecr: false
           logout: true
 
-      - name: Lowercase the repo name
-        run: echo "REPO=${GITHUB_REPOSITORY,,}" >>${GITHUB_ENV}
-
-      - name: build and push image to ACR
+      - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
-          push: true          
-          tags: directai.azurecr.io/persian815/sli_direct_agent:${{ github.sha }},directai.azurecr.io/persian815/sli_direct_agent:latest
+          push: true
+          tags: ${{ env.CONTAINER_APP_IMAGE }}
+          cache-from: type=registry,ref=${{ env.CONTAINER_APP_IMAGE }}
+          cache-to: type=inline
 
-  deploy:
-    runs-on: ubuntu-latest
-    container:
-      image: directai.azurecr.io/persian815/sli_direct_agent:latest  # 👈 ML CLI 내장된 이미지로 수정
-    needs: build
-    environment:
-      name: 'production'
-
-    steps:
-      - name: Login to Azure
+      - name: Deploy to Azure Container Apps
         run: |
-          az login --service-principal \
-            --username "${{ secrets.AZURE_CLIENT_ID }}" \
-            --password "${{ secrets.AZURE_CLIENT_SECRET }}" \
-            --tenant "${{ secrets.AZURE_TENANT_ID }}"
-
-          az account set --subscription "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
-
-      - name: Set Azure Web App settings with ML info
-        run: |
-          AI_FOUNDRY_ENDPOINT=$(az ml workspace show \
-            --name team2_seongryongle-8914 \
-            --resource-group slihackathon-2025-team2-rg \
-            --query "mlClientConnectivity.endpoint" \
-            --output tsv)
-
-          AI_FOUNDRY_API_KEY=$(az ml workspace list-keys \
-            --name team2_seongryongle-8914 \
-            --resource-group slihackathon-2025-team2-rg \
-            --query "primaryKey" \
-            --output tsv)
-
-          az webapp config appsettings set \
-            --name directai \
-            --resource-group slihackathon-2025-team2-rg \
-            --settings AZURE_AI_FOUNDRY_ENDPOINT=$AI_FOUNDRY_ENDPOINT AZURE_AI_FOUNDRY_API_KEY=$AI_FOUNDRY_API_KEY
-
-          az webapp restart \
-            --name directai \
-            --resource-group slihackathon-2025-team2-rg
+          echo "Deploying to Azure Container Apps..."
+          az containerapp update \
+            --name ${{ env.CONTAINER_APP_NAME }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --image ${{ env.CONTAINER_APP_IMAGE }} \
+            --set-env-vars "AZURE_ML_WORKSPACE_INFO=${{ env.AZURE_ML_WORKSPACE_INFO }}" || { echo "Failed to deploy to Container Apps"; exit 1; }
+          echo "Deployment completed successfully"
