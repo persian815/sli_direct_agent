@@ -307,11 +307,19 @@ def render_chat_interface(model):
                 # 마크다운 링크 패턴: [텍스트](URL)
                 link_pattern = r'\[([^\]]+)\]\(([^)]+)\)'
                 
-                # 링크를 HTML로 변환
+                # 링크를 HTML로 변환 - 웹뷰 호환성을 위해 onclick 이벤트 추가
                 content_with_links = re.sub(
                     link_pattern, 
-                    r'<a href="\2" target="_blank" rel="noopener noreferrer">\1</a>', 
+                    r'<a href="\2" target="_blank" rel="noopener noreferrer" onclick="window.open(\'\2\', \'_blank\'); return false;" class="mobile-link">\1</a>', 
                     content
+                )
+                
+                # 일반 URL도 링크로 변환 (http:// 또는 https://로 시작하는 URL)
+                url_pattern = r'(?<![\[\(])(https?://[^\s\)]+)(?![\]\)])'
+                content_with_links = re.sub(
+                    url_pattern,
+                    r'<a href="\1" target="_blank" rel="noopener noreferrer" onclick="window.open(\'\1\', \'_blank\'); return false;" class="mobile-link">\1</a>',
+                    content_with_links
                 )
                 
                 st.markdown(f"""

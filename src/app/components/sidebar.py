@@ -185,40 +185,41 @@ def render_sidebar():
             model = "Azure AI Foundry (GPT-4.0)"
             st.session_state.model = model
         
-        # 채팅 히스토리 표시
-        st.subheader("채팅 히스토리")
-        chat_history = get_chat_history_from_api()
-        
-        if chat_history:
-            # 채팅 히스토리를 표로 표시
-            import pandas as pd
+        # 채팅 히스토리 표시 (개발자 모드가 활성화된 경우에만)
+        if developer_mode:
+            st.subheader("채팅 히스토리")
+            chat_history = get_chat_history_from_api()
             
-            # 데이터프레임 생성
-            df = pd.DataFrame(chat_history)
-            
-            # ID 열을 인덱스로 설정
-            if 'id' in df.columns:
-                df = df.set_index('id')
-            
-            # 표로 표시
-            st.dataframe(
-                df,
-                use_container_width=True,
-                hide_index=False,
-                column_config={
-                    "question": st.column_config.TextColumn(
-                        "질문",
-                        width="medium",
-                        help="사용자가 입력한 질문"
-                    ),
-                    "answer": st.column_config.TextColumn(
-                        "답변",
-                        width="large",
-                        help="에이전트가 제공한 답변"
-                    )
-                }
-            )
-        else:
-            st.info("아직 채팅 히스토리가 없습니다.")
+            if chat_history:
+                # 채팅 히스토리를 표로 표시
+                import pandas as pd
+                
+                # 데이터프레임 생성
+                df = pd.DataFrame(chat_history)
+                
+                # ID 열을 인덱스로 설정
+                if 'id' in df.columns:
+                    df = df.set_index('id')
+                
+                # 표로 표시
+                st.dataframe(
+                    df,
+                    use_container_width=True,
+                    hide_index=False,
+                    column_config={
+                        "question": st.column_config.TextColumn(
+                            "질문",
+                            width="medium",
+                            help="사용자가 입력한 질문"
+                        ),
+                        "answer": st.column_config.TextColumn(
+                            "답변",
+                            width="large",
+                            help="에이전트가 제공한 답변"
+                        )
+                    }
+                )
+            else:
+                st.info("아직 채팅 히스토리가 없습니다.")
     
     return model, role, character, developer_mode 

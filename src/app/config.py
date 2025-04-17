@@ -14,6 +14,54 @@ def load_js():
             <script>
                 {js_code}
             </script>
+            
+            <!-- 웹뷰에서 링크 처리를 위한 추가 스크립트 -->
+            <script>
+                // 웹뷰에서 링크 처리를 위한 함수
+                function handleWebViewLinks() {{
+                    // 모든 링크에 이벤트 리스너 추가
+                    document.querySelectorAll('a').forEach(function(link) {{
+                        // 링크에 클릭 이벤트 리스너 추가
+                        link.addEventListener('click', function(e) {{
+                            // 기본 이벤트 방지
+                            e.preventDefault();
+                            
+                            // 링크 URL 가져오기
+                            const url = this.getAttribute('href');
+                            
+                            // 새 창에서 링크 열기
+                            window.open(url, '_blank');
+                        }});
+                        
+                        // 링크에 터치 이벤트 리스너 추가
+                        link.addEventListener('touchend', function(e) {{
+                            // 기본 이벤트 방지
+                            e.preventDefault();
+                            
+                            // 링크 URL 가져오기
+                            const url = this.getAttribute('href');
+                            
+                            // 새 창에서 링크 열기
+                            window.open(url, '_blank');
+                        }});
+                    }});
+                }}
+                
+                // 페이지 로드 시 함수 실행
+                document.addEventListener('DOMContentLoaded', handleWebViewLinks);
+                
+                // DOM 변경 감지 및 함수 실행
+                const observer = new MutationObserver(function(mutations) {{
+                    mutations.forEach(function(mutation) {{
+                        if (mutation.addedNodes.length) {{
+                            handleWebViewLinks();
+                        }}
+                    }});
+                }});
+                
+                // 문서 전체 관찰
+                observer.observe(document.body, {{ childList: true, subtree: true }});
+            </script>
         """, unsafe_allow_html=True)
 
 def initialize_app():

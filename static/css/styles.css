@@ -203,6 +203,33 @@
     z-index: 10;
 }
 
+/* 모바일 웹뷰에서 링크 클릭 가능하도록 추가 스타일 */
+.mobile-link {
+    display: inline-block !important;
+    padding: 8px 0 !important;
+    margin: -8px 0 !important;
+    min-height: 44px !important; /* iOS 권장 최소 터치 영역 */
+    min-width: 44px !important;
+    position: relative !important;
+    z-index: 100 !important;
+    -webkit-touch-callout: none !important;
+    -webkit-user-select: none !important;
+    user-select: none !important;
+    touch-action: manipulation !important;
+}
+
+/* 모바일 웹뷰에서 링크 활성화 상태 */
+.mobile-link:active {
+    background-color: rgba(76, 175, 80, 0.2) !important;
+    color: #3d8b40 !important;
+}
+
+/* 모바일 웹뷰에서 링크 포커스 상태 */
+.mobile-link:focus {
+    outline: 2px solid rgba(76, 175, 80, 0.5) !important;
+    outline-offset: 2px !important;
+}
+
 /* 모바일 환경에서 링크 터치 영역 확대 */
 .message-content a {
     padding: 5px 0;
