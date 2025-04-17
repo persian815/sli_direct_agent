@@ -63,25 +63,26 @@ def render_sidebar():
         
         # 개발자 모드가 활성화된 경우에만 모델 선택 영역 표시
         if developer_mode:
-            # Model selection
-            st.subheader("모델 선택")
+
+            # # Model selection
+            # st.subheader("모델 선택")
             
-            # 사용 가능한 모델 목록 생성
-            available_models = ["Azure AI Foundry (GPT-4.0)"]  # Azure AI Foundry를 기본으로 추가
+            # # 사용 가능한 모델 목록 생성
+            # available_models = ["Azure AI Foundry (GPT-4.0)"]  # Azure AI Foundry를 기본으로 추가
             
-            # Ollama 모델 추가
-            available_models.append("Ollama (라마 3.3)")
+            # # Ollama 모델 추가
+            # available_models.append("Ollama (라마 3.3)")
             
-            # AWS 자격증명이 있는 경우 AWS 모델 추가
-            if aws_credentials_available:
-                available_models.append("AWS Bedrock (클로드 3.5)")
+            # # AWS 자격증명이 있는 경우 AWS 모델 추가
+            # if aws_credentials_available:
+            #     available_models.append("AWS Bedrock (클로드 3.5)")
             
-            model = st.radio(
-                "LLM 모델 선택",
-                available_models,
-                key="model",
-                index=0  # Azure AI Foundry를 기본값으로 설정
-            )
+            # model = st.radio(
+            #     "LLM 모델 선택",
+            #     available_models,
+            #     key="model",
+            #     index=0  # Azure AI Foundry를 기본값으로 설정
+            # )
             
             # Azure AI Foundry 연결 테스트 로그 추가 (모델 변경 시)
             if model == "Azure AI Foundry (GPT-4.0)" and not st.session_state.is_first_load:
@@ -170,6 +171,8 @@ def render_sidebar():
                     )
                     
                     st.plotly_chart(fig, use_container_width=True)
+                else:
+                    st.info("아직 에이전트 품질 통계 데이터가 없습니다.")
             
             # Function logs display
             st.subheader("함수 로그")

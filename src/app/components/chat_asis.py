@@ -1,6 +1,7 @@
 import streamlit as st
 import time
 from src.llm import (
+    query_bedrock_agent, query_ollama_optimized, query_ms_agent,
     evaluate_user_knowledge_level, get_knowledge_level_color
 )
 from src.visualization.visualization import (
@@ -13,7 +14,6 @@ from src.utils.utils import (
     evaluate_user_temperature,
     get_temperature_color
 )
-from src.llm.ms_functions import query_ms_agent
 
 def render_chat_interface(model):
     """채팅 인터페이스를 렌더링하는 함수"""
@@ -199,7 +199,16 @@ def render_chat_interface(model):
         with st.chat_message("assistant"):
             with st.spinner("답변 작성 중..."):
                 start_time = time.time()
-                if model == "Azure AI Foundry (GPT-4.0)":
+                if model == "AWS Bedrock (클로드 3.5)":
+                    response, trace_steps, elapsed_time, input_tokens, output_tokens, start_time = query_bedrock_agent(prompt)
+                    # metrics 딕셔너리 생성
+                    metrics = {
+                        "request_time": elapsed_time,
+                        "response_time": elapsed_time,
+                        "input_tokens": input_tokens,
+                        "output_tokens": output_tokens
+                    }
+                elif model == "Azure AI Foundry (GPT-4.0)":
                     response, trace_steps, elapsed_time, input_tokens, output_tokens, start_time = query_ms_agent(prompt)
                     # metrics 딕셔너리 생성
                     metrics = {
@@ -209,13 +218,14 @@ def render_chat_interface(model):
                         "output_tokens": output_tokens
                     }
                 else:
-                    # 기본 응답 생성
-                    response = "죄송합니다. 현재 선택된 모델은 지원되지 않습니다."
+                    # Ollama 함수는 5개의 값을 반환합니다
+                    response, response_time, input_tokens, output_tokens, _ = query_ollama_optimized(prompt)
+                    # metrics 딕셔너리 생성
                     metrics = {
-                        "request_time": 0,
-                        "response_time": 0,
-                        "input_tokens": 0,
-                        "output_tokens": 0
+                        "request_time": time.time() - start_time,
+                        "response_time": response_time,
+                        "input_tokens": input_tokens,
+                        "output_tokens": output_tokens
                     }
                 
                 # 답변 작성 중 상태 해제
