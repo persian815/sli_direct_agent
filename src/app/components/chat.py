@@ -17,56 +17,56 @@ from src.utils.utils import (
 
 def render_chat_interface(model):
     """채팅 인터페이스를 렌더링하는 함수"""
-    # Light 테마 스타일링 추가
+    # Dark 테마 스타일링 추가
     st.markdown("""
     <style>
-        /* Light 테마 기본 스타일 */
+        /* Dark 테마 기본 스타일 */
         .stApp {
-            background-color: #FFFFFF;
-            color: #31333F;
+            background-color: #1E1E1E;
+            color: #E0E0E0;
         }
         
         /* 채팅 메시지 스타일 */
         .stChatMessage {
-            background-color: #F8F9FA;
+            background-color: #2D2D2D;
             border-radius: 10px;
             padding: 10px;
             margin-bottom: 10px;
-            border: 1px solid #E9ECEF;
+            border: 1px solid #3D3D3D;
         }
         
         /* 사용자 메시지 스타일 */
         .stChatMessage[data-testid="stChatMessage"] {
-            background-color: #E6F3FF;
+            background-color: #1E3A5F;
             border-left: 4px solid #0066CC;
         }
         
         /* 어시스턴트 메시지 스타일 */
         .stChatMessage[data-testid="stChatMessage"]:nth-child(even) {
-            background-color: #F0F0F0;
+            background-color: #2D2D2D;
             border-left: 4px solid #4CAF50;
         }
         
         /* 입력 필드 스타일 */
         .stChatInputContainer {
-            background-color: #FFFFFF;
+            background-color: #2D2D2D;
             border-radius: 10px;
             padding: 10px;
             margin-top: 20px;
-            border: 1px solid #E9ECEF;
+            border: 1px solid #3D3D3D;
         }
         
         div.stTextInput > div > div > input {
-            background-color: #FFFFFF;
-            color: #31333F;
-            border: 1px solid #CED4DA;
+            background-color: #3D3D3D;
+            color: #E0E0E0;
+            border: 1px solid #4D4D4D;
             border-radius: 8px;
             padding: 10px 15px;
         }
         
         /* 캡션 스타일 */
         .stCaption {
-            color: #6C757D;
+            color: #A0A0A0;
             font-size: 0.85em;
         }
         
@@ -96,16 +96,32 @@ def render_chat_interface(model):
         }
         
         ::-webkit-scrollbar-track {
-            background: #F8F9FA;
+            background: #2D2D2D;
         }
         
         ::-webkit-scrollbar-thumb {
-            background: #CED4DA;
+            background: #4D4D4D;
             border-radius: 4px;
         }
         
         ::-webkit-scrollbar-thumb:hover {
-            background: #ADB5BD;
+            background: #5D5D5D;
+        }
+        
+        /* 메트릭스 스타일 */
+        .metrics {
+            color: #A0A0A0;
+            font-size: 0.85em;
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+        
+        /* 지식 수준 이유 스타일 */
+        .knowledge-level-reason, .temperature-reason, .quality-reason {
+            color: #A0A0A0;
+            font-size: 0.8em;
+            margin-top: 2px;
+            margin-bottom: 5px;
         }
     </style>
     """, unsafe_allow_html=True)
