@@ -73,7 +73,7 @@ def render_chat_interface(model):
         /* 사용자 메시지 스타일 */
         .stChatMessage[data-testid="stChatMessage"] {
             background-color: #1E3A5F;
-            border-left: 4px solid #0066CC;
+            # border-left: 4px solid #0066CC;
         }
         
         /* 어시스턴트 메시지 스타일 */
@@ -175,14 +175,16 @@ def render_chat_interface(model):
             flex-direction: row;
             align-items: flex-start;
             margin-bottom: 10px;
+            position: relative;
         }
         
         /* 어시스턴트 메시지 컨테이너 스타일 */
         .assistant-message-container {
             display: flex;
-            flex-direction: row-reverse;
+            flex-direction: row;
             align-items: flex-start;
             margin-bottom: 10px;
+            position: relative;
         }
         
         /* 메시지 내용 스타일 */
@@ -191,18 +193,42 @@ def render_chat_interface(model):
             border-radius: 10px;
             padding: 10px;
             max-width: 100%;
+            position: relative;
         }
         
         /* 사용자 메시지 내용 스타일 */
         .user-message-content {
             background-color: #1E3A5F;
-            border-left: 4px solid #0066CC;
+            # border-left: 4px solid #0066CC;
         }
         
         /* 어시스턴트 메시지 내용 스타일 */
         .assistant-message-content {
             background-color: #2D2D2D;
             border-left: 4px solid #4CAF50;
+        }
+        
+        /* 말풍선 스타일 */
+        .message-content::before {
+            content: "";
+            position: absolute;
+            top: -10px;
+            left: 10px;
+            width: 0;
+            height: 0;
+            border-bottom: 10px solid #2D2D2D;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+        }
+        
+        /* 사용자 말풍선 스타일 */
+        .user-message-content::before {
+            border-bottom-color: #1E3A5F;
+        }
+        
+        /* 어시스턴트 말풍선 스타일 */
+        .assistant-message-content::before {
+            border-bottom-color: #2D2D2D;
         }
         
         /* 이미지 컨테이너 스타일 */
@@ -254,7 +280,7 @@ def render_chat_interface(model):
     for message in st.session_state.messages:
         if message["role"] == "user":
             # 사용자 메시지 컨테이너
-            col1, col2 = st.columns([1, 5])
+            col1, col2 = st.columns([1, 10])
             with col1:
                 st.image(user_icon, width=40)
             
@@ -262,7 +288,7 @@ def render_chat_interface(model):
                 # 메시지 내용 표시
                 st.markdown(f"""
                 <div class="user-message-container">
-                    <div class="message-content">
+                    <div class="message-content user-message-content">
                         {message["content"]}
                     </div>
                 </div>
@@ -289,7 +315,7 @@ def render_chat_interface(model):
             character_icon = get_character_icon(character_name)
             
             # 어시스턴트 메시지 컨테이너
-            col1, col2 = st.columns([1, 5])
+            col1, col2 = st.columns([1, 10])
             with col1:
                 st.image(character_icon, width=40)
             
@@ -300,32 +326,10 @@ def render_chat_interface(model):
                 if isinstance(content, tuple):
                     content = content[0]
                 
-                # 링크를 클릭 가능하게 만들기 위해 특별한 처리를 추가
-                # 마크다운 링크를 HTML 링크로 변환
-                import re
-                
-                # 마크다운 링크 패턴: [텍스트](URL)
-                link_pattern = r'\[([^\]]+)\]\(([^)]+)\)'
-                
-                # 링크를 HTML로 변환 - 웹뷰 호환성을 위해 onclick 이벤트 추가
-                content_with_links = re.sub(
-                    link_pattern, 
-                    r'<a href="\2" target="_blank" rel="noopener noreferrer" onclick="window.open(\'\2\', \'_blank\'); return false;" class="mobile-link">\1</a>', 
-                    content
-                )
-                
-                # 일반 URL도 링크로 변환 (http:// 또는 https://로 시작하는 URL)
-                url_pattern = r'(?<![\[\(])(https?://[^\s\)]+)(?![\]\)])'
-                content_with_links = re.sub(
-                    url_pattern,
-                    r'<a href="\1" target="_blank" rel="noopener noreferrer" onclick="window.open(\'\1\', \'_blank\'); return false;" class="mobile-link">\1</a>',
-                    content_with_links
-                )
-                
                 st.markdown(f"""
                 <div class="assistant-message-container">
                     <div class="message-content">
-                        {content_with_links}
+                        {content}
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
@@ -345,25 +349,25 @@ def render_chat_interface(model):
                             if 'quality_reason' in message and message['quality_reason'] is not None:
                                 st.markdown(f'<div class="quality-reason" style="color: #888888; font-size: 0.8em;">{message["quality_reason"]}</div>', unsafe_allow_html=True)
     
-    # 답변 작성 중 메시지
-    if st.session_state.get('is_generating', False):
-        # 현재 선택된 캐릭터 아이콘 경로
-        character_name = st.session_state.get("character", "논리적인 테스형")
-        character_icon = get_character_icon(character_name)
+    # # 답변 작성 중 메시지
+    # if st.session_state.get('is_generating', False):
+    #     # 현재 선택된 캐릭터 아이콘 경로
+    #     character_name = st.session_state.get("character", "논리적인 테스형")
+    #     character_icon = get_character_icon(character_name)
         
-        # 어시스턴트 메시지 컨테이너
-        col1, col2 = st.columns([1, 10])
-        with col1:
-            st.image(character_icon, width=40)
+    #     # 어시스턴트 메시지 컨테이너
+    #     col1, col2 = st.columns([1, 10])
+    #     with col1:
+    #         st.image(character_icon, width=40)
         
-        with col2:
-            st.markdown(f"""
-            <div class="assistant-message-container">
-                <div class="message-content">
-                    답변 작성 중...
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+    #     with col2:
+    #         st.markdown(f"""
+    #         <div class="assistant-message-container">
+    #             <div class="message-content">
+    #                 답변 작성 중...
+    #             </div>
+    #         </div>
+    #         """, unsafe_allow_html=True)
     
     # 사용자 입력 받기
     if prompt := st.chat_input("메시지를 입력하세요"):
@@ -393,20 +397,6 @@ def render_chat_interface(model):
         character_name = st.session_state.get("character", "논리적인 테스형")
         character_icon = get_character_icon(character_name)
         
-        # 어시스턴트 메시지 컨테이너
-        col1, col2 = st.columns([1, 10])
-        with col1:
-            st.image(character_icon, width=40)
-        
-        with col2:
-            st.markdown(f"""
-            <div class="assistant-message-container">
-                <div class="message-content">
-                    답변 작성 중...
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-        
         with st.spinner("답변 작성 중..."):
             start_time = time.time()
             if model == "Azure AI Foundry (GPT-4.0)":
@@ -432,7 +422,7 @@ def render_chat_interface(model):
             st.session_state.is_generating = False
             
             # 응답 표시
-            col1, col2 = st.columns([1, 5])
+            col1, col2 = st.columns([1, 10])
             with col1:
                 st.image(character_icon, width=40)
             
@@ -446,7 +436,9 @@ def render_chat_interface(model):
                 """, unsafe_allow_html=True)
                 
                 # API로 채팅 로그 전송
-                user_question = st.session_state.messages[-2]["content"]  # 마지막 사용자 질문
+                # user_question = st.session_state.messages[-2]["content"]  # 마지막 사용자 질문
+                user_question =prompt;
+                
                 send_chat_log_to_api(user_question, response)
                 
                 # 개발자 모드가 켜져 있을 때만 메트릭스 표시

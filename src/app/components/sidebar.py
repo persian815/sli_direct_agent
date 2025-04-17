@@ -5,9 +5,10 @@ from src.visualization.visualization import create_knowledge_distribution_graph,
 from src.llm import aws_credentials_available, ms_credentials_available
 from src.llm.ms_functions import test_ms_agent_connection
 from src.utils.utils import get_temperature_color, get_chat_history_from_api
+import pandas as pd
 
 def render_sidebar():
-    """사이드바 UI를 렌더링하는 함수"""
+    """사이드바를 렌더링합니다."""
     # 세션 상태 초기화
     if 'function_logs' not in st.session_state:
         st.session_state.function_logs = []
@@ -17,13 +18,6 @@ def render_sidebar():
         st.session_state.is_first_load = True
         st.session_state.model = "Azure AI Foundry (GPT-4.0)"
         st.session_state.character = "친절한 금자씨"
-        
-        # # Azure AI Foundry 연결 테스트 및 로그 추가
-        # success, message = test_ms_agent_connection()
-        # if success:
-        #     st.session_state.function_logs.append(f"Azure AI Foundry 연결 테스트 성공: {message}")
-        # else:
-        #     st.session_state.function_logs.append(f"Azure AI Foundry 연결 테스트 실패: {message}")
     
     # 기본 모델 설정
     model = st.session_state.get("model", "Azure AI Foundry (GPT-4.0)")
@@ -31,195 +25,119 @@ def render_sidebar():
     with st.sidebar:
         st.header("설정")
         
-        # Service selection
-        st.subheader("서비스")
-        role = st.selectbox(
-            "서비스 선택",
+        # 서비스 선택
+        st.subheader("서비스 선택")
+        service = st.selectbox(
+            "서비스를 선택하세요",
             list(SERVICES.keys()),
-            key="role"
+            key="service"
         )
         
-        # Character selection
-        st.subheader("캐릭터")
-        def update_persona_info():
-            st.session_state.persona_info = PERSONAS.get(st.session_state.character, {})
-            # 함수 로그 추가
-            st.session_state.function_logs.append(f"페르소나 정보 업데이트: {st.session_state.character}")
-        character = st.selectbox(
-            "캐릭터 선택",
-            list(PERSONAS.keys()),
-            key="character",
-            on_change=update_persona_info
-        )
-        
-        # Display selected persona information
-        st.subheader("선택된 페르소나")
-        persona_info = PERSONAS.get(character, {})
-        if persona_info:
-            st.markdown(f"**설명:** {persona_info.get('설명', 'N/A')}")
-        else:
-            st.warning("페르소나 정보를 가져오는데 실패했습니다.")
-        
-        # Developer mode toggle
+        # 개발자 모드 토글
         st.subheader("개발자 모드")
-        developer_mode = st.toggle("개발자 모드 활성화", key="developer_mode")
+        is_developer_mode = st.toggle("개발자 모드 활성화", key="developer_mode")
         
-        # 개발자 모드가 활성화된 경우에만 모델 선택 영역 표시
-        if developer_mode:
-            # Model selection
-            st.subheader("모델 선택")
-            
-            # 사용 가능한 모델 목록 생성
-            available_models = ["Azure AI Foundry (GPT-4.0)"]  # Azure AI Foundry를 기본으로 추가
-            
-            # Ollama 모델 추가
-            available_models.append("Ollama (라마 3.3)")
-            
-            # AWS 자격증명이 있는 경우 AWS 모델 추가
-            if aws_credentials_available:
-                available_models.append("AWS Bedrock (클로드 3.5)")
-            
-            model = st.radio(
-                "LLM 모델 선택",
-                available_models,
-                key="model",
-                index=0  # Azure AI Foundry를 기본값으로 설정
-            )
-            
-            # Azure AI Foundry 연결 테스트 로그 추가 (모델 변경 시)
-            if model == "Azure AI Foundry (GPT-4.0)" and not st.session_state.is_first_load:
-                success, message = test_ms_agent_connection()
-                if success:
-                    st.session_state.function_logs.append(f"Azure AI Foundry 연결 테스트 성공: {message}")
-                else:
-                    st.session_state.function_logs.append(f"Azure AI Foundry 연결 테스트 실패: {message}")
-            
-            # Knowledge level statistics
-            st.subheader("지식 수준 통계")
-            if st.session_state.get('developer_mode', False):
-                knowledge_levels = [msg.get('knowledge_level', 0) for msg in st.session_state.messages if 'knowledge_level' in msg]
-                if knowledge_levels:
-                    fig = create_knowledge_distribution_graph(knowledge_levels)
-                    st.plotly_chart(fig, use_container_width=True)
-                else:
-                    st.info("아직 지식 수준 데이터가 없습니다.")
-            
-            # User temperature statistics
-            st.subheader("사용자 온도 통계")
-            if st.session_state.messages:
-                temperatures = [
-                    msg.get("temperature", 36.5)
-                    for msg in st.session_state.messages
-                    if msg["role"] == "user" and "temperature" in msg
-                ]
+        if is_developer_mode:
+            # 채팅 히스토리
+            st.subheader("채팅 히스토리")
+            chat_history = get_chat_history_from_api()
+            if chat_history:
+                df = pd.DataFrame(chat_history)
+                if 'id' in df.columns:
+                    df.set_index('id', inplace=True)
+                # 역순으로 정렬하여 최신 메시지가 위에 표시되도록 함
+                df = df.sort_index(ascending=False)
                 
-                if temperatures:
-                    # 온도 분포 그래프 생성
-                    fig = create_temperature_distribution_graph(temperatures)
-                    st.plotly_chart(fig, use_container_width=True)
-                else:
-                    st.info("아직 사용자 온도 데이터가 없습니다.")
+                # 표시할 컬럼 설정
+                display_columns = ['question', 'answer']
+                
+                # 추가 정보가 있는 경우 컬럼에 추가
+                if 'timestamp' in df.columns:
+                    display_columns.append('timestamp')
+                if 'service' in df.columns:
+                    display_columns.append('service')
+                if 'character' in df.columns:
+                    display_columns.append('character')
+                if 'knowledge_level' in df.columns:
+                    display_columns.append('knowledge_level')
+                if 'temperature' in df.columns:
+                    display_columns.append('temperature')
+                if 'quality_score' in df.columns:
+                    display_columns.append('quality_score')
+                
+                # 컬럼 이름 한글화
+                column_config = {
+                    'question': '질문',
+                    'answer': '답변'
+                }
+                
+                if 'timestamp' in display_columns:
+                    column_config['timestamp'] = '시간'
+                if 'service' in display_columns:
+                    column_config['service'] = '서비스'
+                if 'character' in display_columns:
+                    column_config['character'] = '캐릭터'
+                if 'knowledge_level' in display_columns:
+                    column_config['knowledge_level'] = '지식 수준'
+                if 'temperature' in display_columns:
+                    column_config['temperature'] = '온도'
+                if 'quality_score' in display_columns:
+                    column_config['quality_score'] = '품질 점수'
+                
+                # 번호 컬럼 추가
+                df['번호'] = range(1, len(df) + 1)
+                display_columns.insert(0, '번호')
+                column_config['번호'] = '번호'
+                
+                st.dataframe(
+                    df[display_columns],
+                    column_config=column_config,
+                    hide_index=True
+                )
+            else:
+                st.info("현재 채팅 히스토리가 없습니다.")
+                
+            # 지식 레벨 통계
+            st.subheader("지식 레벨 통계")
+            knowledge_levels = {
+                "초급": 30,
+                "중급": 45,
+                "고급": 25
+            }
+            st.bar_chart(knowledge_levels)
             
-            # Response quality statistics
-            st.subheader("답변 품질 통계")
-            if st.session_state.messages:
-                quality_scores = [
-                    msg.get("quality_score", 0)
-                    for msg in st.session_state.messages
-                    if msg["role"] == "assistant" and "quality_score" in msg and msg.get("quality_score") is not None
-                ]
-                if quality_scores:
-                    avg_quality = sum(quality_scores) / len(quality_scores)
-                    st.markdown(f"평균 답변 품질: {avg_quality:.1f}/100")
-                    
-                    # 품질 점수 분포 그래프 생성
-                    quality_ranges = {}
-                    for i in range(0, 101, 20):
-                        range_key = f"{i}-{i+19}"
-                        quality_ranges[range_key] = sum(1 for score in quality_scores if i <= score < i+20)
-                    
-                    # 품질 점수 분포 그래프 표시
-                    import plotly.graph_objects as go
-                    fig = go.Figure(data=[
-                        go.Bar(
-                            x=list(quality_ranges.keys()),
-                            y=list(quality_ranges.values()),
-                            marker_color='#4CAF50',
-                            opacity=0.7
-                        )
-                    ])
-                    
-                    # 그래프 레이아웃 업데이트
-                    fig.update_layout(
-                        title="Response Quality Distribution",
-                        xaxis_title="Quality Score Range",
-                        yaxis_title="Count",
-                        template="plotly_dark",
-                        paper_bgcolor="#1E1E1E",
-                        plot_bgcolor="#1E1E1E",
-                        font=dict(color="#FFFFFF"),
-                        margin=dict(t=30, l=40, r=20, b=40),
-                        height=300
-                    )
-                    
-                    # 축 업데이트
-                    fig.update_xaxes(
-                        gridcolor="#2D2D2D",
-                        zerolinecolor="#2D2D2D"
-                    )
-                    fig.update_yaxes(
-                        gridcolor="#2D2D2D",
-                        zerolinecolor="#2D2D2D"
-                    )
-                    
-                    st.plotly_chart(fig, use_container_width=True)
-                else:
-                    st.info("아직 에이전트 품질 통계 데이터가 없습니다.")
+            # 사용자 온도 통계
+            st.subheader("사용자 온도 통계")
+            temperature_stats = {
+                "낮음": 20,
+                "보통": 50,
+                "높음": 30
+            }
+            st.bar_chart(temperature_stats)
             
-            # Function logs display
+            # 응답 품질 통계
+            st.subheader("응답 품질 통계")
+            quality_stats = {
+                "불만족": 10,
+                "보통": 40,
+                "만족": 50
+            }
+            st.bar_chart(quality_stats)
+            
+            # 함수 로그
             st.subheader("함수 로그")
-            for log in st.session_state.function_logs:
-                st.text(log)
+            function_logs = [
+                {"timestamp": "2024-03-20 10:00:00", "function": "get_chat_history", "status": "success"},
+                {"timestamp": "2024-03-20 10:01:00", "function": "process_message", "status": "success"},
+                {"timestamp": "2024-03-20 10:02:00", "function": "generate_response", "status": "error"}
+            ]
+            st.dataframe(function_logs)
         else:
             # 개발자 모드가 비활성화된 경우 기본 모델 사용
             model = "Azure AI Foundry (GPT-4.0)"
             st.session_state.model = model
-        
-        # 채팅 히스토리 표시 (개발자 모드가 활성화된 경우에만)
-        if developer_mode:
-            st.subheader("채팅 히스토리")
-            chat_history = get_chat_history_from_api()
-            
-            if chat_history:
-                # 채팅 히스토리를 표로 표시
-                import pandas as pd
-                
-                # 데이터프레임 생성
-                df = pd.DataFrame(chat_history)
-                
-                # ID 열을 인덱스로 설정
-                if 'id' in df.columns:
-                    df = df.set_index('id')
-                
-                # 표로 표시
-                st.dataframe(
-                    df,
-                    use_container_width=True,
-                    hide_index=False,
-                    column_config={
-                        "question": st.column_config.TextColumn(
-                            "질문",
-                            width="medium",
-                            help="사용자가 입력한 질문"
-                        ),
-                        "answer": st.column_config.TextColumn(
-                            "답변",
-                            width="large",
-                            help="에이전트가 제공한 답변"
-                        )
-                    }
-                )
-            else:
-                st.info("아직 채팅 히스토리가 없습니다.")
     
-    return model, role, character, developer_mode 
+    # 현재 선택된 캐릭터 반환
+    character = st.session_state.get("character", "친절한 금자씨")
+    
+    return model, service, character, is_developer_mode 

@@ -1,73 +1,28 @@
+import os
 import streamlit as st
 from src.llm import initialize_session_state
 
 def load_css():
     """CSS 파일을 로드하는 함수"""
-    with open("static/css/styles.css") as f:
-        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+    css_file = os.path.join(os.path.dirname(__file__), '..', '..', 'static', 'css', 'style.css')
+    if os.path.exists(css_file):
+        with open(css_file) as f:
+            st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
 def load_js():
     """JavaScript 파일을 로드하는 함수"""
-    with open("static/js/sidebar.js") as f:
-        js_code = f.read()
-        st.markdown(f"""
-            <script>
-                {js_code}
-            </script>
-            
-            <!-- 웹뷰에서 링크 처리를 위한 추가 스크립트 -->
-            <script>
-                // 웹뷰에서 링크 처리를 위한 함수
-                function handleWebViewLinks() {{
-                    // 모든 링크에 이벤트 리스너 추가
-                    document.querySelectorAll('a').forEach(function(link) {{
-                        // 링크에 클릭 이벤트 리스너 추가
-                        link.addEventListener('click', function(e) {{
-                            // 기본 이벤트 방지
-                            e.preventDefault();
-                            
-                            // 링크 URL 가져오기
-                            const url = this.getAttribute('href');
-                            
-                            // 새 창에서 링크 열기
-                            window.open(url, '_blank');
-                        }});
-                        
-                        // 링크에 터치 이벤트 리스너 추가
-                        link.addEventListener('touchend', function(e) {{
-                            // 기본 이벤트 방지
-                            e.preventDefault();
-                            
-                            // 링크 URL 가져오기
-                            const url = this.getAttribute('href');
-                            
-                            // 새 창에서 링크 열기
-                            window.open(url, '_blank');
-                        }});
-                    }});
-                }}
-                
-                // 페이지 로드 시 함수 실행
-                document.addEventListener('DOMContentLoaded', handleWebViewLinks);
-                
-                // DOM 변경 감지 및 함수 실행
-                const observer = new MutationObserver(function(mutations) {{
-                    mutations.forEach(function(mutation) {{
-                        if (mutation.addedNodes.length) {{
-                            handleWebViewLinks();
-                        }}
-                    }});
-                }});
-                
-                // 문서 전체 관찰
-                observer.observe(document.body, {{ childList: true, subtree: true }});
-            </script>
-        """, unsafe_allow_html=True)
+    js_file = os.path.join(os.path.dirname(__file__), '..', '..', 'static', 'js', 'sidebar.js')
+    if os.path.exists(js_file):
+        with open(js_file) as f:
+            st.markdown(f'<script>{f.read()}</script>', unsafe_allow_html=True)
 
 def initialize_app():
     """애플리케이션 초기화 함수"""
     # Load CSS
     load_css()
+    
+    # Load JavaScript
+    load_js()
     
     # Initialize session state
     initialize_session_state()
@@ -125,4 +80,12 @@ def initialize_app():
                 "input_tokens": 0,
                 "output_tokens": 0
             }
-        }) 
+        })
+
+    if 'function_logs' not in st.session_state:
+        st.session_state.function_logs = []
+
+    if 'is_first_load' not in st.session_state:
+        st.session_state.is_first_load = True
+    else:
+        st.session_state.is_first_load = False 
