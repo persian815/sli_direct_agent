@@ -189,7 +189,7 @@ def render_chat_interface(model):
             background-color: #2D2D2D;
             border-radius: 10px;
             padding: 10px;
-            max-width: 80%;
+            max-width: 100%;
         }
         
         /* 사용자 메시지 내용 스타일 */
@@ -329,7 +329,7 @@ def render_chat_interface(model):
         character_icon = get_character_icon(character_name)
         
         # 어시스턴트 메시지 컨테이너
-        col1, col2 = st.columns([1, 5])
+        col1, col2 = st.columns([1, 10])
         with col1:
             st.image(character_icon, width=40)
         
@@ -371,7 +371,7 @@ def render_chat_interface(model):
         character_icon = get_character_icon(character_name)
         
         # 어시스턴트 메시지 컨테이너
-        col1, col2 = st.columns([1, 5])
+        col1, col2 = st.columns([1, 10])
         with col1:
             st.image(character_icon, width=40)
         
@@ -409,7 +409,7 @@ def render_chat_interface(model):
             st.session_state.is_generating = False
             
             # 응답 표시
-            col1, col2 = st.columns([1, 5])
+            col1, col2 = st.columns([1, 10])
             with col1:
                 st.image(character_icon, width=40)
             

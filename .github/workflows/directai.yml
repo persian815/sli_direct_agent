@@ -42,6 +42,7 @@ jobs:
 
       - name: Lowercase the repo name
         run: echo "REPO=${GITHUB_REPOSITORY,,}" >>${GITHUB_ENV}
+        shell: bash
 
       - name: build and push image to ACR
         uses: docker/build-push-action@v5
