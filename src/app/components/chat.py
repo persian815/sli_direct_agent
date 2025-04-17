@@ -300,10 +300,24 @@ def render_chat_interface(model):
                 if isinstance(content, tuple):
                     content = content[0]
                 
+                # 링크를 클릭 가능하게 만들기 위해 특별한 처리를 추가
+                # 마크다운 링크를 HTML 링크로 변환
+                import re
+                
+                # 마크다운 링크 패턴: [텍스트](URL)
+                link_pattern = r'\[([^\]]+)\]\(([^)]+)\)'
+                
+                # 링크를 HTML로 변환
+                content_with_links = re.sub(
+                    link_pattern, 
+                    r'<a href="\2" target="_blank" rel="noopener noreferrer">\1</a>', 
+                    content
+                )
+                
                 st.markdown(f"""
                 <div class="assistant-message-container">
                     <div class="message-content">
-                        {content}
+                        {content_with_links}
                     </div>
                 </div>
                 """, unsafe_allow_html=True)

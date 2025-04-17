@@ -208,7 +208,7 @@ def query_ms_agent(input_text, tab_id=None, system_prompt=None):
             # 응답 텍스트 추출
             response_text = ""
             
-            # 메시지 목록이 비어있지 않은 경우
+            # 메시지 목록이 비어있지 않은 경우ㅌ
             if messages.text_messages:
                 # 첫 번째 메시지 가져오기
                 first_message = messages.text_messages[0]
