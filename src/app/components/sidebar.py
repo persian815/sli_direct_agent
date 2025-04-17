@@ -27,11 +27,31 @@ def render_sidebar():
         
         # 서비스 선택
         st.subheader("서비스 선택")
-        service = st.selectbox(
-            "서비스를 선택하세요",
-            list(SERVICES.keys()),
-            key="service"
+        service_options = list(SERVICES.keys())
+        default_service_index = 0
+        
+        # URL 파라미터로 설정된 서비스가 있으면 해당 인덱스로 설정
+        if 'service' in st.session_state:
+            service_value = st.session_state.service
+            if service_value == "1":
+                default_service_index = service_options.index("통합 전문가")
+            elif service_value == "2":
+                default_service_index = service_options.index("질병 전문가")
+            elif service_value == "3":
+                default_service_index = service_options.index("라이프 전문가")
+        
+        selected_service = st.selectbox(
+            "서비스 선택",
+            options=service_options,
+            index=default_service_index,
+            key="service_select"
         )
+        
+        # 서비스가 변경되면 세션 상태 업데이트
+        if selected_service != st.session_state.get("service", ""):
+            st.session_state.service = selected_service
+            if 'function_logs' in st.session_state:
+                st.session_state.function_logs.append(f"서비스 변경: {selected_service}")
         
         # 개발자 모드 토글
         st.subheader("개발자 모드")
@@ -140,4 +160,4 @@ def render_sidebar():
     # 현재 선택된 캐릭터 반환
     character = st.session_state.get("character", "친절한 금자씨")
     
-    return model, service, character, is_developer_mode 
+    return model, selected_service, character, is_developer_mode 

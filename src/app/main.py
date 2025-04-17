@@ -2,6 +2,12 @@ import streamlit as st
 from src.app.config import initialize_app, load_js
 from src.app.components import render_sidebar, render_chat_interface
 from src.data.personas_roles import PERSONAS
+import json
+
+import logging
+# 로깅 설정
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 # Page config - 반드시 첫 번째 Streamlit 명령이어야 함
 st.set_page_config(
@@ -15,6 +21,19 @@ def main():
     # Initialize the application
     initialize_app()
 
+    # URL 파라미터 처리
+    query_params = st.query_params
+    
+    # 에이전트 설정 파라미터 처리
+    if 'agent' in query_params:
+        agent_param = query_params['agent']
+        # 단순 문자열 파라미터 처리
+        st.session_state.service = agent_param
+        logger.info("############# main() service : {}".format(st.session_state.service))
+
+        if 'function_logs' in st.session_state:
+            st.session_state.function_logs.append(f"URL 파라미터로 서비스 설정: {agent_param}")
+    
     # 캐릭터 선택 UI 스타일
     st.markdown("""
     <style>

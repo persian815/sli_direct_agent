@@ -16,10 +16,42 @@ logger = logging.getLogger(__name__)
 # 환경 설정
 IS_LOCAL = os.getenv('ENV', 'local') == 'local'
 
-# agent
-MS_AGENT_ID = "asst_U5EvVPTcw0kO5XkvENF1k9dF"
-MS_THREAD_ID = "thread_lsizSBgblCuAXVZh8UVXLuIR"
+# agent1(통합 전문가)
+MS_AGENT_ID_1 = "asst_qdDOMuZzZCDaBTw4MDEwmlMf"
+MS_THREAD_ID_1 = "thread_bKzWFyvSbJOgtfDtXtBpf03x"
 
+# agent2(질병 전문가)
+MS_AGENT_ID_2 = "asst_U5EvVPTcw0kO5XkvENF1k9dF"
+MS_THREAD_ID_2 = "thread_yPa8uxo0dudsnGcKGOybfdvu"
+
+# agent3(라이프 전문가)
+MS_AGENT_ID_3 = "asst_w0KcBJtWbHWNa561GNxFop86"
+MS_THREAD_ID_3 = "thread_2M3RVRlDKlPAaejxMoiJktou"
+
+# 에이전트 ID와 스레드 ID 가져오기
+def get_agent_config():
+    service = format(st.session_state.service);
+
+    if service == "1": 
+        return {
+            "agent_id": MS_AGENT_ID_1,
+            "thread_id": MS_THREAD_ID_1
+        }
+    elif service == "2": 
+        return {
+            "agent_id": MS_AGENT_ID_2,
+            "thread_id": MS_THREAD_ID_2
+        }
+    elif service == "3":  
+        return {
+            "agent_id": MS_AGENT_ID_3,
+            "thread_id": MS_THREAD_ID_3
+        }
+    else:  # 기본값 (통합 전문가)
+        return {
+            "agent_id": MS_AGENT_ID_1,
+            "thread_id": MS_THREAD_ID_1
+        }
 
 # Azure AI Foundry 연결 정보
 MS_CONNECTION_STRING = "eastus2.api.azureml.ms;2326c76a-5eab-44b6-808b-1978f2ffee0e;slihackathon-2025-team2-rg;team2_seongryongle-8914"
@@ -150,11 +182,21 @@ def query_ms_agent(input_text, tab_id=None, system_prompt=None):
     
     while retry_count < max_retries:
         try:
-            logger.debug("에이전트 가져오기 시작")
-            # 에이전트 가져오기
-            agent = project_client.agents.get_agent(MS_AGENT_ID)
-            logger.debug(f"에이전트 가져오기 완료: {agent.id}")
+
+            logger.info("########################################################")
+            logger.info("에이전트 가져오기 시작")
             
+            # 에이전트 설정 가져오기
+            agent_config = get_agent_config()
+            agent_id = agent_config["agent_id"]
+            logger.info(f"에이전트 설정 가져오기: {agent_id}")
+            
+            # 에이전트 가져오기
+            agent = project_client.agents.get_agent(agent_id)
+            
+            logger.info(f"에이전트 가져오기 완료: {agent.id}")
+            logger.info("########################################################")
+
             # 요청 간 지연 시간 추가 (충돌 방지)
             time.sleep(1)
             
@@ -258,8 +300,13 @@ def test_ms_agent_connection():
     try:
         logger.debug("에이전트 연결 테스트 시작")
         
+        # 에이전트 설정 가져오기
+        agent_config = get_agent_config()
+        agent_id = agent_config["agent_id"]
+        logger.debug(f"에이전트 설정 가져오기: {agent_id}")
+        
         # 에이전트 가져오기
-        agent = project_client.agents.get_agent(MS_AGENT_ID)
+        agent = project_client.agents.get_agent(agent_id)
         logger.debug(f"에이전트 가져오기 완료: {agent.id}")
         
         # 요청 간 지연 시간 추가 (충돌 방지)

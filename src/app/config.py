@@ -31,7 +31,7 @@ def initialize_app():
     if 'model' not in st.session_state:
         st.session_state.model = "Azure AI Foundry (GPT-4.0)"
     if 'role' not in st.session_state:
-        st.session_state.role = "보험 전문가"
+        st.session_state.role = "통합 전문가"
     if 'character' not in st.session_state:
         st.session_state.character = "친절한 금자씨"
     if 'persona_info' not in st.session_state:
@@ -56,14 +56,12 @@ def initialize_app():
         
         # 역할별 맞춤 환영 메시지 생성
         role_specific_message = ""
-        if agent_role == "보험 전문가":
+        if agent_role == "통합 전문가":
             role_specific_message = "보험 설계와 상품 추천을 도와드릴게요. 어떤 보험이 필요하신가요?"
         elif agent_role == "질병 전문가":
             role_specific_message = "질병에 대한 분석과 관련 보험 상품을 추천해드릴게요. 어떤 건강 고민이 있으신가요?"
-        elif agent_role == "라이프스타일 전문가":
+        elif agent_role == "라이프 전문가":
             role_specific_message = "고객님의 생활 방식에 맞는 보험을 추천해드릴게요. 평소 어떤 생활을 하시나요?"
-        elif agent_role == "자산 전문가":
-            role_specific_message = "자산 관리와 투자에 대해 상담해드릴게요. 어떤 자산 계획이 있으신가요?"
         else:
             role_specific_message = "고객님께 딱 맞는 보험 상품을 추천해드릴게요. 어떤 도움이 필요하신가요?"
 
