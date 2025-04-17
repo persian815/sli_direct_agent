@@ -29,8 +29,8 @@ try:
     # API 키를 사용하여 인증
     if os.getenv('AZURE_AI_FOUNDRY_API_KEY'):
         # API 키가 설정된 경우 API 키를 사용
-        from azure.core.credentials import AzureKeyCredential
-        credential = AzureKeyCredential(os.getenv('AZURE_AI_FOUNDRY_API_KEY'))
+        # from azure.core.credentials import AzureKeyCredential
+        credential = os.getenv('AZURE_AI_FOUNDRY_API_KEY')
         logger.info("Azure AI Foundry API 키를 사용하여 인증합니다.")
     else:
         # API 키가 설정되지 않은 경우 관리 ID를 사용
