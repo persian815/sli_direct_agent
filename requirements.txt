@@ -11,3 +11,4 @@ requests>=2.31.0
 azure-ai-projects
 azure-identity
 matplotlib>=3.7.2
+pandas>=2.0.0

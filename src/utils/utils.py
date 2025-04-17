@@ -328,13 +328,80 @@ def evaluate_user_temperature(user_input):
 
 def get_temperature_color(temperature):
     """온도에 따른 색상 반환"""
+    if temperature is None:
+        return "#808080"  # 기본 회색
     if temperature >= 37.5:
-        return "#FF4500"  # 빨간색 (열이 많은 상태)
+        return "#FF5252"  # 빨간색
     elif temperature >= 37.0:
-        return "#FF8C00"  # 주황색 (약간 열이 있는 상태)
-    elif temperature >= 36.5:
-        return "#FFD700"  # 금색 (정상 체온)
-    elif temperature >= 36.0:
-        return "#87CEEB"  # 하늘색 (약간 저체온)
+        return "#FFC107"  # 노란색
     else:
-        return "#4169E1"  # 파란색 (저체온) 
+        return "#4CAF50"  # 녹색
+
+def send_chat_log_to_api(question, answer):
+    """채팅 로그를 API로 전송하는 함수"""
+    import requests
+    import json
+    
+    api_url = "https://team2-webapp-g2a2cgb8hvemdzc6.koreacentral-01.azurewebsites.net/api/chat/log"
+    
+    # 전송할 데이터 준비
+    data = {
+        "question": question,
+        "answer": answer
+    }
+    
+    try:
+        # API 호출
+        response = requests.post(api_url, json=data)
+        
+        # 응답 확인
+        if response.status_code == 200:
+            # 응답 내용에서 헤더 정보 제외
+            response_text = response.text
+            if "Response headers:" in response_text:
+                response_text = response_text.split("Response headers:")[0].strip()
+            add_function_log(f"채팅 로그 전송 성공: {response_text}")
+            return True
+        else:
+            # 응답 내용에서 헤더 정보 제외
+            response_text = response.text
+            if "Response headers:" in response_text:
+                response_text = response_text.split("Response headers:")[0].strip()
+            add_function_log(f"채팅 로그 전송 실패: {response.status_code} - {response_text}")
+            return False
+    except Exception as e:
+        add_function_log(f"채팅 로그 전송 중 오류 발생: {str(e)}")
+        return False
+
+def get_chat_history_from_api():
+    """API에서 채팅 히스토리를 가져오는 함수"""
+    import requests
+    import json
+    
+    api_url = "https://team2-webapp-g2a2cgb8hvemdzc6.koreacentral-01.azurewebsites.net/api/chat/log"
+    
+    try:
+        # API 호출
+        response = requests.get(api_url)
+        
+        # 응답 확인
+        if response.status_code == 200:
+            # 응답 내용에서 헤더 정보 제외
+            response_text = response.text
+            if "Response headers:" in response_text:
+                response_text = response_text.split("Response headers:")[0].strip()
+            
+            # JSON 파싱
+            try:
+                chat_history = json.loads(response_text)
+                add_function_log(f"채팅 히스토리 가져오기 성공: {len(chat_history)}개 항목")
+                return chat_history
+            except json.JSONDecodeError:
+                add_function_log(f"채팅 히스토리 JSON 파싱 실패: {response_text}")
+                return []
+        else:
+            add_function_log(f"채팅 히스토리 가져오기 실패: {response.status_code} - {response.text}")
+            return []
+    except Exception as e:
+        add_function_log(f"채팅 히스토리 가져오기 중 오류 발생: {str(e)}")
+        return [] 

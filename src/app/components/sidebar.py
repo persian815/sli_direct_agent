@@ -4,7 +4,7 @@ from src.data.services_roles import SERVICES
 from src.visualization.visualization import create_knowledge_distribution_graph, create_temperature_distribution_graph
 from src.llm import aws_credentials_available, ms_credentials_available
 from src.llm.ms_functions import test_ms_agent_connection
-from src.utils.utils import get_temperature_color
+from src.utils.utils import get_temperature_color, get_chat_history_from_api
 
 def render_sidebar():
     """사이드바 UI를 렌더링하는 함수"""
@@ -66,26 +66,25 @@ def render_sidebar():
         
         # 개발자 모드가 활성화된 경우에만 모델 선택 영역 표시
         if developer_mode:
-           
-            # # Model selection
-            # st.subheader("모델 선택")
+            # Model selection
+            st.subheader("모델 선택")
             
-            # # 사용 가능한 모델 목록 생성
-            # available_models = ["Azure AI Foundry (GPT-4.0)"]  # Azure AI Foundry를 기본으로 추가
+            # 사용 가능한 모델 목록 생성
+            available_models = ["Azure AI Foundry (GPT-4.0)"]  # Azure AI Foundry를 기본으로 추가
             
-            # # Ollama 모델 추가
-            # available_models.append("Ollama (라마 3.3)")
+            # Ollama 모델 추가
+            available_models.append("Ollama (라마 3.3)")
             
-            # # AWS 자격증명이 있는 경우 AWS 모델 추가
-            # if aws_credentials_available:
-            #     available_models.append("AWS Bedrock (클로드 3.5)")
+            # AWS 자격증명이 있는 경우 AWS 모델 추가
+            if aws_credentials_available:
+                available_models.append("AWS Bedrock (클로드 3.5)")
             
-            # model = st.radio(
-            #     "LLM 모델 선택",
-            #     available_models,
-            #     key="model",
-            #     index=0  # Azure AI Foundry를 기본값으로 설정
-            # )
+            model = st.radio(
+                "LLM 모델 선택",
+                available_models,
+                key="model",
+                index=0  # Azure AI Foundry를 기본값으로 설정
+            )
             
             # Azure AI Foundry 연결 테스트 로그 추가 (모델 변경 시)
             if model == "Azure AI Foundry (GPT-4.0)" and not st.session_state.is_first_load:
@@ -185,5 +184,41 @@ def render_sidebar():
             # 개발자 모드가 비활성화된 경우 기본 모델 사용
             model = "Azure AI Foundry (GPT-4.0)"
             st.session_state.model = model
+        
+        # 채팅 히스토리 표시
+        st.subheader("채팅 히스토리")
+        chat_history = get_chat_history_from_api()
+        
+        if chat_history:
+            # 채팅 히스토리를 표로 표시
+            import pandas as pd
+            
+            # 데이터프레임 생성
+            df = pd.DataFrame(chat_history)
+            
+            # ID 열을 인덱스로 설정
+            if 'id' in df.columns:
+                df = df.set_index('id')
+            
+            # 표로 표시
+            st.dataframe(
+                df,
+                use_container_width=True,
+                hide_index=False,
+                column_config={
+                    "question": st.column_config.TextColumn(
+                        "질문",
+                        width="medium",
+                        help="사용자가 입력한 질문"
+                    ),
+                    "answer": st.column_config.TextColumn(
+                        "답변",
+                        width="large",
+                        help="에이전트가 제공한 답변"
+                    )
+                }
+            )
+        else:
+            st.info("아직 채팅 히스토리가 없습니다.")
     
     return model, role, character, developer_mode 

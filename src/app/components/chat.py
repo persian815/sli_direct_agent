@@ -12,7 +12,8 @@ from src.utils.utils import (
     evaluate_response_quality,
     get_quality_level_color,
     evaluate_user_temperature,
-    get_temperature_color
+    get_temperature_color,
+    send_chat_log_to_api
 )
 from src.llm.ms_functions import query_ms_agent
 
@@ -409,7 +410,7 @@ def render_chat_interface(model):
             st.session_state.is_generating = False
             
             # 응답 표시
-            col1, col2 = st.columns([1, 10])
+            col1, col2 = st.columns([1, 5])
             with col1:
                 st.image(character_icon, width=40)
             
@@ -421,6 +422,10 @@ def render_chat_interface(model):
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
+                
+                # API로 채팅 로그 전송
+                user_question = st.session_state.messages[-2]["content"]  # 마지막 사용자 질문
+                send_chat_log_to_api(user_question, response)
                 
                 # 개발자 모드가 켜져 있을 때만 메트릭스 표시
                 if st.session_state.get('developer_mode', False):
