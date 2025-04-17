@@ -54,6 +54,9 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: directai.azurecr.io/persian815/sli_direct_agent:latest  # 👈 ML CLI 내장된 이미지로 수정
+      credentials:
+        username: ${{ secrets.ACR_USERNAME }}
+        password: ${{ secrets.ACR_PASSWORD }}
     needs: build
     environment:
       name: 'production'

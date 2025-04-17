@@ -253,63 +253,74 @@ def render_chat_interface(model):
     for message in st.session_state.messages:
         if message["role"] == "user":
             # 사용자 메시지 컨테이너
-            st.markdown(f"""
-            <div class="user-message-container">
-                <div class="avatar-container user-avatar-container">
-                    <img src="{user_icon}" class="chat-icon" alt="User">
-                </div>
-                <div class="message-content user-message-content">
-                    {message["content"]}
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            col1, col2 = st.columns([1, 5])
+            with col1:
+                st.image(user_icon, width=40)
             
-            # 개발자 모드가 켜져 있을 때만 Knowledge Level 표시
-            if st.session_state.get('developer_mode', False) and 'knowledge_level' in message:
-                knowledge_level = message['knowledge_level']
-                color = get_knowledge_level_color(knowledge_level)
-                st.markdown(f'<div class="knowledge-level" style="background-color: {color}; color: white;">Knowledge Level: {knowledge_level}/100</div>', unsafe_allow_html=True)
-                if 'knowledge_level_reason' in message:
-                    st.markdown(f'<div class="knowledge-level-reason" style="color: #888888; font-size: 0.8em;">{message["knowledge_level_reason"]}</div>', unsafe_allow_html=True)
+            with col2:
+                # 메시지 내용 표시
+                st.markdown(f"""
+                <div class="user-message-container">
+                    <div class="message-content">
+                        {message["content"]}
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
                 
-                # 사용자 온도 표시
-                if 'temperature' in message:
-                    temperature = message['temperature']
-                    color = get_temperature_color(temperature)
-                    st.markdown(f'<div class="temperature-level" style="background-color: {color}; color: white;">User Temperature: {temperature:.1f}°C</div>', unsafe_allow_html=True)
-                    if 'temperature_reason' in message:
-                        st.markdown(f'<div class="temperature-reason" style="color: #888888; font-size: 0.8em;">{message["temperature_reason"]}</div>', unsafe_allow_html=True)
+                # 개발자 모드가 켜져 있을 때만 Knowledge Level 표시
+                if st.session_state.get('developer_mode', False) and 'knowledge_level' in message:
+                    knowledge_level = message['knowledge_level']
+                    color = get_knowledge_level_color(knowledge_level)
+                    st.markdown(f'<div class="knowledge-level" style="background-color: {color}; color: white;">Knowledge Level: {knowledge_level}/100</div>', unsafe_allow_html=True)
+                    if 'knowledge_level_reason' in message:
+                        st.markdown(f'<div class="knowledge-level-reason" style="color: #888888; font-size: 0.8em;">{message["knowledge_level_reason"]}</div>', unsafe_allow_html=True)
+                    
+                    # 사용자 온도 표시
+                    if 'temperature' in message:
+                        temperature = message['temperature']
+                        color = get_temperature_color(temperature)
+                        st.markdown(f'<div class="temperature-level" style="background-color: {color}; color: white;">User Temperature: {temperature:.1f}°C</div>', unsafe_allow_html=True)
+                        if 'temperature_reason' in message:
+                            st.markdown(f'<div class="temperature-reason" style="color: #888888; font-size: 0.8em;">{message["temperature_reason"]}</div>', unsafe_allow_html=True)
         else:
             # 현재 선택된 캐릭터 아이콘 경로
             character_name = st.session_state.get("character", "논리적인 테스형")
             character_icon = get_character_icon(character_name)
             
             # 어시스턴트 메시지 컨테이너
-            st.markdown(f"""
-            <div class="assistant-message-container">
-                <div class="avatar-container assistant-avatar-container">
-                    <img src="{character_icon}" class="chat-icon" alt="Assistant">
-                </div>
-                <div class="message-content assistant-message-content">
-                    {message["content"]}
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            col1, col2 = st.columns([1, 5])
+            with col1:
+                st.image(character_icon, width=40)
             
-            # 개발자 모드가 켜져 있을 때만 메트릭스 표시
-            if st.session_state.get('developer_mode', False):
+            with col2:
+                # 메시지 내용 표시
+                # 응답이 튜플인 경우 첫 번째 요소만 사용
+                content = message["content"]
+                if isinstance(content, tuple):
+                    content = content[0]
+                
+                st.markdown(f"""
+                <div class="assistant-message-container">
+                    <div class="message-content">
+                        {content}
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                
                 # 개발자 모드가 켜져 있을 때만 메트릭스 표시
-                if 'metrics' in message:
-                    metrics = message['metrics']
-                    st.markdown(f'<div class="metrics">Request Time: {metrics["request_time"]:.2f}s | Response Time: {metrics["response_time"]:.2f}s | Input Tokens: {metrics["input_tokens"]:.1f} | Output Tokens: {metrics["output_tokens"]:.1f}</div>', unsafe_allow_html=True)
-                    
-                    # Response Quality 표시 (quality_score가 None이 아닌 경우에만)
-                    if 'quality_score' in message and message['quality_score'] is not None:
-                        quality_score = message['quality_score']
-                        color = get_quality_level_color(quality_score)
-                        st.markdown(f'<div class="quality-score" style="background-color: {color}; color: white;">Response Quality: {quality_score}/100</div>', unsafe_allow_html=True)
-                        if 'quality_reason' in message and message['quality_reason'] is not None:
-                            st.markdown(f'<div class="quality-reason" style="color: #888888; font-size: 0.8em;">{message["quality_reason"]}</div>', unsafe_allow_html=True)
+                if st.session_state.get('developer_mode', False):
+                    # 개발자 모드가 켜져 있을 때만 메트릭스 표시
+                    if 'metrics' in message:
+                        metrics = message['metrics']
+                        st.markdown(f'<div class="metrics">Request Time: {metrics["request_time"]:.2f}s | Response Time: {metrics["response_time"]:.2f}s | Input Tokens: {metrics["input_tokens"]:.1f} | Output Tokens: {metrics["output_tokens"]:.1f}</div>', unsafe_allow_html=True)
+                        
+                        # Response Quality 표시 (quality_score가 None이 아닌 경우에만)
+                        if 'quality_score' in message and message['quality_score'] is not None:
+                            quality_score = message['quality_score']
+                            color = get_quality_level_color(quality_score)
+                            st.markdown(f'<div class="quality-score" style="background-color: {color}; color: white;">Response Quality: {quality_score}/100</div>', unsafe_allow_html=True)
+                            if 'quality_reason' in message and message['quality_reason'] is not None:
+                                st.markdown(f'<div class="quality-reason" style="color: #888888; font-size: 0.8em;">{message["quality_reason"]}</div>', unsafe_allow_html=True)
     
     # 답변 작성 중 메시지
     if st.session_state.get('is_generating', False):
@@ -318,16 +329,18 @@ def render_chat_interface(model):
         character_icon = get_character_icon(character_name)
         
         # 어시스턴트 메시지 컨테이너
-        st.markdown(f"""
-        <div class="assistant-message-container">
-            <div class="avatar-container assistant-avatar-container">
-                <img src="{character_icon}" class="chat-icon" alt="Assistant">
+        col1, col2 = st.columns([1, 5])
+        with col1:
+            st.image(character_icon, width=40)
+        
+        with col2:
+            st.markdown(f"""
+            <div class="assistant-message-container">
+                <div class="message-content">
+                    답변 작성 중...
+                </div>
             </div>
-            <div class="message-content assistant-message-content">
-                답변 작성 중...
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
     
     # 사용자 입력 받기
     if prompt := st.chat_input("메시지를 입력하세요"):
@@ -358,16 +371,18 @@ def render_chat_interface(model):
         character_icon = get_character_icon(character_name)
         
         # 어시스턴트 메시지 컨테이너
-        st.markdown(f"""
-        <div class="assistant-message-container">
-            <div class="avatar-container assistant-avatar-container">
-                <img src="{character_icon}" class="chat-icon" alt="Assistant">
+        col1, col2 = st.columns([1, 5])
+        with col1:
+            st.image(character_icon, width=40)
+        
+        with col2:
+            st.markdown(f"""
+            <div class="assistant-message-container">
+                <div class="message-content">
+                    답변 작성 중...
+                </div>
             </div>
-            <div class="message-content assistant-message-content">
-                답변 작성 중...
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
         
         with st.spinner("답변 작성 중..."):
             start_time = time.time()
@@ -394,28 +409,30 @@ def render_chat_interface(model):
             st.session_state.is_generating = False
             
             # 응답 표시
-            st.markdown(f"""
-            <div class="assistant-message-container">
-                <div class="avatar-container assistant-avatar-container">
-                    <img src="{character_icon}" class="chat-icon" alt="Assistant">
-                </div>
-                <div class="message-content assistant-message-content">
-                    {response}
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            col1, col2 = st.columns([1, 5])
+            with col1:
+                st.image(character_icon, width=40)
             
-            # 개발자 모드가 켜져 있을 때만 메트릭스 표시
-            if st.session_state.get('developer_mode', False):
-                # 응답 품질 평가
-                quality_score, quality_reason = evaluate_response_quality(response)
-                color = get_quality_level_color(quality_score)
-                st.markdown(f'<div class="quality-score" style="background-color: {color}; color: white;">Response Quality: {quality_score}/100</div>', unsafe_allow_html=True)
-                if quality_reason:
-                    st.markdown(f'<div class="quality-reason" style="color: #888888; font-size: 0.8em;">{quality_reason}</div>', unsafe_allow_html=True)
+            with col2:
+                st.markdown(f"""
+                <div class="assistant-message-container">
+                    <div class="message-content">
+                        {response}
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
                 
-                # 메트릭스 표시
-                st.caption(f"Request Time: {metrics['request_time']:.2f}s | Response Time: {metrics['response_time']:.2f}s | Input Tokens: {metrics['input_tokens']:.1f} | Output Tokens: {metrics['output_tokens']:.1f}")
+                # 개발자 모드가 켜져 있을 때만 메트릭스 표시
+                if st.session_state.get('developer_mode', False):
+                    # 응답 품질 평가
+                    quality_score, quality_reason = evaluate_response_quality(response)
+                    color = get_quality_level_color(quality_score)
+                    st.markdown(f'<div class="quality-score" style="background-color: {color}; color: white;">Response Quality: {quality_score}/100</div>', unsafe_allow_html=True)
+                    if quality_reason:
+                        st.markdown(f'<div class="quality-reason" style="color: #888888; font-size: 0.8em;">{quality_reason}</div>', unsafe_allow_html=True)
+                    
+                    # 메트릭스 표시
+                    st.caption(f"Request Time: {metrics['request_time']:.2f}s | Response Time: {metrics['response_time']:.2f}s | Input Tokens: {metrics['input_tokens']:.1f} | Output Tokens: {metrics['output_tokens']:.1f}")
         
         # 어시스턴트 메시지 추가
         quality_score, quality_reason = evaluate_response_quality(response)
