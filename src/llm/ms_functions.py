@@ -16,42 +16,43 @@ logger = logging.getLogger(__name__)
 # 환경 설정
 IS_LOCAL = os.getenv('ENV', 'local') == 'local'
 
-# agent1(통합 전문가)
-MS_AGENT_ID_1 = "asst_qdDOMuZzZCDaBTw4MDEwmlMf"
-MS_THREAD_ID_1 = "thread_bKzWFyvSbJOgtfDtXtBpf03x"
+# agent 디폴트 (통합 전문가)
+MS_AGENT_ID = "asst_qdDOMuZzZCDaBTw4MDEwmlMf"
+MS_THREAD_ID = "thread_bKzWFyvSbJOgtfDtXtBpf03x"
 
-# agent2(질병 전문가)
-MS_AGENT_ID_2 = "asst_U5EvVPTcw0kO5XkvENF1k9dF"
-MS_THREAD_ID_2 = "thread_yPa8uxo0dudsnGcKGOybfdvu"
 
-# agent3(라이프 전문가)
-MS_AGENT_ID_3 = "asst_w0KcBJtWbHWNa561GNxFop86"
-MS_THREAD_ID_3 = "thread_2M3RVRlDKlPAaejxMoiJktou"
 
 # 에이전트 ID와 스레드 ID 가져오기
-def get_agent_config():
-    service = format(st.session_state.service);
-
-    if service == "1": 
-        return {
-            "agent_id": MS_AGENT_ID_1,
-            "thread_id": MS_THREAD_ID_1
-        }
-    elif service == "2": 
-        return {
-            "agent_id": MS_AGENT_ID_2,
-            "thread_id": MS_THREAD_ID_2
-        }
-    elif service == "3":  
-        return {
-            "agent_id": MS_AGENT_ID_3,
-            "thread_id": MS_THREAD_ID_3
-        }
-    else:  # 기본값 (통합 전문가)
-        return {
-            "agent_id": MS_AGENT_ID_1,
-            "thread_id": MS_THREAD_ID_1
-        }
+def get_agent_config(service=None):
+    """
+    현재 선택된 서비스와 캐릭터에 따라 에이전트 설정을 반환하는 함수
+    
+    Args:
+        service (str, optional): 서비스 이름. 기본값은 None으로, 세션 상태에서 가져옵니다.
+    
+    Returns:
+        dict: agent_id와 thread_id를 포함하는 딕셔너리
+    """
+    # 서비스가 지정되지 않은 경우 세션 상태에서 가져오기
+    if service is None:
+        service = st.session_state.get("service", "통합 전문가")
+    
+    # 현재 선택된 캐릭터 가져오기
+    character = st.session_state.get("character", "친절한 금자씨")
+    
+    # 캐릭터 정보 가져오기
+    character_info = PERSONAS.get(character, {})
+    
+    # 캐릭터에 정의된 agent_id와 thread_id 사용
+    agent_id = character_info.get("agent_id", MS_AGENT_ID)  # 기본값으로 통합 전문가 ID 사용
+    thread_id = character_info.get("thread_id", MS_THREAD_ID)  # 기본값으로 통합 전문가 스레드 ID 사용
+    
+    logger.info(f"캐릭터 '{character}'에 대한 에이전트 설정: agent_id={agent_id}, thread_id={thread_id}")
+    
+    return {
+        "agent_id": agent_id,
+        "thread_id": thread_id
+    }
 
 # Azure AI Foundry 연결 정보
 MS_CONNECTION_STRING = "eastus2.api.azureml.ms;2326c76a-5eab-44b6-808b-1978f2ffee0e;slihackathon-2025-team2-rg;team2_seongryongle-8914"

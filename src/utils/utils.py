@@ -404,4 +404,23 @@ def get_chat_history_from_api():
             return []
     except Exception as e:
         add_function_log(f"채팅 히스토리 가져오기 중 오류 발생: {str(e)}")
-        return [] 
+        return []
+
+def get_role_specific_message(agent_role):
+    """
+    역할에 따른 맞춤 환영 메시지를 반환하는 함수
+    
+    Args:
+        agent_role (str): 에이전트의 역할
+    
+    Returns:
+        str: 역할에 맞는 환영 메시지
+    """
+    if agent_role == "통합 전문가":
+        return "보험 설계와 상품 추천을 도와드릴게요. 어떤 보험이 필요하신가요?"
+    elif agent_role == "질병 전문가":
+        return "질병에 대한 분석과 관련 보험 상품을 추천해드릴게요. 어떤 건강 고민이 있으신가요?"
+    elif agent_role == "라이프 전문가":
+        return "고객님의 생활 방식에 맞는 보험을 추천해드릴게요. 평소 어떤 생활을 하시나요?"
+    else:
+        return "고객님께 딱 맞는 보험 상품을 추천해드릴게요. 어떤 도움이 필요하신가요?" 

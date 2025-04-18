@@ -35,8 +35,10 @@ def initialize_app():
     if 'character' not in st.session_state:
         st.session_state.character = "친절한 금자씨"
     if 'persona_info' not in st.session_state:
+        from src.data.personas_roles import PERSONAS
+        welcome_message = PERSONAS.get("친절한 금자씨", {}).get("welcome_message", "안녕하세요! 무엇을 도와드릴까요?")
         st.session_state.persona_info = {
-            "description": "저는 삼성생명 다이렉트 FIT AI 서비스의 친절한 금자씨입니다. 고객님의 상황과 니즈에 맞는 최적의 보험 상품을 추천해드리겠습니다."
+            "description": welcome_message
         }
     
     # Initialize tabs in session state
@@ -55,15 +57,8 @@ def initialize_app():
         persona_info = st.session_state.persona_info
         
         # 역할별 맞춤 환영 메시지 생성
-        role_specific_message = ""
-        if agent_role == "통합 전문가":
-            role_specific_message = "보험 설계와 상품 추천을 도와드릴게요. 어떤 보험이 필요하신가요?"
-        elif agent_role == "질병 전문가":
-            role_specific_message = "질병에 대한 분석과 관련 보험 상품을 추천해드릴게요. 어떤 건강 고민이 있으신가요?"
-        elif agent_role == "라이프 전문가":
-            role_specific_message = "고객님의 생활 방식에 맞는 보험을 추천해드릴게요. 평소 어떤 생활을 하시나요?"
-        else:
-            role_specific_message = "고객님께 딱 맞는 보험 상품을 추천해드릴게요. 어떤 도움이 필요하신가요?"
+        from src.utils.utils import get_role_specific_message
+        role_specific_message = get_role_specific_message(agent_role)
 
         st.session_state.messages.append({
             "role": "assistant",
