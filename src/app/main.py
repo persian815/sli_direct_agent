@@ -129,7 +129,7 @@ def main():
 
             st.session_state.messages.append({
                 "role": "assistant",
-                "content": f"""안녕하세요! 저는 {agent_name}이에요. {agent_role}로서 고객님을 만나게 되어 정말 반가워요.
+                "content": f"""안녕하세요! 저는 {agent_name}이에요. {agent_role}로서 고객님을 만나게 되어 정말 반가워요.\n
 
 {persona_info.get('welcome_message', '').replace('[', '').replace(']', '')}
 

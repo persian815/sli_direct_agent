@@ -417,10 +417,10 @@ def get_role_specific_message(agent_role):
         str: 역할에 맞는 환영 메시지
     """
     if agent_role == "통합 전문가":
-        return "보험 설계와 상품 추천을 도와드릴게요. 어떤 보험이 필요하신가요?"
+        return "어떤 도움이 필요하신가요?"
     elif agent_role == "질병 전문가":
-        return "질병에 대한 분석과 관련 보험 상품을 추천해드릴게요. 어떤 건강 고민이 있으신가요?"
+        return "어떤 고민이 있으신가요?"
     elif agent_role == "라이프 전문가":
-        return "고객님의 생활 방식에 맞는 보험을 추천해드릴게요. 평소 어떤 생활을 하시나요?"
+        return "평소 어떤 생활을 하시나요?"
     else:
-        return "고객님께 딱 맞는 보험 상품을 추천해드릴게요. 어떤 도움이 필요하신가요?" 
+        return "어떤 도움이 필요하신가요?" 

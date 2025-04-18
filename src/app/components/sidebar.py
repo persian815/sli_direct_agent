@@ -6,6 +6,7 @@ from src.visualization.visualization import create_knowledge_distribution_graph,
 from src.llm import aws_credentials_available, ms_credentials_available
 from src.llm.ms_functions import test_ms_agent_connection, get_agent_config
 from src.utils.utils import get_temperature_color, get_chat_history_from_api, get_role_specific_message
+from src.app.components.chat import get_character_icon
 
 def render_sidebar():
     """사이드바를 렌더링합니다."""
@@ -176,19 +177,26 @@ def render_sidebar():
         st.session_state.messages = []  # 대화 내용 초기화
         st.session_state.is_generating = False
         
-        # 웰컴 메시지 추가
+        # 캐릭터 변경 시 role 업데이트
+        current_character = st.session_state.character
+        character_info = PERSONAS.get(current_character, {})
+        st.session_state.role = character_info.get("agent_name", "통합 전문가")
+        
+        # 캐릭터 변경 시 아바타 이미지 업데이트
+        st.session_state.avatar_image = get_character_icon(current_character)
+        
+        # 캐릭터 변경 시 messages 초기화 및 새로운 웰컴 메시지 추가
         agent_name = selected_character
         agent_role = st.session_state.role
-        persona_info = PERSONAS.get(selected_character, {})
         
         # 역할별 맞춤 환영 메시지 생성
         role_specific_message = get_role_specific_message(agent_role)
 
         st.session_state.messages.append({
             "role": "assistant",
-            "content": f"""안녕하세요! 저는 {agent_name}이에요. {agent_role}로서 고객님을 만나게 되어 정말 반가워요.
+            "content": f"""안녕하세요! 저는 {agent_name}이에요. {agent_role}로서 고객님을 만나게 되어 정말 반가워요.\n
 
-{persona_info.get('welcome_message', '').replace('[', '').replace(']', '')}
+{character_info.get('welcome_message', '').replace('[', '').replace(']', '')}
 
 {role_specific_message} 편하게 말씀해 주세요! 😊""",
             "metrics": {
