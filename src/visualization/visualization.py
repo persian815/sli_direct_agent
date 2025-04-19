@@ -75,13 +75,11 @@ def format_knowledge_level_html(level: int, color: str) -> str:
         </div>
     """
 
-def format_metrics_html(request_time: float, response_time: float, 
-                       input_tokens: int, output_tokens: int) -> str:
+def format_metrics_html(response_time: float, input_tokens: int, output_tokens: int) -> str:
     """
     Format metrics information as HTML.
     
     Args:
-        request_time: Time taken for the request (seconds)
         response_time: Time taken for the response (seconds)
         input_tokens: Number of input tokens
         output_tokens: Number of output tokens
@@ -91,7 +89,7 @@ def format_metrics_html(request_time: float, response_time: float,
     """
     return f"""
         <div class="metrics">
-            Request Time: {request_time:.2f}s | Response Time: {response_time:.2f}s | 
+            Response Time: {response_time:.2f}s | 
             Input Tokens: {input_tokens} | Output Tokens: {output_tokens}
         </div>
     """
