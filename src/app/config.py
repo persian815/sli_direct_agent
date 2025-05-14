@@ -33,10 +33,10 @@ def initialize_app():
     if 'role' not in st.session_state:
         st.session_state.role = "통합 전문가"
     if 'character' not in st.session_state:
-        st.session_state.character = "친절한 금자씨"
+        st.session_state.character = "친절한 미영씨"
     if 'persona_info' not in st.session_state:
         from src.data.personas_roles import PERSONAS
-        welcome_message = PERSONAS.get("친절한 금자씨", {}).get("welcome_message", "안녕하세요! 무엇을 도와드릴까요?")
+        welcome_message = PERSONAS.get("친절한 미영씨", {}).get("welcome_message", "안녕하세요! 무엇을 도와드릴까요?")
         st.session_state.persona_info = {
             "description": welcome_message
         }

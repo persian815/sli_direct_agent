@@ -1,12 +1,18 @@
 import streamlit as st
 import pandas as pd
+import logging
 from src.data.personas_roles import PERSONAS
 from src.data.services_roles import SERVICES
+from src.data.users_data import USERS
 from src.visualization.visualization import create_knowledge_distribution_graph, create_temperature_distribution_graph
 from src.llm import aws_credentials_available, ms_credentials_available
 from src.llm.ms_functions import test_ms_agent_connection, get_agent_config
 from src.utils.utils import get_temperature_color, get_chat_history_from_api, get_role_specific_message
 from src.app.components.chat import get_character_icon
+
+# 로깅 설정
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 def render_sidebar():
     """사이드바를 렌더링합니다."""
@@ -18,7 +24,7 @@ def render_sidebar():
     if 'is_first_load' not in st.session_state:
         st.session_state.is_first_load = True
         st.session_state.model = "Azure AI Foundry (GPT-4.0)"
-        st.session_state.character = "친절한 금자씨"
+        st.session_state.character = "친절한 미영시"
     
     # 기본 모델 설정
     model = st.session_state.get("model", "Azure AI Foundry (GPT-4.0)")
@@ -55,6 +61,63 @@ def render_sidebar():
         is_developer_mode = st.toggle("개발자 모드 활성화", key="developer_mode")
         
         if is_developer_mode:
+            # 선택된 사용자 정보 표시
+            st.subheader("선택된 사용자")
+            # 반드시 영문 id만 사용
+            current_user = st.session_state.get("selected_user", "User1")
+            user_kor_names = {
+                "User1": "사용자 1",
+                "User2": "사용자 2",
+                "User3": "사용자 3",
+                "User4": "사용자 4",
+            }
+            kor_display = user_kor_names.get(current_user, current_user)
+            # 사용자 정보 조회 (영문 id로만!)
+            user_info = USERS.get(current_user, {})
+            if isinstance(user_info, list):
+                user_info = user_info[0] if user_info else {}
+            # 표시
+            basic_info = user_info.get('기본정보', {})
+            name = basic_info.get('이름', '')
+            age = basic_info.get('나이', '')
+            display_name = f"{name} ({age}세)" if name and age else kor_display
+            st.markdown(f"**현재 선택된 사용자**: {display_name}")
+            
+            if user_info:
+                # 기본정보
+                if basic_info:
+                    st.markdown("**기본정보**")
+                    st.markdown(f"- 이름: {basic_info.get('이름', '')}")
+                    st.markdown(f"- 나이: {basic_info.get('나이', '')}세")
+                    st.markdown(f"- 성별: {basic_info.get('성별', '')}")
+                    st.markdown(f"- 직업: {basic_info.get('직업', '')}")
+                    st.markdown(f"- 가족구성: {basic_info.get('가족구성', '')}")
+                    st.markdown(f"- 월수입: {basic_info.get('월수입', '')}")
+                    st.markdown(f"- 월지출: {basic_info.get('월지출', '')}")
+                    st.markdown(f"- 자산: {basic_info.get('자산', '')}")
+                    st.markdown(f"- 부채: {basic_info.get('부채', '')}")
+                
+                # 건강검진정보
+                health_info = user_info.get('건강검진정보', {})
+                if health_info:
+                    st.markdown("**건강검진정보**")
+                    st.markdown(f"- 고혈압: {health_info.get('고혈압', '')}")
+                    st.markdown(f"- 당뇨: {health_info.get('당뇨', '')}")
+                    st.markdown(f"- 고지혈증: {health_info.get('고지혈증', '')}")
+                    st.markdown(f"- 가족력: {health_info.get('가족력', '')}")
+                
+                # 보험가입내역
+                insurance_info = user_info.get('보험가입내역', {})
+                if insurance_info:
+                    st.markdown("**보험가입내역**")
+                    st.markdown(f"- 실손의료보험: {insurance_info.get('실손의료보험', '')}")
+                    st.markdown(f"- 종합보험: {insurance_info.get('종합보험', '')}")
+                    st.markdown(f"- 암보험: {insurance_info.get('암보험', '')}")
+            else:
+                st.warning(f"사용자 '{current_user}'의 정보를 찾을 수 없습니다.")
+            
+            st.divider()
+            
             # 에이전트 설정 정보 표시
             st.subheader("에이전트 설정")
             # 현재 선택된 캐릭터의 agent_id와 thread_id를 가져옴

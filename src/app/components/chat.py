@@ -29,6 +29,7 @@ def get_character_icon(character_name: str) -> str:
     """
     # 캐릭터 이름과 이미지 파일명 매핑
     character_icon_map = {
+        "친절한 미영씨": "static/image/친절한 미영씨.png",
         "친절한 금자씨": "static/image/친절한 금자씨.png",
         "공감의녀 장금이": "static/image/공감의녀 장금이.png",
         "감성충만 애순이": "static/image/감성충만 애순이.png",
