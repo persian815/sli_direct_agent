@@ -79,20 +79,14 @@ def get_or_create_thread(session_id: str) -> AIProjectClient:
     """세션 ID에 해당하는 스레드를 반환하거나 새로 생성합니다."""
     if session_id not in _thread_cache:
         try:
-            # 새로운 스레드 ID 생성
-            new_thread_id = f"thread_{session_id}_{int(time.time())}"
-            _thread_cache[session_id] = project_client.agents.create_thread_by_id(new_thread_id)
-            logger.info(f"새로운 스레드 생성 완료: {_thread_cache[session_id].id}")
+            # 기본 스레드 사용
+            _thread_cache[session_id] = project_client.agents.get_thread(DEFAULT_THREAD_ID)
+            logger.info(f"기본 스레드 사용: {DEFAULT_THREAD_ID}")
         except Exception as e:
-            logger.error(f"스레드 생성 실패: {str(e)}")
-            try:
-                _thread_cache[session_id] = project_client.agents.get_thread_by_id(DEFAULT_THREAD_ID)
-                logger.info(f"기본 스레드 사용: {DEFAULT_THREAD_ID}")
-            except Exception as e:
-                logger.error(f"기본 스레드 가져오기 실패: {str(e)}")
-                # 스레드 생성 재시도
-                _thread_cache[session_id] = project_client.agents.create_thread()
-                logger.info(f"새로운 스레드 생성 완료: {_thread_cache[session_id].id}")
+            logger.error(f"기본 스레드 가져오기 실패: {str(e)}")
+            # 스레드 생성은 지원되지 않으므로 기본 스레드 재사용
+            _thread_cache[session_id] = project_client.agents.get_thread(DEFAULT_THREAD_ID)
+            logger.info(f"기본 스레드 재사용: {DEFAULT_THREAD_ID}")
     return _thread_cache[session_id]
 
 def get_agent_config(service: Optional[str] = None) -> Dict[str, str]:
