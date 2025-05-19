@@ -64,7 +64,7 @@ def render_sidebar():
             # 선택된 사용자 정보 표시
             st.subheader("선택된 사용자")
             # 반드시 영문 id만 사용
-            current_user = st.session_state.get("selected_user", "User1")
+            current_user = st.session_state.get("user", "User1")
             user_kor_names = {
                 "User1": "사용자 1",
                 "User2": "사용자 2",
@@ -73,7 +73,7 @@ def render_sidebar():
             }
             kor_display = user_kor_names.get(current_user, current_user)
             # 사용자 정보 조회 (영문 id로만!)
-            user_info = USERS.get(current_user, {})
+            user_info = USERS.get(current_user, {}).get('info', {})
             if isinstance(user_info, list):
                 user_info = user_info[0] if user_info else {}
             # 표시
@@ -83,39 +83,55 @@ def render_sidebar():
             display_name = f"{name} ({age}세)" if name and age else kor_display
             st.markdown(f"**현재 선택된 사용자**: {display_name}")
             
-            if user_info:
-                # 기본정보
-                if basic_info:
-                    st.markdown("**기본정보**")
-                    st.markdown(f"- 이름: {basic_info.get('이름', '')}")
-                    st.markdown(f"- 나이: {basic_info.get('나이', '')}세")
-                    st.markdown(f"- 성별: {basic_info.get('성별', '')}")
-                    st.markdown(f"- 직업: {basic_info.get('직업', '')}")
-                    st.markdown(f"- 가족구성: {basic_info.get('가족구성', '')}")
-                    st.markdown(f"- 월수입: {basic_info.get('월수입', '')}")
-                    st.markdown(f"- 월지출: {basic_info.get('월지출', '')}")
-                    st.markdown(f"- 자산: {basic_info.get('자산', '')}")
-                    st.markdown(f"- 부채: {basic_info.get('부채', '')}")
-                
-                # 건강검진정보
-                health_info = user_info.get('건강검진정보', {})
-                if health_info:
-                    st.markdown("**건강검진정보**")
-                    st.markdown(f"- 고혈압: {health_info.get('고혈압', '')}")
-                    st.markdown(f"- 당뇨: {health_info.get('당뇨', '')}")
-                    st.markdown(f"- 고지혈증: {health_info.get('고지혈증', '')}")
-                    st.markdown(f"- 가족력: {health_info.get('가족력', '')}")
-                
-                # 보험가입내역
-                insurance_info = user_info.get('보험가입내역', {})
-                if insurance_info:
-                    st.markdown("**보험가입내역**")
-                    st.markdown(f"- 실손의료보험: {insurance_info.get('실손의료보험', '')}")
-                    st.markdown(f"- 종합보험: {insurance_info.get('종합보험', '')}")
-                    st.markdown(f"- 암보험: {insurance_info.get('암보험', '')}")
-            else:
-                st.warning(f"사용자 '{current_user}'의 정보를 찾을 수 없습니다.")
-            
+            st.divider()
+
+            # 상담원(페르소나) 선택 영역을 사용자 정보 아래로 이동
+            persona_options = [
+                "친절한 미영씨",
+                "친절한 금자씨",
+                "공감의녀 장금이",
+                "감성충만 애순이",
+                "논리적인 테스형"
+            ]
+            current_persona = st.session_state.get("character", "논리적인 테스형")
+            selected_persona = st.selectbox(
+                "상담원 선택",
+                persona_options,
+                index=persona_options.index(current_persona) if current_persona in persona_options else 0,
+                key="persona_select_main"
+            )
+            if selected_persona != current_persona:
+                st.session_state["character"] = selected_persona
+                # 웰컴 메시지 업데이트
+                welcome_message = PERSONAS.get(selected_persona, {}).get("welcome_message", "안녕하세요! 무엇을 도와드릴까요?")
+                st.session_state.persona_info = {
+                    "description": welcome_message
+                }
+                # 채팅 메시지 초기화 및 새로운 웰컴 메시지 추가
+                st.session_state.messages = []
+                agent_name = selected_persona
+                agent_role = st.session_state.get("role", "통합 전문가")
+                role_specific_message = get_role_specific_message(agent_role)
+                st.session_state.messages.append({
+                    "role": "assistant",
+                    "content": f"""안녕하세요! 저는 {agent_name}이에요. {agent_role}로서 고객님을 만나게 되어 정말 반가워요.
+
+{welcome_message}
+
+{role_specific_message} 편하게 말씀해 주세요! 😊""",
+                    "metrics": {
+                        "request_time": 0,
+                        "response_time": 0,
+                        "input_tokens": 0,
+                        "output_tokens": 0
+                    }
+                })
+                st.rerun()
+            # 캐릭터 설명 노출
+            persona_desc = PERSONAS.get(selected_persona, {}).get('설명', '')
+            if persona_desc:
+                st.markdown(f"<div style='margin-top:8px; color:#666; font-size:0.95em;'>{persona_desc}</div>", unsafe_allow_html=True)
+
             st.divider()
             
             # 에이전트 설정 정보 표시
@@ -221,56 +237,11 @@ def render_sidebar():
     # 현재 선택된 캐릭터
     current_character = st.session_state.get("character", "논리적인 테스형")
     
-    # 캐릭터 선택 옵션
-    character_options = list(PERSONAS.keys())
+    if st.session_state.get('developer_mode', False):
+        # 개발자 모드가 활성화된 경우 사이드바 내용은 이미 위에서 처리됨
+        pass
+    else:
+        # 개발자 모드가 아니면 사이드바를 비워둠
+        st.sidebar.empty()
     
-    # 셀렉트박스로 캐릭터 선택
-    selected_character = st.selectbox(
-        label="캐릭터 선택",
-        options=character_options,
-        index=character_options.index(current_character) if current_character in character_options else 0,
-        key="sidebar_character_select",
-        label_visibility="collapsed"
-    )
-    
-    # 선택된 캐릭터가 변경되었으면 세션 상태 업데이트
-    if selected_character != current_character:
-        # 캐릭터 변경 시 세션 상태 초기화
-        st.session_state.character = selected_character
-        st.session_state.messages = []  # 대화 내용 초기화
-        st.session_state.is_generating = False
-        
-        # 캐릭터 변경 시 role 업데이트
-        current_character = st.session_state.character
-        character_info = PERSONAS.get(current_character, {})
-        st.session_state.role = character_info.get("agent_name", "통합 전문가")
-        
-        # 캐릭터 변경 시 아바타 이미지 업데이트
-        st.session_state.avatar_image = get_character_icon(current_character)
-        
-        # 캐릭터 변경 시 messages 초기화 및 새로운 웰컴 메시지 추가
-        agent_name = selected_character
-        agent_role = st.session_state.role
-        
-        # 역할별 맞춤 환영 메시지 생성
-        role_specific_message = get_role_specific_message(agent_role)
-
-        st.session_state.messages.append({
-            "role": "assistant",
-            "content": f"""안녕하세요! 저는 {agent_name}이에요. {agent_role}로서 고객님을 만나게 되어 정말 반가워요.\n
-
-{character_info.get('welcome_message', '').replace('[', '').replace(']', '')}
-
-{role_specific_message} 편하게 말씀해 주세요! 😊""",
-            "metrics": {
-                "request_time": 0,
-                "response_time": 0,
-                "input_tokens": 0,
-                "output_tokens": 0
-            }
-        })
-        
-        # 개발자 모드 초기화를 위해 페이지 리로드
-        st.rerun()
-    
-    return model, selected_service, selected_character, None 
+    return model, selected_service, current_character, None 

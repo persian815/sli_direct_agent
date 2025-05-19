@@ -1,6 +1,7 @@
 import streamlit as st
 import time
 import os
+import re
 from src.llm import (
     evaluate_user_knowledge_level, get_knowledge_level_color
 )
@@ -16,6 +17,12 @@ from src.utils.utils import (
     send_chat_log_to_api
 )
 from src.llm.ms_functions import query_ms_agent
+
+def load_css():
+    """CSS 파일을 로드하는 함수"""
+    css_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../static/css/styles.css"))
+    with open(css_file) as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
 def get_character_icon(character_name: str) -> str:
     """
@@ -66,419 +73,65 @@ def get_user_icon() -> str:
     # 사용자 ID가 매핑에 있으면 해당 아이콘 반환, 없으면 기본 아이콘 반환
     return user_icon_map.get(current_user, default_icon)
 
-def render_chat_interface(model):
-    """채팅 인터페이스를 렌더링하는 함수"""
-    # Dark 테마 스타일링 추가
-    st.markdown("""
-    <style>
-        /* Dark 테마 기본 스타일 */
-        .stApp {
-            background-color: #1E1E1E;
-            color: #E0E0E0;
-        }
-        
-        /* 채팅 메시지 스타일 */
-        .stChatMessage {
-            background-color: #2D2D2D;
-            border-radius: 10px;
-            padding: 10px;
-            margin-bottom: 10px;
-            border: 1px solid #3D3D3D;
-        }
-        
-        /* 사용자 메시지 스타일 */
-        .stChatMessage[data-testid="stChatMessage"] {
-            background-color: #1E3A5F;
-            # border-left: 4px solid #0066CC;
-        }
-        
-        /* 어시스턴트 메시지 스타일 */
-        .stChatMessage[data-testid="stChatMessage"]:nth-child(even) {
-            background-color: #2D2D2D;
-            border-left: 4px solid #4CAF50;
-        }
-        
-        /* 입력 필드 스타일 */
-        .stChatInputContainer {
-            background-color: #2D2D2D;
-            border-radius: 10px;
-            padding: 10px;
-            margin-top: 20px;
-            border: 1px solid #3D3D3D;
-        }
-        
-        div.stTextInput > div > div > input {
-            background-color: #3D3D3D;
-            color: #E0E0E0;
-            border: 1px solid #4D4D4D;
-            border-radius: 8px;
-            padding: 10px 15px;
-        }
-        
-        /* 캡션 스타일 */
-        .stCaption {
-            color: #A0A0A0;
-            font-size: 0.85em;
-        }
-        
-        /* 품질 점수 스타일 */
-        .quality-score {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-weight: bold;
-            margin-top: 5px;
-            margin-bottom: 5px;
-        }
-        
-        /* 지식 수준 스타일 */
-        .knowledge-level {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-weight: bold;
-            margin-top: 5px;
-            margin-bottom: 5px;
-        }
-        
-        /* 스크롤바 스타일 */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: #2D2D2D;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: #4D4D4D;
-            border-radius: 4px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: #5D5D5D;
-        }
-        
-        /* 메트릭스 스타일 */
-        .metrics {
-            color: #A0A0A0;
-            font-size: 0.85em;
-            margin-top: 5px;
-            margin-bottom: 5px;
-        }
-        
-        /* 지식 수준 이유 스타일 */
-        .knowledge-level-reason, .temperature-reason, .quality-reason {
-            color: #A0A0A0;
-            font-size: 0.8em;
-            margin-top: 2px;
-            margin-bottom: 5px;
-        }
-        
-        /* 아이콘 스타일 */
-        .chat-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin-right: 10px;
-            display: block;
-        }
-        
-        /* 사용자 메시지 컨테이너 스타일 */
-        .user-message-container {
-            display: flex;
-            flex-direction: row;
-            align-items: flex-start;
-            margin-bottom: 10px;
-            position: relative;
-        }
-        
-        /* 어시스턴트 메시지 컨테이너 스타일 */
-        .assistant-message-container {
-            display: flex;
-            flex-direction: row;
-            align-items: flex-start;
-            margin-bottom: 10px;
-            position: relative;
-        }
-        
-        /* 메시지 내용 스타일 */
-        .message-content {
-            background-color: #2D2D2D;
-            border-radius: 10px;
-            padding: 10px;
-            max-width: 100%;
-            position: relative;
-        }
-        
-        /* 사용자 메시지 내용 스타일 */
-        .user-message-content {
-            background-color: #1E3A5F;
-            # border-left: 4px solid #0066CC;
-        }
-        
-        /* 어시스턴트 메시지 내용 스타일 */
-        .assistant-message-content {
-            background-color: #2D2D2D;
-            border-left: 4px solid #4CAF50;
-        }
-        
-        /* 말풍선 스타일 */
-        .message-content::before {
-            content: "";
-            position: absolute;
-            top: -10px;
-            left: 10px;
-            width: 0;
-            height: 0;
-            border-bottom: 10px solid #2D2D2D;
-            border-left: 10px solid transparent;
-            border-right: 10px solid transparent;
-        }
-        
-        /* 사용자 말풍선 스타일 */
-        .user-message-content::before {
-            border-bottom-color: #1E3A5F;
-        }
-        
-        /* 어시스턴트 말풍선 스타일 */
-        .assistant-message-content::before {
-            border-bottom-color: #2D2D2D;
-        }
-        
-        /* 이미지 컨테이너 스타일 */
-        .avatar-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            overflow: hidden;
-            flex-shrink: 0;
-        }
-        
-        /* 사용자 아바타 컨테이너 */
-        .user-avatar-container {
-            margin-right: 10px;
-        }
-        
-        /* 어시스턴트 아바타 컨테이너 */
-        .assistant-avatar-container {
-            margin-left: 10px;
-        }
-    </style>
-    """, unsafe_allow_html=True)
+def strip_html_tags(text):
+    # 마크다운 코드블록 전체 제거
+    text = re.sub(r'```[\\s\\S]*?```', '', text)
+    # script, style 태그 전체 제거
+    text = re.sub(r'<(script|style)[^>]*>[\\s\\S]*?</\\1>', '', text, flags=re.IGNORECASE)
+    # 모든 HTML 태그 제거 (여러 줄, 들여쓰기 포함)
+    text = re.sub(r'<[^>]+>', '', text)
+    return text
+
+def render_chat_interface(model: str):
+    """채팅 인터페이스를 렌더링합니다."""
+    # CSS 로드
+    load_css()
     
-    # 사용자 아이콘 경로
+    # 세션 상태 초기화
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+    
     user_icon = get_user_icon()
+    character_icon = get_character_icon(st.session_state.get("character", "논리적인 테스형"))
     
-    # 메시지가 없는 경우 초기 메시지 표시
-    if not st.session_state.messages:
-        # 현재 선택된 캐릭터 아이콘 경로
-        character_name = st.session_state.get("character", "논리적인 테스형")
-        character_icon = get_character_icon(character_name)
-        
-        # 어시스턴트 메시지 컨테이너
-        st.markdown(f"""
-        <div class="assistant-message-container">
-            <div class="avatar-container assistant-avatar-container">
-                <img src="{character_icon}" class="chat-icon" alt="Assistant">
-            </div>
-            <div class="message-content assistant-message-content">
-                안녕하세요! 무엇을 도와드릴까요?
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    # 메시지 표시
+    # 채팅 히스토리 표시
     for message in st.session_state.messages:
         if message["role"] == "user":
-            # 사용자 메시지 컨테이너
-            col1, col2 = st.columns([1, 10])
-            with col1:
-                st.image(user_icon, width=40)
-            
-            with col2:
-                # 메시지 내용 표시
-                st.markdown(f"""
-                <div class="message-content user-message-content">
-                    {message["content"]}
-                </div>
-                """, unsafe_allow_html=True)
-                
-                # 개발자 모드가 켜져 있을 때만 Knowledge Level 표시
-                if st.session_state.get('developer_mode', False) and 'knowledge_level' in message:
-                    knowledge_level = message['knowledge_level']
-                    color = get_knowledge_level_color(knowledge_level)
-                    st.markdown(f'<div class="knowledge-level" style="background-color: {color}; color: white;">Knowledge Level: {knowledge_level}/100</div>', unsafe_allow_html=True)
-                    if 'knowledge_level_reason' in message:
-                        st.markdown(f'<div class="knowledge-level-reason" style="color: #888888; font-size: 0.8em;">{message["knowledge_level_reason"]}</div>', unsafe_allow_html=True)
-                    
-                    # 사용자 온도 표시
-                    if 'temperature' in message:
-                        temperature = message['temperature']
-                        color = get_temperature_color(temperature)
-                        st.markdown(f'<div class="temperature-level" style="background-color: {color}; color: white;">User Temperature: {temperature:.1f}°C</div>', unsafe_allow_html=True)
-                        if 'temperature_reason' in message:
-                            st.markdown(f'<div class="temperature-reason" style="color: #888888; font-size: 0.8em;">{message["temperature_reason"]}</div>', unsafe_allow_html=True)
+            with st.chat_message("user", avatar=user_icon):
+                st.markdown(message["content"])
         else:
-            # 현재 선택된 캐릭터 아이콘 경로
-            character_name = st.session_state.get("character", "논리적인 테스형")
-            character_icon = get_character_icon(character_name)
-            
-            # 어시스턴트 메시지 컨테이너
-            col1, col2 = st.columns([1, 10])
-            with col1:
-                st.image(character_icon, width=40)
-            
-            with col2:
-                # 메시지 내용 표시
-                # 응답이 튜플인 경우 첫 번째 요소만 사용
-                content = message["content"]
-                if isinstance(content, tuple):
-                    content = content[0]
-                
-                st.markdown(f"""
-                <div class="assistant-message-container">
-                    <div class="message-content">
-                        {content}
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                # 개발자 모드가 켜져 있을 때만 메트릭스 표시
-                if st.session_state.get('developer_mode', False):
-                    # 개발자 모드가 켜져 있을 때만 메트릭스 표시
-                    if 'metrics' in message:
-                        metrics = message['metrics']
-                        st.markdown(f'<div class="metrics">Request Time: {metrics["request_time"]:.2f}s | Response Time: {metrics["response_time"]:.2f}s | Input Tokens: {metrics["input_tokens"]:.1f} | Output Tokens: {metrics["output_tokens"]:.1f}</div>', unsafe_allow_html=True)
-                        
-                        # Response Quality 표시 (quality_score가 None이 아닌 경우에만)
-                        if 'quality_score' in message and message['quality_score'] is not None:
-                            quality_score = message['quality_score']
-                            color = get_quality_level_color(quality_score)
-                            st.markdown(f'<div class="quality-score" style="background-color: {color}; color: white;">Response Quality: {quality_score}/100</div>', unsafe_allow_html=True)
-                            if 'quality_reason' in message and message['quality_reason'] is not None:
-                                st.markdown(f'<div class="quality-reason" style="color: #888888; font-size: 0.8em;">{message["quality_reason"]}</div>', unsafe_allow_html=True)
+            with st.chat_message("assistant", avatar=character_icon):
+                st.markdown(message["content"])
     
-    # # 답변 작성 중 메시지
-    # if st.session_state.get('is_generating', False):
-    #     # 현재 선택된 캐릭터 아이콘 경로
-    #     character_name = st.session_state.get("character", "논리적인 테스형")
-    #     character_icon = get_character_icon(character_name)
-        
-    #     # 어시스턴트 메시지 컨테이너
-    #     col1, col2 = st.columns([1, 10])
-    #     with col1:
-    #         st.image(character_icon, width=40)
-        
-    #     with col2:
-    #         st.markdown(f"""
-    #         <div class="assistant-message-container">
-    #             <div class="message-content">
-    #                 답변 작성 중...
-    #             </div>
-    #         </div>
-    #         """, unsafe_allow_html=True)
-    
-    # 사용자 입력 받기
-    if prompt := st.chat_input("메시지를 입력하세요"):
-        # 사용자 입력 평가 (항상 수행)
-        knowledge_level, knowledge_level_reason = evaluate_user_knowledge_level(prompt)
-        temperature, temperature_reason = evaluate_user_temperature(prompt)
-        
-        # 사용자 메시지를 st.session_state.messages에 추가
-        user_message = {
-            "role": "user",
-            "content": prompt,
-            "knowledge_level": knowledge_level,
-            "knowledge_level_reason": knowledge_level_reason,
-            "temperature": temperature,
-            "temperature_reason": temperature_reason
-        }
-        st.session_state.messages.append(user_message)
-        
-        # 사용자 메시지를 st.session_state.chat_messages에도 추가
-        st.session_state.chat_messages.append(user_message)
-        
-        # 답변 작성 중 상태 설정
-        st.session_state.is_generating = True
-        
-        # 어시스턴트 응답 생성
-        # 현재 선택된 캐릭터 아이콘 경로
-        character_name = st.session_state.get("character", "논리적인 테스형")
-        character_icon = get_character_icon(character_name)
-        
+    # 사용자 입력
+    if prompt := st.chat_input("질문을 입력하세요"):
+        # 사용자 메시지 추가
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user", avatar=user_icon):
+            st.markdown(prompt)
+        # 답변 작성 중 spinner
         with st.spinner("답변 작성 중..."):
-            start_time = time.time()
-            if model == "Azure AI Foundry (GPT-4.0)":
-                response, trace_steps, elapsed_time, input_tokens, output_tokens, start_time = query_ms_agent(prompt)
-                # metrics 딕셔너리 생성
-                metrics = {
-                    "request_time": elapsed_time,
-                    "response_time": elapsed_time,
-                    "input_tokens": input_tokens,
-                    "output_tokens": output_tokens
-                }
-            else:
-                # 기본 응답 생성
-                response = "죄송합니다. 현재 선택된 모델은 지원되지 않습니다."
-                metrics = {
-                    "request_time": 0,
-                    "response_time": 0,
-                    "input_tokens": 0,
-                    "output_tokens": 0
-                }
-            
-            # 답변 작성 중 상태 해제
-            st.session_state.is_generating = False
-            
-            # 응답 표시
-            col1, col2 = st.columns([1, 10])
-            with col1:
-                st.image(character_icon, width=40)
-            
-            with col2:
-                st.markdown(f"""
-                <div class="assistant-message-container">
-                    <div class="message-content">
-                        {response}
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                # API로 채팅 로그 전송
-                # user_question = st.session_state.messages[-2]["content"]  # 마지막 사용자 질문
-                user_question =prompt;
-                
-                send_chat_log_to_api(user_question, response)
-                
-                # 개발자 모드가 켜져 있을 때만 메트릭스 표시
-                if st.session_state.get('developer_mode', False):
-                    # 응답 품질 평가
-                    quality_score, quality_reason = evaluate_response_quality(response)
-                    color = get_quality_level_color(quality_score)
-                    st.markdown(f'<div class="quality-score" style="background-color: {color}; color: white;">Response Quality: {quality_score}/100</div>', unsafe_allow_html=True)
-                    if quality_reason:
-                        st.markdown(f'<div class="quality-reason" style="color: #888888; font-size: 0.8em;">{quality_reason}</div>', unsafe_allow_html=True)
-                    
-                    # 메트릭스 표시
-                    st.caption(f"Request Time: {metrics['request_time']:.2f}s | Response Time: {metrics['response_time']:.2f}s | Input Tokens: {metrics['input_tokens']:.1f} | Output Tokens: {metrics['output_tokens']:.1f}")
-        
-        # 어시스턴트 메시지 추가
-        quality_score, quality_reason = evaluate_response_quality(response)
-        st.session_state.messages.append({
-            "role": "assistant",
-            "content": response,
-            "metrics": metrics,
-            "quality_score": quality_score,
-            "quality_reason": quality_reason
-        })
-        
-        # 페이지 새로고침
-        st.rerun()
+            # 답변 3개 생성
+            # response, _, elapsed_time, input_tokens, output_tokens, start_time = query_ms_agent(prompt)
+            dummy_ms = "안녕하세요, 곰철수님! 다시 만나 뵙게 되어 반갑습니다.\n고객님의 건강 상태와 보험 가입 상황을 바탕으로 아래와 같은 분석을 제공합니다.\n\n예상 응답:\n- AWS Bedrock은 Amazon의 완전 관리형 서비스로, 다양한 파운데이션 모델을 제공합니다.\n- 현재 API 연동 작업이 진행 중이며, 곧 서비스가 시작될 예정입니다.\n- 더 자세한 정보는 AWS Bedrock 공식 문서를 참조하세요."
+            dummy_aws = "안녕하세요, 곰철수님! 다시 만나 뵙게 되어 반갑습니다.\n고객님의 건강 상태와 보험 가입 상황을 바탕으로 아래와 같은 분석을 제공합니다.\n\n예상 응답:\n- AWS Bedrock은 Amazon의 완전 관리형 서비스로, 다양한 파운데이션 모델을 제공합니다.\n- 현재 API 연동 작업이 진행 중이며, 곧 서비스가 시작될 예정입니다.\n- 더 자세한 정보는 AWS Bedrock 공식 문서를 참조하세요."
+            dummy_sds = "안녕하세요, 곰철수님! 다시 만나 뵙게 되어 반갑습니다.\n고객님의 건강 상태와 보험 가입 상황을 바탕으로 아래와 같은 분석을 제공합니다.\n\n예상 응답:\n- SDS AI는 삼성 SDS의 AI 플랫폼으로, 다양한 비즈니스 솔루션을 제공합니다.\n- 현재 API 연동 작업이 진행 중이며, 곧 서비스가 시작될 예정입니다.\n- 더 자세한 정보는 SDS AI 공식 문서를 참조하세요."
+
+            # 답변 카드 row (HTML/CSS + JS)
+            ms_tokens = int(len(prompt.split()) // 1.3)
+            aws_tokens = int(len(prompt.split()) // 1.3)
+            sds_tokens = int(len(prompt.split()) // 1.3)
+            cards_html = f"""
+<div class=\"answer-scroll-row\">\n    <div class=\"answer-card\">\n        <div>{dummy_ms}</div>\n        <div style=\"font-size:0.9em;color:#888;margin-top:10px;\">\n            입력 토큰: {ms_tokens} / 출력 토큰: 150 / 처리 시간: 2.5초\n        </div>\n        <button class=\"like-btn\" disabled>👍 좋아요</button>\n    </div>\n    <div class=\"answer-card\">\n        <div>{dummy_aws}</div>\n        <div style=\"font-size:0.9em;color:#888;margin-top:10px;\">\n            입력 토큰: {aws_tokens} / 출력 토큰: 150 / 처리 시간: 2.5초\n        </div>\n        <button class=\"like-btn\" disabled>👍 좋아요</button>\n    </div>\n    <div class=\"answer-card\">\n        <div>{dummy_sds}</div>\n        <div style=\"font-size:0.9em;color:#888;margin-top:10px;\">\n            입력 토큰: {sds_tokens} / 출력 토큰: 120 / 처리 시간: 1.8초\n        </div>\n        <button class=\"like-btn\" disabled>👍 좋아요</button>\n    </div>\n</div>
+"""
+            st.markdown(cards_html, unsafe_allow_html=True)
+
+            # 메시지 히스토리에는 strip_html_tags(response) 등 순수 텍스트만 저장
+            plain_response = strip_html_tags(dummy_ms)
+            st.session_state.messages.append({
+                "role": "assistant", 
+                "content": f"Azure AI Foundry: {plain_response}\n\nAWS Bedrock: API 연동 중\n\nSDS AI: API 연동 중"
+            })
 
 def generate_tab_name(role, character):
     """전문 역할, 캐릭터, 날짜, 시간을 조합하여 탭 이름을 생성하는 함수"""

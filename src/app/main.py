@@ -31,10 +31,7 @@ def main():
     # 2. (이전 상세화면 분기 삭제)
     # 바로 다음 단계로 이동
     model, role, character, _ = render_sidebar()
-    # 현재 선택된 캐릭터 정보 표시
-    current_character = st.session_state.get("character", "논리적인 테스형")
-    character_description = PERSONAS.get(current_character, {}).get("설명", "캐릭터 설명이 없습니다.")
-    st.markdown(f'<div class="character-description">{character_description}</div>', unsafe_allow_html=True)
+    # 현재 선택된 캐릭터 정보 표시 제거
     render_chat_interface(model)
     load_js()
     if 'chat_messages' not in st.session_state:
