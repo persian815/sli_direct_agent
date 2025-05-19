@@ -23,7 +23,7 @@ AZURE_PROJECT_NAME = "team2_seongryongle-8914"
 
 # 기본 에이전트 설정
 DEFAULT_AGENT_ID = "asst_YVPGAmrKz41p7l5LlsBhJ661"
-DEFAULT_THREAD_ID = "thread_M7udZoEMzmXQJDoHfleNS5ng"
+DEFAULT_THREAD_ID = "thread_NFFROjExx5Sol4Ht28NoGOyc"
 DEFAULT_ROLE = "통합 전문가"
 DEFAULT_CHARACTER = "친절한 미영씨"
 DEFAULT_USER = "User1"
@@ -79,7 +79,9 @@ def get_or_create_thread(session_id: str) -> AIProjectClient:
     """세션 ID에 해당하는 스레드를 반환하거나 새로 생성합니다."""
     if session_id not in _thread_cache:
         try:
-            _thread_cache[session_id] = project_client.agents.create_thread()
+            # 새로운 스레드 ID 생성
+            new_thread_id = f"thread_{session_id}_{int(time.time())}"
+            _thread_cache[session_id] = project_client.agents.create_thread_by_id(new_thread_id)
             logger.info(f"새로운 스레드 생성 완료: {_thread_cache[session_id].id}")
         except Exception as e:
             logger.error(f"스레드 생성 실패: {str(e)}")
