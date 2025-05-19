@@ -18,6 +18,12 @@ logger = logging.getLogger(__name__)
 # 환경 설정
 IS_LOCAL = os.getenv('ENV', 'local') == 'local'
 
+# Azure AI Foundry 연결 정보
+AZURE_ENDPOINT = "https://eastus2.api.azureml.ms"
+AZURE_SUBSCRIPTION_ID = "2326c76a-5eab-44b6-808b-1978f2ffee0e"
+AZURE_RESOURCE_GROUP = "slihackathon-2025-team2-rg"
+AZURE_PROJECT_NAME = "team2_seongryongle-8914"
+
 # agent 디폴트 (통합 전문가)
 MS_AGENT_ID = "asst_YVPGAmrKz41p7l5LlsBhJ661"  # 기본 에이전트 ID
 MS_THREAD_ID = "thread_M7udZoEMzmXQJDoHfleNS5ng"  # 기본 스레드 ID
@@ -25,12 +31,6 @@ MS_THREAD_ID = "thread_M7udZoEMzmXQJDoHfleNS5ng"  # 기본 스레드 ID
 # 캐싱을 위한 전역 변수
 _cached_agent = None
 _thread_cache = {}
-
-# Azure AI Foundry 연결 정보
-AZURE_ENDPOINT = "https://eastus2.api.azureml.ms"
-AZURE_SUBSCRIPTION_ID = "2326c76a-5eab-44b6-808b-1978f2ffee0e"
-AZURE_RESOURCE_GROUP = "slihackathon-2025-team2-rg"
-AZURE_PROJECT_NAME = "team2_seongryongle-8914"
 
 def get_cached_agent():
     global _cached_agent
@@ -58,7 +58,6 @@ def get_or_create_thread(session_id):
             logger.info(f"기본 스레드 사용: {MS_THREAD_ID}")
     return _thread_cache[session_id]
 
-# 에이전트 ID와 스레드 ID 가져오기
 def get_agent_config(service=None):
     """
     현재 선택된 서비스와 캐릭터에 따라 에이전트 설정을 반환하는 함수
@@ -95,9 +94,6 @@ def get_agent_config(service=None):
         "thread_id": thread_id
     }
 
-# Azure AI Foundry 연결 정보
-MS_CONNECTION_STRING = "eastus2.api.azureml.ms;2326c76a-5eab-44b6-808b-1978f2ffee0e;slihackathon-2025-team2-rg;team2_seongryongle-8914"
-
 # Azure AI Foundry 클라이언트 초기화
 try:
     if os.getenv('AZURE_AI_FOUNDRY_API_KEY'):
@@ -124,73 +120,6 @@ except Exception as e:
     ms_credentials_available = False
     logger.error(f"Azure AI Foundry 클라이언트 초기화 실패: {str(e)}")
 
-def extract_text_from_message(message):
-    """
-    메시지 객체에서 텍스트를 추출하는 함수
-    다양한 메시지 구조를 처리할 수 있도록 설계됨
-    """
-    try:
-        # 메시지가 문자열인 경우 바로 반환
-        if isinstance(message, str):
-            return message
-            
-        # 메시지 객체를 딕셔너리로 변환 시도
-        try:
-            message_dict = vars(message)
-        except (TypeError, AttributeError):
-            # vars() 함수를 사용할 수 없는 경우 (문자열 등)
-            return str(message)
-            
-        # content 키가 있는지 확인
-        if 'content' in message_dict:
-            content = message_dict['content']
-            
-            # content가 문자열인 경우
-            if isinstance(content, str):
-                return content
-            
-            # content가 리스트인 경우
-            if isinstance(content, list):
-                for item in content:
-                    # 항목이 딕셔너리인 경우
-                    if isinstance(item, dict):
-                        # text 키가 있는지 확인
-                        if 'text' in item:
-                            text_obj = item['text']
-                            
-                            # text가 딕셔너리인 경우 value 키 확인
-                            if isinstance(text_obj, dict):
-                                if 'value' in text_obj:
-                                    return text_obj['value']
-                            
-                            # text가 문자열인 경우
-                            if isinstance(text_obj, str):
-                                return text_obj
-                        
-                        # type이 text이고 text 키가 있는 경우
-                        if 'type' in item and item['type'] == 'text' and 'text' in item:
-                            text_obj = item['text']
-                            if isinstance(text_obj, dict) and 'value' in text_obj:
-                                return text_obj['value']
-                    
-                    # 항목이 문자열인 경우
-                    if isinstance(item, str):
-                        return item
-        
-        # text 키가 있는지 확인
-        if 'text' in message_dict:
-            text_obj = message_dict['text']
-            if isinstance(text_obj, dict) and 'value' in text_obj:
-                return text_obj['value']
-            if isinstance(text_obj, str):
-                return text_obj
-        
-        # 모든 방법이 실패한 경우 메시지 객체를 문자열로 변환
-        return str(message)
-    except Exception as e:
-        logger.error(f"메시지 텍스트 추출 중 오류 발생: {str(e)}")
-        return str(message)
-
 def query_ms_agent(input_text, tab_id=None, system_prompt=None):
     """Azure AI Foundry (GPT4.0)를 사용하여 질문에 답변하는 함수"""
     if not ms_credentials_available:
@@ -201,12 +130,10 @@ def query_ms_agent(input_text, tab_id=None, system_prompt=None):
         st.session_state.role = "통합 전문가"
     if "character" not in st.session_state:
         st.session_state.character = "친절한 미영씨"
-    # user 세션 상태는 초기화하지 않음 (선택된 사용자 정보 유지)
 
     # 시작 시간 기록
     start_time = time.time()
 
-    persona_prompt = ""
     try:
         # 캐시된 에이전트 사용
         agent = get_cached_agent()
@@ -287,12 +214,9 @@ def query_ms_agent(input_text, tab_id=None, system_prompt=None):
         final_message = ""
         if user_data:
             final_message += f"{user_data}\n\n"
-        if persona_prompt:
-            final_message += f"{persona_prompt}\n\n"
         final_message += f"질문: {input_texts}"
         
         logger.debug(f"입력 텍스트 준비 완료")
-        logger.debug(f"캐릭터 프롬프트: {persona_prompt}")
         logger.debug(f"사용자 정보: {user_data}")
         logger.debug(f"최종 메시지: {final_message}")
 
