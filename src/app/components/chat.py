@@ -122,7 +122,28 @@ def render_chat_interface(model: str):
             aws_tokens = int(len(prompt.split()) // 1.3)
             sds_tokens = int(len(prompt.split()) // 1.3)
             cards_html = f"""
-<div class=\"answer-scroll-row\">\n    <div class=\"answer-card\">\n        <div>{dummy_ms}</div>\n        <div style=\"font-size:0.9em;color:#888;margin-top:10px;\">\n            입력 토큰: {ms_tokens} / 출력 토큰: 150 / 처리 시간: 2.5초\n        </div>\n        <button class=\"like-btn\" disabled>👍 좋아요</button>\n    </div>\n    <div class=\"answer-card\">\n        <div>{dummy_aws}</div>\n        <div style=\"font-size:0.9em;color:#888;margin-top:10px;\">\n            입력 토큰: {aws_tokens} / 출력 토큰: 150 / 처리 시간: 2.5초\n        </div>\n        <button class=\"like-btn\" disabled>👍 좋아요</button>\n    </div>\n    <div class=\"answer-card\">\n        <div>{dummy_sds}</div>\n        <div style=\"font-size:0.9em;color:#888;margin-top:10px;\">\n            입력 토큰: {sds_tokens} / 출력 토큰: 120 / 처리 시간: 1.8초\n        </div>\n        <button class=\"like-btn\" disabled>👍 좋아요</button>\n    </div>\n</div>
+<div class=\"answer-scroll-row\">\n    
+<div class=\"answer-card\">\n        
+<div>{dummy_ms}</div>\n        
+<div style=\"font-size:0.9em;color:#888;margin-top:10px;\">\n            
+입력 토큰: {ms_tokens} / 출력 토큰: 150 / 처리 시간: 2.5초\n       
+</div>\n        
+<button class=\"like-btn\">👍 좋아요</button>\n    
+</div>\n    
+<div class=\"answer-card\">\n        
+<div>{dummy_aws}</div>\n        
+<div style=\"font-size:0.9em;color:#888;margin-top:10px;\">\n            
+입력 토큰: {aws_tokens} / 출력 토큰: 150 / 처리 시간: 2.5초\n        
+</div>\n        
+<button class=\"like-btn\">👍 좋아요</button>\n    
+</div>\n    
+<div class=\"answer-card\">\n       
+<div>{dummy_sds}</div>\n        
+<div style=\"font-size:0.9em;color:#888;margin-top:10px;\">\n            
+입력 토큰: {sds_tokens} / 출력 토큰: 120 / 처리 시간: 1.8초\n        
+</div>\n        
+<button class=\"like-btn\">👍 좋아요</button>\n    
+</div>\n</div>
 """
             st.markdown(cards_html, unsafe_allow_html=True)
 
