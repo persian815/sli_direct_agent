@@ -49,7 +49,22 @@ def get_user_icon() -> str:
     Returns:
         str: 사용자 아이콘 이미지 경로
     """
-    return "static/image/사용자.png"
+    # 현재 선택된 사용자 ID 가져오기
+    current_user = st.session_state.get("user", "User1")
+    
+    # 사용자 ID에 따른 이미지 매핑
+    user_icon_map = {
+        "User1": "static/image/char1.png",
+        "User2": "static/image/char2.png",
+        "User3": "static/image/char3.png",
+        "User4": "static/image/char4.png"
+    }
+    
+    # 기본 아이콘 경로
+    default_icon = "static/image/사용자.png"
+    
+    # 사용자 ID가 매핑에 있으면 해당 아이콘 반환, 없으면 기본 아이콘 반환
+    return user_icon_map.get(current_user, default_icon)
 
 def render_chat_interface(model):
     """채팅 인터페이스를 렌더링하는 함수"""
@@ -288,10 +303,8 @@ def render_chat_interface(model):
             with col2:
                 # 메시지 내용 표시
                 st.markdown(f"""
-                <div class="user-message-container">
-                    <div class="message-content user-message-content">
-                        {message["content"]}
-                    </div>
+                <div class="message-content user-message-content">
+                    {message["content"]}
                 </div>
                 """, unsafe_allow_html=True)
                 

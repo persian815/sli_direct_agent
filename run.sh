@@ -16,7 +16,7 @@ else
 fi
 
 #streamlit run src/app/components/main_chat2.py --server.port 8081
-streamlit run src/app/main.py --server.port 8000 --server.enableCORS false
+streamlit run src/app/main.py --server.port 8002 --server.enableCORS false
 
 
 

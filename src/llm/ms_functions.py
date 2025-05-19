@@ -6,6 +6,7 @@ import logging
 from typing import Dict, List, Tuple, Any, Optional
 from azure.ai.projects import AIProjectClient
 from azure.identity import DefaultAzureCredential, ManagedIdentityCredential
+from azure.core.credentials import AzureKeyCredential, TokenCredential
 from src.data.services_roles import SERVICES
 from src.data.personas_roles import PERSONAS
 from src.data.users_data import USERS
@@ -19,11 +20,17 @@ IS_LOCAL = os.getenv('ENV', 'local') == 'local'
 
 # agent 디폴트 (통합 전문가)
 MS_AGENT_ID = "asst_YVPGAmrKz41p7l5LlsBhJ661"  # 기본 에이전트 ID
-MS_THREAD_ID = "thread_OEGbQXSIsHwp2nPjBsdxhl5j"  # 기본 스레드 ID
+MS_THREAD_ID = "thread_M7udZoEMzmXQJDoHfleNS5ng"  # 기본 스레드 ID
 
 # 캐싱을 위한 전역 변수
 _cached_agent = None
 _thread_cache = {}
+
+# Azure AI Foundry 연결 정보
+AZURE_ENDPOINT = "https://eastus2.api.azureml.ms"
+AZURE_SUBSCRIPTION_ID = "2326c76a-5eab-44b6-808b-1978f2ffee0e"
+AZURE_RESOURCE_GROUP = "slihackathon-2025-team2-rg"
+AZURE_PROJECT_NAME = "team2_seongryongle-8914"
 
 def get_cached_agent():
     global _cached_agent
@@ -93,27 +100,23 @@ MS_CONNECTION_STRING = "eastus2.api.azureml.ms;2326c76a-5eab-44b6-808b-1978f2ffe
 
 # Azure AI Foundry 클라이언트 초기화
 try:
-    # API 키를 사용하여 인증
     if os.getenv('AZURE_AI_FOUNDRY_API_KEY'):
-        # API 키가 설정된 경우 API 키를 사용
-        # from azure.core.credentials import AzureKeyCredential
-        #credential = AzureKeyCredential(os.getenv('AZURE_AI_FOUNDRY_API_KEY'))
-        credential = os.getenv('AZURE_AI_FOUNDRY_API_KEY')
-        logger.info("Azure AI Foundry API 키를 사용하여 인증합니다.")
+        # API 키가 설정된 경우 DefaultAzureCredential 사용
+        credential = DefaultAzureCredential()
+        logger.info("DefaultAzureCredential을 사용하여 인증합니다.")
+    elif IS_LOCAL:
+        credential = DefaultAzureCredential()
+        logger.info("로컬 환경에서 DefaultAzureCredential을 사용하여 인증합니다.")
     else:
-        # API 키가 설정되지 않은 경우 관리 ID를 사용
-        if IS_LOCAL:
-            # 로컬 환경에서는 DefaultAzureCredential 사용
-            credential = DefaultAzureCredential()
-            logger.info("로컬 환경에서 DefaultAzureCredential을 사용하여 인증합니다.")
-        else:
-            # Azure 환경에서는 ManagedIdentityCredential 사용
-            credential = ManagedIdentityCredential()
-            logger.info("Azure 환경에서 ManagedIdentityCredential을 사용하여 인증합니다.")
-    
-    project_client = AIProjectClient.from_connection_string(
+        credential = ManagedIdentityCredential()
+        logger.info("Azure 환경에서 ManagedIdentityCredential을 사용하여 인증합니다.")
+
+    project_client = AIProjectClient(
+        endpoint=AZURE_ENDPOINT,
         credential=credential,
-        conn_str=MS_CONNECTION_STRING
+        subscription_id=AZURE_SUBSCRIPTION_ID,
+        resource_group_name=AZURE_RESOURCE_GROUP,
+        project_name=AZURE_PROJECT_NAME
     )
     ms_credentials_available = True
     logger.info("Azure AI Foundry 클라이언트 초기화 성공")
