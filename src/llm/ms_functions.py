@@ -83,8 +83,14 @@ def get_or_create_thread(session_id: str) -> AIProjectClient:
             logger.info(f"새로운 스레드 생성 완료: {_thread_cache[session_id].id}")
         except Exception as e:
             logger.error(f"스레드 생성 실패: {str(e)}")
-            _thread_cache[session_id] = project_client.agents.get_thread(DEFAULT_THREAD_ID)
-            logger.info(f"기본 스레드 사용: {DEFAULT_THREAD_ID}")
+            try:
+                _thread_cache[session_id] = project_client.agents.get_thread_by_id(DEFAULT_THREAD_ID)
+                logger.info(f"기본 스레드 사용: {DEFAULT_THREAD_ID}")
+            except Exception as e:
+                logger.error(f"기본 스레드 가져오기 실패: {str(e)}")
+                # 스레드 생성 재시도
+                _thread_cache[session_id] = project_client.agents.create_thread()
+                logger.info(f"새로운 스레드 생성 완료: {_thread_cache[session_id].id}")
     return _thread_cache[session_id]
 
 def get_agent_config(service: Optional[str] = None) -> Dict[str, str]:
