@@ -17,6 +17,7 @@ from src.utils.utils import (
     send_chat_log_to_api
 )
 from src.llm.ms_functions import query_ms_agent
+from src.data.personas_roles import PERSONAS
 
 def load_css():
     """CSS 파일을 로드하는 함수"""
@@ -87,72 +88,134 @@ def render_chat_interface(model: str):
     # CSS 로드
     load_css()
     
-    # 세션 상태 초기화
+    # 세션 상태 초기화 (함수 맨 앞에서만)
     if "messages" not in st.session_state:
         st.session_state.messages = []
-    
+    if "selected_answer_idx" not in st.session_state:
+        st.session_state.selected_answer_idx = None
+        st.session_state.selected_answer_content = None
+        st.session_state.selected_answer_tokens = None
+    if "last_prompt" not in st.session_state:
+        st.session_state.last_prompt = None
+
     user_icon = get_user_icon()
-    character_icon = get_character_icon(st.session_state.get("character", "논리적인 테스형"))
-    
-    # 채팅 히스토리 표시
+    character = st.session_state.get("character", "논리적인 테스형")
+    character_icon = get_character_icon(character)
+
+    # PERSONAS에서 웰컴 메시지 가져오기
+    welcome_message = PERSONAS.get(character, {}).get("welcome_message", "안녕하세요! 무엇을 도와드릴까요?")
+    # with st.chat_message("assistant", avatar=character_icon):
+    #     st.markdown(welcome_message)
+
+    # 2. 채팅 히스토리 표시 (user/assistant 모두)
     for message in st.session_state.messages:
+        # 웰컴 메시지와 동일한 assistant 메시지는 건너뜀
+        if message["role"] == "assistant" and message["content"] == welcome_message:
+            continue
         if message["role"] == "user":
             with st.chat_message("user", avatar=user_icon):
                 st.markdown(message["content"])
-        else:
+        elif message["role"] == "assistant":
             with st.chat_message("assistant", avatar=character_icon):
                 st.markdown(message["content"])
-    
-    # 사용자 입력
-    if prompt := st.chat_input("질문을 입력하세요"):
-        # 사용자 메시지 추가
+
+    # 입력창 key를 질문 개수 등과 조합
+    num_questions = len([m for m in st.session_state.messages if m["role"] == "user"])
+    prompt = None
+
+    if st.session_state.last_prompt is None:
+        # 초기 상태: 입력창 활성화
+        prompt = st.chat_input("질문을 입력하세요", disabled=False, key=f"chat_input_enabled_{num_questions}")
+    elif st.session_state.selected_answer_idx is not None:
+        # 답변 선택 후: 입력창 활성화(새 질문 가능)
+        prompt = st.chat_input("질문을 입력하세요", disabled=False, key=f"chat_input_enabled_{num_questions}")
+    # else: 답변 카드/버튼이 노출될 때는 입력창을 아예 표시하지 않음
+
+    if prompt and not (st.session_state.last_prompt and st.session_state.selected_answer_idx is None):
+        # 새로운 질문이 들어오면 이전 선택값 초기화
+        st.session_state.selected_answer_idx = None
+        st.session_state.selected_answer_content = None
+        st.session_state.selected_answer_tokens = None
+        st.session_state.last_prompt = prompt
+
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user", avatar=user_icon):
             st.markdown(prompt)
-        # 답변 작성 중 spinner
-        with st.spinner("답변 작성 중..."):
-            # 답변 3개 생성
-            # response, _, elapsed_time, input_tokens, output_tokens, start_time = query_ms_agent(prompt)
-            dummy_ms = "안녕하세요, 곰철수님! 다시 만나 뵙게 되어 반갑습니다.\n고객님의 건강 상태와 보험 가입 상황을 바탕으로 아래와 같은 분석을 제공합니다.\n\n예상 응답:\n- AWS Bedrock은 Amazon의 완전 관리형 서비스로, 다양한 파운데이션 모델을 제공합니다.\n- 현재 API 연동 작업이 진행 중이며, 곧 서비스가 시작될 예정입니다.\n- 더 자세한 정보는 AWS Bedrock 공식 문서를 참조하세요."
-            dummy_aws = "안녕하세요, 곰철수님! 다시 만나 뵙게 되어 반갑습니다.\n고객님의 건강 상태와 보험 가입 상황을 바탕으로 아래와 같은 분석을 제공합니다.\n\n예상 응답:\n- AWS Bedrock은 Amazon의 완전 관리형 서비스로, 다양한 파운데이션 모델을 제공합니다.\n- 현재 API 연동 작업이 진행 중이며, 곧 서비스가 시작될 예정입니다.\n- 더 자세한 정보는 AWS Bedrock 공식 문서를 참조하세요."
-            dummy_sds = "안녕하세요, 곰철수님! 다시 만나 뵙게 되어 반갑습니다.\n고객님의 건강 상태와 보험 가입 상황을 바탕으로 아래와 같은 분석을 제공합니다.\n\n예상 응답:\n- SDS AI는 삼성 SDS의 AI 플랫폼으로, 다양한 비즈니스 솔루션을 제공합니다.\n- 현재 API 연동 작업이 진행 중이며, 곧 서비스가 시작될 예정입니다.\n- 더 자세한 정보는 SDS AI 공식 문서를 참조하세요."
 
-            # 답변 카드 row (HTML/CSS + JS)
-            ms_tokens = int(len(prompt.split()) // 1.3)
-            aws_tokens = int(len(prompt.split()) // 1.3)
-            sds_tokens = int(len(prompt.split()) // 1.3)
+    # 답변 생성 및 카드/버튼 렌더링은 오직 여기서만!
+    if st.session_state.last_prompt:
+        # 답변 3개 생성
+        dummy_ms = "안녕하세요, 곰철수님! 다시 만나 뵙게 되어 반갑습니다.\n고객님의 건강 상태와 보험 가입 상황을 바탕으로 아래와 같은 분석을 제공합니다.\n\n예상 응답:\n- Azure Foundry  AI는 MS의 완전 관리형 서비스로, 다양한 파운데이션 모델을 제공합니다.\n- 현재 API 연동 작업이 진행 중이며, 곧 서비스가 시작될 예정입니다.\n- 더 자세한 정보는 Azure Foundry AI 공식 문서를 참조하세요."
+        dummy_aws = "안녕하세요, 곰철수님! 다시 만나 뵙게 되어 반갑습니다.\n고객님의 건강 상태와 보험 가입 상황을 바탕으로 아래와 같은 분석을 제공합니다.\n\n예상 응답:\n- AWS Bedrock은 Amazon의 완전 관리형 서비스로, 다양한 파운데이션 모델을 제공합니다.\n- 현재 API 연동 작업이 진행 중이며, 곧 서비스가 시작될 예정입니다.\n- 더 자세한 정보는 AWS Bedrock 공식 문서를 참조하세요."
+        dummy_sds = "안녕하세요, 곰철수님! 다시 만나 뵙게 되어 반갑습니다.\n고객님의 건강 상태와 보험 가입 상황을 바탕으로 아래와 같은 분석을 제공합니다.\n\n예상 응답:\n- SDS AI는 삼성 SDS의 AI 플랫폼으로, 다양한 비즈니스 솔루션을 제공합니다.\n- 현재 API 연동 작업이 진행 중이며, 곧 서비스가 시작될 예정입니다.\n- 더 자세한 정보는 SDS AI 공식 문서를 참조하세요."
+        ms_tokens = int(len(st.session_state.last_prompt.split()) // 1.3)
+        aws_tokens = int(len(st.session_state.last_prompt.split()) // 1.3)
+        sds_tokens = int(len(st.session_state.last_prompt.split()) // 1.3)
+        answers = [dummy_ms, dummy_aws, dummy_sds]
+        label_list = ["1번 답변 👍", "2번 답변 👍", "3번 답변 👍"]
+
+        if st.session_state.selected_answer_idx is None:
+            # 카드/버튼 렌더링 (여기서만!)
             cards_html = f"""
-<div class=\"answer-scroll-row\">\n    
-<div class=\"answer-card\">\n        
-<div>{dummy_ms}</div>\n        
-<div style=\"font-size:0.9em;color:#888;margin-top:10px;\">\n            
-입력 토큰: {ms_tokens} / 출력 토큰: 150 / 처리 시간: 2.5초\n       
-</div>\n        
-<button class=\"like-btn\">👍 좋아요</button>\n    
-</div>\n    
-<div class=\"answer-card\">\n        
-<div>{dummy_aws}</div>\n        
-<div style=\"font-size:0.9em;color:#888;margin-top:10px;\">\n            
-입력 토큰: {aws_tokens} / 출력 토큰: 150 / 처리 시간: 2.5초\n        
-</div>\n        
-<button class=\"like-btn\">👍 좋아요</button>\n    
-</div>\n    
-<div class=\"answer-card\">\n       
-<div>{dummy_sds}</div>\n        
-<div style=\"font-size:0.9em;color:#888;margin-top:10px;\">\n            
-입력 토큰: {sds_tokens} / 출력 토큰: 120 / 처리 시간: 1.8초\n        
-</div>\n        
-<button class=\"like-btn\">👍 좋아요</button>\n    
-</div>\n</div>
-"""
+            <div class="answer-scroll-row">
+                <div class="answer-card">
+                    <div>{dummy_ms}</div>
+                    <div style="font-size:0.9em;color:#888;margin-top:10px;">
+                        입력 토큰: {ms_tokens} / 출력 토큰: 150 / 처리 시간: 2.5초
+                    </div>
+                </div>
+                <div class="answer-card">
+                    <div>{dummy_aws}</div>
+                    <div style="font-size:0.9em;color:#888;margin-top:10px;">
+                        입력 토큰: {aws_tokens} / 출력 토큰: 150 / 처리 시간: 2.5초
+                    </div>
+                </div>
+                <div class="answer-card">
+                    <div>{dummy_sds}</div>
+                    <div style="font-size:0.9em;color:#888;margin-top:10px;">
+                        입력 토큰: {sds_tokens} / 출력 토큰: 120 / 처리 시간: 1.8초
+                    </div>
+                </div>
+            </div>
+            """
             st.markdown(cards_html, unsafe_allow_html=True)
+            
+            cols = st.columns(3)
+            for idx, col in enumerate(cols):
+                with col:
+                    if st.button(label_list[idx], key=f"like_{idx}"):
+                        st.session_state.selected_answer_idx = idx
+                        st.session_state.selected_answer_content = answers[idx]
+                        st.session_state.selected_answer_tokens = {
+                            "input": [ms_tokens, aws_tokens, sds_tokens][idx],
+                            "output": [150, 150, 120][idx],
+                            "time": [2.5, 2.5, 1.8][idx]
+                        }
+                        # 답변을 messages에 저장
+                        st.session_state.messages.append({
+                            "role": "assistant",
+                            "content": answers[idx]
+                        })
+                        st.rerun()
+        else:
+            # 선택된 답변만 노출 (히스토리에 이미 있으므로 별도 출력하지 않음)
+            idx = st.session_state.selected_answer_idx
+            selected_text = st.session_state.selected_answer_content
+            token_info = st.session_state.selected_answer_tokens
+            selected_card_html = f"""
+            <div class="answer-scroll-row">
+              <div class="answer-card">
+                <div>{selected_text}</div>
+                <div style="font-size:0.9em;color:#888;margin-top:10px;">
+                  입력 토큰: {token_info['input']} / 출력 토큰: {token_info['output']} / 처리 시간: {token_info['time']}초
+                </div>
+              </div>
+            </div>
+            """
+            # st.markdown(selected_card_html, unsafe_allow_html=True)
 
-            # 메시지 히스토리에는 strip_html_tags(response) 등 순수 텍스트만 저장
-            plain_response = strip_html_tags(dummy_ms)
-            st.session_state.messages.append({
-                "role": "assistant", 
-                "content": f"Azure AI Foundry: {plain_response}\n\nAWS Bedrock: API 연동 중\n\nSDS AI: API 연동 중"
-            })
+    st.write(f"함수 진입! selected_answer_idx: {st.session_state.get('selected_answer_idx', None)}")
+    print(f"함수 진입! selected_answer_idx: {st.session_state.get('selected_answer_idx', None)}")
 
 def generate_tab_name(role, character):
     """전문 역할, 캐릭터, 날짜, 시간을 조합하여 탭 이름을 생성하는 함수"""

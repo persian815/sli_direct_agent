@@ -112,20 +112,21 @@ def render_sidebar():
                 agent_name = selected_persona
                 agent_role = st.session_state.get("role", "통합 전문가")
                 role_specific_message = get_role_specific_message(agent_role)
-                st.session_state.messages.append({
-                    "role": "assistant",
-                    "content": f"""안녕하세요! 저는 {agent_name}이에요. {agent_role}로서 고객님을 만나게 되어 정말 반가워요.
-
-{welcome_message}
-
-{role_specific_message} 편하게 말씀해 주세요! 😊""",
-                    "metrics": {
-                        "request_time": 0,
-                        "response_time": 0,
-                        "input_tokens": 0,
-                        "output_tokens": 0
-                    }
-                })
+                # 웰컴 메시지는 오직 한 곳에서만 출력해야 합니다.
+                # st.session_state.messages.append({
+                #     "role": "assistant",
+                #     "content": f"""안녕하세요! 저는 {agent_name}이에요. {agent_role}로서 고객님을 만나게 되어 정말 반가워요.
+                #
+                # {welcome_message}
+                #
+                # {role_specific_message} 편하게 말씀해 주세요! 😊""",
+                #     "metrics": {
+                #         "request_time": 0,
+                #         "response_time": 0,
+                #         "input_tokens": 0,
+                #         "output_tokens": 0
+                #     }
+                # })
                 st.rerun()
             # 캐릭터 설명 노출
             persona_desc = PERSONAS.get(selected_persona, {}).get('설명', '')
