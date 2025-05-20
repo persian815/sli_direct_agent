@@ -89,7 +89,8 @@ def render_chat_interface(model: str):
     if "selected_answer_idx" not in st.session_state:
         st.session_state.selected_answer_idx = None
         st.session_state.selected_answer_content = None
-        st.session_state.selected_answer_tokens = None
+    if "cached_responses" not in st.session_state:
+        st.session_state.cached_responses = {}
 
     user_icon = get_user_icon()
     character = st.session_state.get("character", "논리적인 테스형")
@@ -132,7 +133,6 @@ def render_chat_interface(model: str):
         # 새로운 질문이 들어오면 이전 선택값 초기화
         st.session_state.selected_answer_idx = None
         st.session_state.selected_answer_content = None
-        st.session_state.selected_answer_tokens = None
 
         # 사용자 메시지에 지식레벨과 온도 추가
         knowledge_level, knowledge_reason = evaluate_user_knowledge_level(prompt)
@@ -155,7 +155,7 @@ def render_chat_interface(model: str):
                 st.markdown(f"<div style='color: {temperature_color}; font-size: 0.8em;'>사용자 온도: {temperature:.1f}°C</div>", unsafe_allow_html=True)
 
     # 답변 생성 및 카드/버튼 렌더링은 오직 여기서만!
-    if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
+    if st.session_state.messages and st.session_state.messages[-1]["role"] == "user" and st.session_state.selected_answer_idx is None:
         last_user_message = st.session_state.messages[-1]["content"]
         
         # 더미 모드가 활성화된 경우 더미 답변 사용
@@ -168,31 +168,27 @@ def render_chat_interface(model: str):
         else:
             # 더미 모드가 비활성화된 경우 실제 AI 플랫폼 호출
             try:
-                # MS Agent 호출
-                response = query_ms_agent(last_user_message)
-                if isinstance(response, tuple):
-                    ms_response = response[0]  # 첫 번째 값만 사용
+                # 캐시된 응답이 있는지 확인
+                if last_user_message in st.session_state.cached_responses:
+                    answers = st.session_state.cached_responses[last_user_message]
                 else:
-                    ms_response = response
-                # AWS Bedrock 호출 (구현 필요)
-                aws_response = "AWS Bedrock 응답 준비 중..."
-                # SDS AI 호출 (구현 필요)
-                sds_response = "SDS AI 응답 준비 중..."
-                answers = [ms_response, aws_response, sds_response]
+                    # MS Agent 호출
+                    response = query_ms_agent(last_user_message)
+                    if isinstance(response, tuple):
+                        ms_response = response[0]  # 첫 번째 값만 사용
+                    else:
+                        ms_response = response
+                    # AWS Bedrock 호출 (구현 필요)
+                    aws_response = "AWS Bedrock 응답 준비 중..."
+                    # SDS AI 호출 (구현 필요)
+                    sds_response = "SDS AI 응답 준비 중..."
+                    answers = [ms_response, aws_response, sds_response]
+                    # 응답 캐싱
+                    st.session_state.cached_responses[last_user_message] = answers
             except Exception as e:
                 st.error(f"AI 플랫폼 호출 중 오류 발생: {str(e)}")
                 return
 
-        # 토큰 수 계산 (더미 모드일 때만)
-        if st.session_state.get('dummy_mode', True):
-            ms_tokens = int(len(last_user_message.split()) // 1.3)
-            aws_tokens = int(len(last_user_message.split()) // 1.3)
-            sds_tokens = int(len(last_user_message.split()) // 1.3)
-        else:
-            # 실제 모드에서는 토큰 수를 0으로 설정
-            ms_tokens = 0
-            aws_tokens = 0
-            sds_tokens = 0
         label_list = ["1번 답변 👍", "2번 답변 👍", "3번 답변 👍"]
 
         if st.session_state.selected_answer_idx is None:
@@ -201,21 +197,12 @@ def render_chat_interface(model: str):
             <div class="answer-scroll-row">
                 <div class="answer-card">
                     <div>{answers[0]}</div>
-                    <div style="font-size:0.9em;color:#888;margin-top:10px;">
-                        입력 토큰: {ms_tokens} / 출력 토큰: 150 / 처리 시간: 2.5초
-                    </div>
                 </div>
                 <div class="answer-card">
                     <div>{answers[1]}</div>
-                    <div style="font-size:0.9em;color:#888;margin-top:10px;">
-                        입력 토큰: {aws_tokens} / 출력 토큰: 150 / 처리 시간: 2.5초
-                    </div>
                 </div>
                 <div class="answer-card">
                     <div>{answers[2]}</div>
-                    <div style="font-size:0.9em;color:#888;margin-top:10px;">
-                        입력 토큰: {sds_tokens} / 출력 토큰: 120 / 처리 시간: 1.8초
-                    </div>
                 </div>
             </div>
             """
@@ -227,11 +214,6 @@ def render_chat_interface(model: str):
                     if st.button(label_list[idx], key=f"like_{idx}"):
                         st.session_state.selected_answer_idx = idx
                         st.session_state.selected_answer_content = answers[idx]
-                        st.session_state.selected_answer_tokens = {
-                            "input": [ms_tokens, aws_tokens, sds_tokens][idx],
-                            "output": [150, 150, 120][idx],
-                            "time": [2.5, 2.5, 1.8][idx]
-                        }
                         
                         # 답변의 품질 평가
                         quality_score, quality_reason = evaluate_response_quality(answers[idx])
@@ -247,14 +229,10 @@ def render_chat_interface(model: str):
             # 선택된 답변만 노출 (히스토리에 이미 있으므로 별도 출력하지 않음)
             idx = st.session_state.selected_answer_idx
             selected_text = st.session_state.selected_answer_content
-            token_info = st.session_state.selected_answer_tokens
             selected_card_html = f"""
             <div class="answer-scroll-row">
               <div class="answer-card">
                 <div>{selected_text}</div>
-                <div style="font-size:0.9em;color:#888;margin-top:10px;">
-                  입력 토큰: {token_info['input']} / 출력 토큰: {token_info['output']} / 처리 시간: {token_info['time']}초
-                </div>
               </div>
             </div>
             """
