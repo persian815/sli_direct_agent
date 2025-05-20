@@ -5,10 +5,6 @@ import re
 from src.llm import (
     evaluate_user_knowledge_level, get_knowledge_level_color
 )
-from src.visualization.visualization import (
-    format_knowledge_level_html,
-    format_metrics_html
-)
 from src.utils.utils import (
     evaluate_response_quality,
     get_quality_level_color,
@@ -84,8 +80,7 @@ def strip_html_tags(text):
     return text
 
 def render_chat_interface(model: str):
-    """채팅 인터페이스를 렌더링합니다."""
-    # CSS 로드
+    """채팅 인터페이스를 렌더링하는 함수"""
     load_css()
     
     # 세션 상태 초기화 (함수 맨 앞에서만)
@@ -111,9 +106,23 @@ def render_chat_interface(model: str):
         if message["role"] == "user":
             with st.chat_message("user", avatar=user_icon):
                 st.markdown(message["content"])
+                # 사용자 메시지의 경우 지식레벨과 온도 표시
+                if "knowledge_level" in message:
+                    knowledge_level = message["knowledge_level"]
+                    knowledge_color = get_knowledge_level_color(knowledge_level)
+                    st.markdown(f"<div style='color: {knowledge_color}; font-size: 0.8em;'>지식레벨: {knowledge_level}</div>", unsafe_allow_html=True)
+                if "temperature" in message:
+                    temperature = message["temperature"]
+                    temperature_color = get_temperature_color(temperature)
+                    st.markdown(f"<div style='color: {temperature_color}; font-size: 0.8em;'>사용자 온도: {temperature:.1f}°C</div>", unsafe_allow_html=True)
         elif message["role"] == "assistant":
             with st.chat_message("assistant", avatar=character_icon):
                 st.markdown(message["content"])
+                # 어시스턴트 메시지의 경우 응답 품질 표시
+                if "quality_score" in message:
+                    quality_score = message["quality_score"]
+                    quality_color = get_quality_level_color(quality_score)
+                    st.markdown(f"<div style='color: {quality_color}; font-size: 0.8em;'>응답 품질: {quality_score}</div>", unsafe_allow_html=True)
 
     # 입력창 항상 하나만 표시
     prompt = st.chat_input("질문을 입력하세요")
@@ -123,9 +132,23 @@ def render_chat_interface(model: str):
         st.session_state.selected_answer_content = None
         st.session_state.selected_answer_tokens = None
 
-        st.session_state.messages.append({"role": "user", "content": prompt})
+        # 사용자 메시지에 지식레벨과 온도 추가
+        knowledge_level, knowledge_reason = evaluate_user_knowledge_level(prompt)
+        temperature, temperature_reason = evaluate_user_temperature(prompt)
+        
+        st.session_state.messages.append({
+            "role": "user", 
+            "content": prompt,
+            "knowledge_level": knowledge_level,
+            "temperature": temperature
+        })
+        
         with st.chat_message("user", avatar=user_icon):
             st.markdown(prompt)
+            knowledge_color = get_knowledge_level_color(knowledge_level)
+            temperature_color = get_temperature_color(temperature)
+            st.markdown(f"<div style='color: {knowledge_color}; font-size: 0.8em;'>지식레벨: {knowledge_level}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='color: {temperature_color}; font-size: 0.8em;'>사용자 온도: {temperature:.1f}°C</div>", unsafe_allow_html=True)
 
     # 답변 생성 및 카드/버튼 렌더링은 오직 여기서만!
     if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
@@ -177,10 +200,15 @@ def render_chat_interface(model: str):
                             "output": [150, 150, 120][idx],
                             "time": [2.5, 2.5, 1.8][idx]
                         }
+                        
+                        # 답변의 품질 평가
+                        quality_score, quality_reason = evaluate_response_quality(answers[idx])
+                        
                         # 답변을 messages에 저장
                         st.session_state.messages.append({
                             "role": "assistant",
-                            "content": answers[idx]
+                            "content": answers[idx],
+                            "quality_score": quality_score
                         })
                         st.rerun()
         else:
@@ -198,12 +226,4 @@ def render_chat_interface(model: str):
               </div>
             </div>
             """
-            # st.markdown(selected_card_html, unsafe_allow_html=True)
-
-def generate_tab_name(role, character):
-    """전문 역할, 캐릭터, 날짜, 시간을 조합하여 탭 이름을 생성하는 함수"""
-    import datetime
-    now = datetime.datetime.now()
-    date_str = now.strftime("%Y%m%d")
-    time_str = now.strftime("%H%M")
-    return f"{role}_{character}_{date_str}_{time_str}" 
+            # st.markdown(selected_card_html, unsafe_allow_html=True) 

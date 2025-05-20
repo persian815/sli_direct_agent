@@ -41,13 +41,6 @@ def initialize_app():
             "description": welcome_message
         }
     
-    # Initialize tabs in session state
-    if 'tabs' not in st.session_state or not st.session_state.tabs:
-        from src.app.components.chat import generate_tab_name
-        tab_name = generate_tab_name(st.session_state.role, st.session_state.character)
-        st.session_state.tabs = [tab_name]
-        st.session_state.current_tab = tab_name
-    
     # Initialize messages in session state
     if 'messages' not in st.session_state:
         st.session_state.messages = []
@@ -62,11 +55,7 @@ def initialize_app():
 
         st.session_state.messages.append({
             "role": "assistant",
-            "content": f"""안녕하세요! 저는 {agent_name}이에요. {agent_role}로서 고객님을 만나게 되어 정말 반가워요.
-
-{persona_info.get('description', '').replace('[', '').replace(']', '')}
-
-{role_specific_message} 편하게 말씀해 주세요! 😊""",
+            "content": f"""안녕하세요! 저는 {agent_name}이에요. {agent_role}로서 고객님을 만나게 되어 정말 반가워요.\n\n{persona_info.get('description', '').replace('[', '').replace(']', '')}\n\n{role_specific_message} 편하게 말씀해 주세요! 😊""",
             "metrics": {
                 "request_time": 0,
                 "response_time": 0,
