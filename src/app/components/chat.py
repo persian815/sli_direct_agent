@@ -2,6 +2,23 @@ import streamlit as st
 import time
 import os
 import re
+import logging
+import sys
+from typing import Dict
+
+# 로깅 설정
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout)  # 터미널에 출력
+    ]
+)
+logger = logging.getLogger(__name__)
+
+# 로그 레벨 설정 확인
+logger.setLevel(logging.INFO)
+
 from src.llm import (
     evaluate_user_knowledge_level, get_knowledge_level_color
 )
@@ -78,6 +95,64 @@ def strip_html_tags(text):
     # 모든 HTML 태그 제거 (여러 줄, 들여쓰기 포함)
     text = re.sub(r'<[^>]+>', '', text)
     return text
+
+def _format_user_info(user_info: Dict) -> str:
+    """사용자 정보를 문자열로 포맷팅합니다."""
+    if not user_info:
+        return ""
+        
+    user_data = []
+    
+    # 기본정보
+    basic_info = user_info.get('기본정보', {})
+    if basic_info:
+        user_data.append("사용자 기본정보:")
+        for key, value in basic_info.items():
+            user_data.append(f"- {key}: {value}")
+    
+    # 건강검진정보
+    health_info = user_info.get('건강검진정보', {})
+    if health_info:
+        user_data.append("\n건강검진정보:")
+        for key, value in health_info.items():
+            user_data.append(f"- {key}: {value}")
+    
+    # 보험가입내역
+    insurance_info = user_info.get('보험가입내역', [])
+    if isinstance(insurance_info, list) and insurance_info:
+        user_data.append("\n보험가입내역:")
+        for item in insurance_info:
+            user_data.append(
+                f"- {item.get('상품명', '')} / {item.get('보장급부', '')} / "
+                f"{item.get('보장내용', '')} / 보장금액: {item.get('보장금액(만원)', '')}만원 / "
+                f"보험료: {item.get('보험료(만원)', '')}만원\n  설명: {item.get('설명', '')}"
+            )
+    elif isinstance(insurance_info, dict):
+        user_data.append("\n보험가입내역:")
+        for key, value in insurance_info.items():
+            user_data.append(f"- {key}: {value}")
+    
+    return "\n".join(user_data)
+
+def _prepare_message(input_text: str) -> str:
+    """사용자 정보와 입력 텍스트를 결합하여 최종 메시지를 생성합니다."""
+    from src.data.users_data import USERS
+    
+    # 사용자 정보 준비
+    user = st.session_state.get("user", "User1")
+    if user not in USERS:
+        logger.warning(f"user({user})가 USERS에 없습니다. User1로 fallback.")
+        user = "User1"
+        
+    user_info = USERS.get(user, {}).get('info', {})
+    if isinstance(user_info, list):
+        user_info = user_info[0] if user_info else {}
+        
+    # 메시지 구성
+    user_data = _format_user_info(user_info)
+    final_message = f"{user_data}\n\n질문: {input_text}" if user_data else f"질문: {input_text}"
+    
+    return final_message
 
 def render_chat_interface(model: str):
     """채팅 인터페이스를 렌더링하는 함수"""
@@ -172,16 +247,29 @@ def render_chat_interface(model: str):
                 if last_user_message in st.session_state.cached_responses:
                     answers = st.session_state.cached_responses[last_user_message]
                 else:
+                    
+                    # 최종 메시지 구성
+                    final_message = _prepare_message(last_user_message)
+                    logger.info(f"Prepared message: {final_message}")
+                    
                     # MS Agent 호출
-                    response = query_ms_agent(last_user_message)
+                    response = query_ms_agent(final_message)
                     if isinstance(response, tuple):
                         ms_response = response[0]  # 첫 번째 값만 사용
                     else:
                         ms_response = response
-                    # AWS Bedrock 호출 (구현 필요)
-                    aws_response = "AWS Bedrock 응답 준비 중..."
+
+                    # AWS Bedrock 호출
+                    from src.llm.aws_functions import query_bedrock_agent, aws_credentials_available
+                    
+                    if aws_credentials_available():
+                        aws_response, _, _, _, _, _ = query_bedrock_agent(final_message)
+                    else:
+                        aws_response = "AWS Bedrock 서비스를 사용하기 위해서는 AWS 자격 증명이 필요합니다.\n\n자격 증명 설정 방법:\n1. AWS CLI 설치\n2. `aws configure` 명령어로 자격 증명 설정\n3. AWS_ACCESS_KEY_ID와 AWS_SECRET_ACCESS_KEY 환경 변수 설정"
+
                     # SDS AI 호출 (구현 필요)
                     sds_response = "SDS AI 응답 준비 중..."
+                    
                     answers = [ms_response, aws_response, sds_response]
                     # 응답 캐싱
                     st.session_state.cached_responses[last_user_message] = answers

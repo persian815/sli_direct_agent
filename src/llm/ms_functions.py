@@ -189,25 +189,11 @@ def query_ms_agent(input_text: str, tab_id: Optional[str] = None, system_prompt:
         agent = get_cached_agent()
         thread = get_or_create_thread(tab_id or "default")
         
-        # 사용자 정보 준비
-        user = st.session_state.get("user", DEFAULT_USER)
-        if user not in USERS:
-            logger.warning(f"user({user})가 USERS에 없습니다. User1로 fallback.")
-            user = DEFAULT_USER
-            
-        user_info = USERS.get(user, {}).get('info', {})
-        if isinstance(user_info, list):
-            user_info = user_info[0] if user_info else {}
-            
-        # 메시지 구성
-        user_data = _format_user_info(user_info)
-        final_message = f"{user_data}\n\n질문: {input_text}" if user_data else f"질문: {input_text}"
-        
         # API 호출
         user_message = project_client.agents.create_message(
             thread_id=thread.id,
             role="user",
-            content=final_message
+            content=input_text
         )
         time.sleep(0.2)
         
