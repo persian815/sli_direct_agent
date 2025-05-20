@@ -110,16 +110,18 @@ def render_chat_interface(model: str):
                 if "knowledge_level" in message:
                     knowledge_level = message["knowledge_level"]
                     knowledge_color = get_knowledge_level_color(knowledge_level)
-                    st.markdown(f"<div style='color: {knowledge_color}; font-size: 0.8em;'>지식레벨: {knowledge_level}</div>", unsafe_allow_html=True)
+                    if st.session_state.get('developer_mode', False):
+                        st.markdown(f"<div style='color: {knowledge_color}; font-size: 0.8em;'>지식레벨: {knowledge_level}</div>", unsafe_allow_html=True)
                 if "temperature" in message:
                     temperature = message["temperature"]
                     temperature_color = get_temperature_color(temperature)
-                    st.markdown(f"<div style='color: {temperature_color}; font-size: 0.8em;'>사용자 온도: {temperature:.1f}°C</div>", unsafe_allow_html=True)
+                    if st.session_state.get('developer_mode', False):
+                        st.markdown(f"<div style='color: {temperature_color}; font-size: 0.8em;'>사용자 온도: {temperature:.1f}°C</div>", unsafe_allow_html=True)
         elif message["role"] == "assistant":
             with st.chat_message("assistant", avatar=character_icon):
                 st.markdown(message["content"])
-                # 어시스턴트 메시지의 경우 응답 품질 표시
-                if "quality_score" in message:
+                # 어시스턴트 메시지의 경우 응답 품질 표시 (개발자 모드 활성화 시에만)
+                if "quality_score" in message and st.session_state.get('developer_mode', False):
                     quality_score = message["quality_score"]
                     quality_color = get_quality_level_color(quality_score)
                     st.markdown(f"<div style='color: {quality_color}; font-size: 0.8em;'>응답 품질: {quality_score}</div>", unsafe_allow_html=True)
@@ -145,10 +147,12 @@ def render_chat_interface(model: str):
         
         with st.chat_message("user", avatar=user_icon):
             st.markdown(prompt)
-            knowledge_color = get_knowledge_level_color(knowledge_level)
-            temperature_color = get_temperature_color(temperature)
-            st.markdown(f"<div style='color: {knowledge_color}; font-size: 0.8em;'>지식레벨: {knowledge_level}</div>", unsafe_allow_html=True)
-            st.markdown(f"<div style='color: {temperature_color}; font-size: 0.8em;'>사용자 온도: {temperature:.1f}°C</div>", unsafe_allow_html=True)
+            # 개발자 모드가 활성화된 경우에만 지식레벨과 온도 표시
+            if st.session_state.get('developer_mode', False):
+                knowledge_color = get_knowledge_level_color(knowledge_level)
+                temperature_color = get_temperature_color(temperature)
+                st.markdown(f"<div style='color: {knowledge_color}; font-size: 0.8em;'>지식레벨: {knowledge_level}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='color: {temperature_color}; font-size: 0.8em;'>사용자 온도: {temperature:.1f}°C</div>", unsafe_allow_html=True)
 
     # 답변 생성 및 카드/버튼 렌더링은 오직 여기서만!
     if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":

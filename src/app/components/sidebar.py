@@ -215,14 +215,6 @@ def render_sidebar():
                     '응답 품질': quality_scores
                 })
                 st.sidebar.bar_chart(quality_df)
-        
-        # 함수 로그
-        st.sidebar.subheader("함수 로그")
-        function_logs = st.session_state.get("function_logs", [])
-        if function_logs:
-            st.sidebar.dataframe(function_logs)
-        else:
-            st.sidebar.info("함수 로그가 없습니다.")
     else:
         # 개발자 모드가 비활성화된 경우 기본 모델 사용
         model = "Azure AI Foundry (GPT-4.0)"
