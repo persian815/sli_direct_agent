@@ -23,7 +23,7 @@ AZURE_PROJECT_NAME = "team2_seongryongle-8914"
 
 # 기본 에이전트 설정
 DEFAULT_AGENT_ID = "asst_YVPGAmrKz41p7l5LlsBhJ661"
-DEFAULT_THREAD_ID = "thread_NFFROjExx5Sol4Ht28NoGOyc"
+DEFAULT_THREAD_ID = "thread_M7udZoEMzmXQJDoHfleNS5ng"
 DEFAULT_ROLE = "통합 전문가"
 DEFAULT_CHARACTER = "친절한 미영씨"
 DEFAULT_USER = "User1"
@@ -216,8 +216,47 @@ def query_ms_agent(input_text: str, tab_id: Optional[str] = None, system_prompt:
             agent_id=agent.id
         )
         
-        messages = project_client.agents.list_messages(thread_id=thread.id)
-        response_text = _extract_response_text(messages)
+        # 실행이 완료될 때까지 대기 (최대 30초)
+        max_wait_time = 30
+        wait_start = time.time()
+        while True:
+            try:
+                run_status = project_client.agents.get_run(thread_id=thread.id, run_id=run.id)
+                logger.debug(f"실행 상태: {run_status.status}")
+                
+                if run_status.status == 'completed':
+                    break
+                elif run_status.status in ['failed', 'cancelled']:
+                    error_msg = f"실행 실패: {run_status.status}"
+                    if hasattr(run_status, 'error'):
+                        error_msg += f" - {run_status.error}"
+                    if hasattr(run_status, 'last_error'):
+                        error_msg += f"\n마지막 에러: {run_status.last_error}"
+                    logger.error(error_msg)
+                    return f"응답 생성 중 오류가 발생했습니다. (상태: {run_status.status})", [], elapsed_time, 0, 0, start_time
+                
+                # 타임아웃 체크
+                if time.time() - wait_start > max_wait_time:
+                    logger.error("실행 시간 초과")
+                    return "응답 생성 시간이 초과되었습니다.", [], elapsed_time, 0, 0, start_time
+                
+                time.sleep(1)
+            except Exception as e:
+                logger.error(f"실행 상태 확인 중 오류 발생: {str(e)}")
+                return f"실행 상태 확인 중 오류가 발생했습니다: {str(e)}", [], elapsed_time, 0, 0, start_time
+        
+        # 최신 메시지 가져오기
+        try:
+            messages = project_client.agents.list_messages(thread_id=thread.id)
+            response_text = _extract_response_text(messages)
+            if not response_text:
+                logger.error("응답 텍스트를 추출할 수 없습니다.")
+                return "응답을 생성할 수 없습니다.", [], elapsed_time, 0, 0, start_time
+                
+            logger.info(f"응답 생성 완료 (response_text: {response_text})")
+        except Exception as e:
+            logger.error(f"메시지 가져오기 실패: {str(e)}")
+            return f"응답을 가져오는 중 오류가 발생했습니다: {str(e)}", [], elapsed_time, 0, 0, start_time
         
         # 결과 계산
         elapsed_time = time.time() - start_time

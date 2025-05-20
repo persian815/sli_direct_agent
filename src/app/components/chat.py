@@ -157,14 +157,42 @@ def render_chat_interface(model: str):
     # 답변 생성 및 카드/버튼 렌더링은 오직 여기서만!
     if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
         last_user_message = st.session_state.messages[-1]["content"]
-        # 답변 3개 생성
-        dummy_ms = "안녕하세요, 곰철수님! 다시 만나 뵙게 되어 반갑습니다.\n고객님의 건강 상태와 보험 가입 상황을 바탕으로 아래와 같은 분석을 제공합니다.\n\n예상 응답:\n- Azure Foundry  AI는 MS의 완전 관리형 서비스로, 다양한 파운데이션 모델을 제공합니다.\n- 현재 API 연동 작업이 진행 중이며, 곧 서비스가 시작될 예정입니다.\n- 더 자세한 정보는 Azure Foundry AI 공식 문서를 참조하세요."
-        dummy_aws = "안녕하세요, 곰철수님! 다시 만나 뵙게 되어 반갑습니다.\n고객님의 건강 상태와 보험 가입 상황을 바탕으로 아래와 같은 분석을 제공합니다.\n\n예상 응답:\n- AWS Bedrock은 Amazon의 완전 관리형 서비스로, 다양한 파운데이션 모델을 제공합니다.\n- 현재 API 연동 작업이 진행 중이며, 곧 서비스가 시작될 예정입니다.\n- 더 자세한 정보는 AWS Bedrock 공식 문서를 참조하세요."
-        dummy_sds = "안녕하세요, 곰철수님! 다시 만나 뵙게 되어 반갑습니다.\n고객님의 건강 상태와 보험 가입 상황을 바탕으로 아래와 같은 분석을 제공합니다.\n\n예상 응답:\n- SDS AI는 삼성 SDS의 AI 플랫폼으로, 다양한 비즈니스 솔루션을 제공합니다.\n- 현재 API 연동 작업이 진행 중이며, 곧 서비스가 시작될 예정입니다.\n- 더 자세한 정보는 SDS AI 공식 문서를 참조하세요."
-        ms_tokens = int(len(last_user_message.split()) // 1.3)
-        aws_tokens = int(len(last_user_message.split()) // 1.3)
-        sds_tokens = int(len(last_user_message.split()) // 1.3)
-        answers = [dummy_ms, dummy_aws, dummy_sds]
+        
+        # 더미 모드가 활성화된 경우 더미 답변 사용
+        if st.session_state.get('dummy_mode', True):
+            # 답변 3개 생성
+            dummy_ms = "안녕하세요, 곰철수님! 다시 만나 뵙게 되어 반갑습니다.\n고객님의 건강 상태와 보험 가입 상황을 바탕으로 아래와 같은 분석을 제공합니다.\n\n예상 응답:\n- Azure Foundry  AI는 MS의 완전 관리형 서비스로, 다양한 파운데이션 모델을 제공합니다.\n- 현재 API 연동 작업이 진행 중이며, 곧 서비스가 시작될 예정입니다.\n- 더 자세한 정보는 Azure Foundry AI 공식 문서를 참조하세요."
+            dummy_aws = "안녕하세요, 곰철수님! 다시 만나 뵙게 되어 반갑습니다.\n고객님의 건강 상태와 보험 가입 상황을 바탕으로 아래와 같은 분석을 제공합니다.\n\n예상 응답:\n- AWS Bedrock은 Amazon의 완전 관리형 서비스로, 다양한 파운데이션 모델을 제공합니다.\n- 현재 API 연동 작업이 진행 중이며, 곧 서비스가 시작될 예정입니다.\n- 더 자세한 정보는 AWS Bedrock 공식 문서를 참조하세요."
+            dummy_sds = "안녕하세요, 곰철수님! 다시 만나 뵙게 되어 반갑습니다.\n고객님의 건강 상태와 보험 가입 상황을 바탕으로 아래와 같은 분석을 제공합니다.\n\n예상 응답:\n- SDS AI는 삼성 SDS의 AI 플랫폼으로, 다양한 비즈니스 솔루션을 제공합니다.\n- 현재 API 연동 작업이 진행 중이며, 곧 서비스가 시작될 예정입니다.\n- 더 자세한 정보는 SDS AI 공식 문서를 참조하세요."
+            answers = [dummy_ms, dummy_aws, dummy_sds]
+        else:
+            # 더미 모드가 비활성화된 경우 실제 AI 플랫폼 호출
+            try:
+                # MS Agent 호출
+                response = query_ms_agent(last_user_message)
+                if isinstance(response, tuple):
+                    ms_response = response[0]  # 첫 번째 값만 사용
+                else:
+                    ms_response = response
+                # AWS Bedrock 호출 (구현 필요)
+                aws_response = "AWS Bedrock 응답 준비 중..."
+                # SDS AI 호출 (구현 필요)
+                sds_response = "SDS AI 응답 준비 중..."
+                answers = [ms_response, aws_response, sds_response]
+            except Exception as e:
+                st.error(f"AI 플랫폼 호출 중 오류 발생: {str(e)}")
+                return
+
+        # 토큰 수 계산 (더미 모드일 때만)
+        if st.session_state.get('dummy_mode', True):
+            ms_tokens = int(len(last_user_message.split()) // 1.3)
+            aws_tokens = int(len(last_user_message.split()) // 1.3)
+            sds_tokens = int(len(last_user_message.split()) // 1.3)
+        else:
+            # 실제 모드에서는 토큰 수를 0으로 설정
+            ms_tokens = 0
+            aws_tokens = 0
+            sds_tokens = 0
         label_list = ["1번 답변 👍", "2번 답변 👍", "3번 답변 👍"]
 
         if st.session_state.selected_answer_idx is None:
@@ -172,19 +200,19 @@ def render_chat_interface(model: str):
             cards_html = f"""
             <div class="answer-scroll-row">
                 <div class="answer-card">
-                    <div>{dummy_ms}</div>
+                    <div>{answers[0]}</div>
                     <div style="font-size:0.9em;color:#888;margin-top:10px;">
                         입력 토큰: {ms_tokens} / 출력 토큰: 150 / 처리 시간: 2.5초
                     </div>
                 </div>
                 <div class="answer-card">
-                    <div>{dummy_aws}</div>
+                    <div>{answers[1]}</div>
                     <div style="font-size:0.9em;color:#888;margin-top:10px;">
                         입력 토큰: {aws_tokens} / 출력 토큰: 150 / 처리 시간: 2.5초
                     </div>
                 </div>
                 <div class="answer-card">
-                    <div>{dummy_sds}</div>
+                    <div>{answers[2]}</div>
                     <div style="font-size:0.9em;color:#888;margin-top:10px;">
                         입력 토큰: {sds_tokens} / 출력 토큰: 120 / 처리 시간: 1.8초
                     </div>

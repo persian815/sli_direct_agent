@@ -9,6 +9,7 @@ from src.llm.ms_functions import test_ms_agent_connection, get_agent_config
 from src.utils.utils import get_temperature_color, get_chat_history_from_api, get_role_specific_message, evaluate_user_knowledge_level, evaluate_user_temperature
 from src.app.components.chat import get_character_icon
 from src.visualization.visualization import create_knowledge_distribution_graph, create_temperature_distribution_graph
+import time
 
 # 로깅 설정
 logging.basicConfig(level=logging.DEBUG)
@@ -48,6 +49,10 @@ def render_sidebar():
     # 개발자 모드 토글
     st.sidebar.subheader("개발자 모드")
     is_developer_mode = st.sidebar.toggle("개발자 모드 활성화", key="developer_mode")
+    
+    # 더미 모드 토글 (기본값: 활성화)
+    st.sidebar.subheader("더미 모드")
+    is_dummy_mode = st.sidebar.toggle("더미 모드 활성화", key="dummy_mode", value=False)
     
     # 개발자 모드가 활성화된 경우에만 사이드바 내용 표시
     if is_developer_mode:
@@ -243,3 +248,6 @@ def plot_knowledge_distribution():
 def generate_response(prompt: str, model: str) -> str:
     # Implementation of generate_response function
     pass 
+
+start_time = time.time()
+elapsed_time = 0  # 초기화 추가 
