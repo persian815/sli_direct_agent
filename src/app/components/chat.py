@@ -62,10 +62,10 @@ def get_user_icon() -> str:
     
     # 사용자 ID에 따른 이미지 매핑
     user_icon_map = {
-        "User1": "static/image/char1.png",
-        "User2": "static/image/char2.png",
-        "User3": "static/image/char3.png",
-        "User4": "static/image/char4.png"
+        "User1": "static/image/user1.png",
+        "User2": "static/image/user2.png",
+        "User3": "static/image/user3.png",
+        "User4": "static/image/user4.png"
     }
     
     # 기본 아이콘 경로
@@ -95,8 +95,6 @@ def render_chat_interface(model: str):
         st.session_state.selected_answer_idx = None
         st.session_state.selected_answer_content = None
         st.session_state.selected_answer_tokens = None
-    if "last_prompt" not in st.session_state:
-        st.session_state.last_prompt = None
 
     user_icon = get_user_icon()
     character = st.session_state.get("character", "논리적인 테스형")
@@ -104,8 +102,6 @@ def render_chat_interface(model: str):
 
     # PERSONAS에서 웰컴 메시지 가져오기
     welcome_message = PERSONAS.get(character, {}).get("welcome_message", "안녕하세요! 무엇을 도와드릴까요?")
-    # with st.chat_message("assistant", avatar=character_icon):
-    #     st.markdown(welcome_message)
 
     # 2. 채팅 히스토리 표시 (user/assistant 모두)
     for message in st.session_state.messages:
@@ -119,38 +115,28 @@ def render_chat_interface(model: str):
             with st.chat_message("assistant", avatar=character_icon):
                 st.markdown(message["content"])
 
-    # 입력창 key를 질문 개수 등과 조합
-    num_questions = len([m for m in st.session_state.messages if m["role"] == "user"])
-    prompt = None
-
-    if st.session_state.last_prompt is None:
-        # 초기 상태: 입력창 활성화
-        prompt = st.chat_input("질문을 입력하세요", disabled=False, key=f"chat_input_enabled_{num_questions}")
-    elif st.session_state.selected_answer_idx is not None:
-        # 답변 선택 후: 입력창 활성화(새 질문 가능)
-        prompt = st.chat_input("질문을 입력하세요", disabled=False, key=f"chat_input_enabled_{num_questions}")
-    # else: 답변 카드/버튼이 노출될 때는 입력창을 아예 표시하지 않음
-
-    if prompt and not (st.session_state.last_prompt and st.session_state.selected_answer_idx is None):
+    # 입력창 항상 하나만 표시
+    prompt = st.chat_input("질문을 입력하세요")
+    if prompt:
         # 새로운 질문이 들어오면 이전 선택값 초기화
         st.session_state.selected_answer_idx = None
         st.session_state.selected_answer_content = None
         st.session_state.selected_answer_tokens = None
-        st.session_state.last_prompt = prompt
 
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user", avatar=user_icon):
             st.markdown(prompt)
 
     # 답변 생성 및 카드/버튼 렌더링은 오직 여기서만!
-    if st.session_state.last_prompt:
+    if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
+        last_user_message = st.session_state.messages[-1]["content"]
         # 답변 3개 생성
         dummy_ms = "안녕하세요, 곰철수님! 다시 만나 뵙게 되어 반갑습니다.\n고객님의 건강 상태와 보험 가입 상황을 바탕으로 아래와 같은 분석을 제공합니다.\n\n예상 응답:\n- Azure Foundry  AI는 MS의 완전 관리형 서비스로, 다양한 파운데이션 모델을 제공합니다.\n- 현재 API 연동 작업이 진행 중이며, 곧 서비스가 시작될 예정입니다.\n- 더 자세한 정보는 Azure Foundry AI 공식 문서를 참조하세요."
         dummy_aws = "안녕하세요, 곰철수님! 다시 만나 뵙게 되어 반갑습니다.\n고객님의 건강 상태와 보험 가입 상황을 바탕으로 아래와 같은 분석을 제공합니다.\n\n예상 응답:\n- AWS Bedrock은 Amazon의 완전 관리형 서비스로, 다양한 파운데이션 모델을 제공합니다.\n- 현재 API 연동 작업이 진행 중이며, 곧 서비스가 시작될 예정입니다.\n- 더 자세한 정보는 AWS Bedrock 공식 문서를 참조하세요."
         dummy_sds = "안녕하세요, 곰철수님! 다시 만나 뵙게 되어 반갑습니다.\n고객님의 건강 상태와 보험 가입 상황을 바탕으로 아래와 같은 분석을 제공합니다.\n\n예상 응답:\n- SDS AI는 삼성 SDS의 AI 플랫폼으로, 다양한 비즈니스 솔루션을 제공합니다.\n- 현재 API 연동 작업이 진행 중이며, 곧 서비스가 시작될 예정입니다.\n- 더 자세한 정보는 SDS AI 공식 문서를 참조하세요."
-        ms_tokens = int(len(st.session_state.last_prompt.split()) // 1.3)
-        aws_tokens = int(len(st.session_state.last_prompt.split()) // 1.3)
-        sds_tokens = int(len(st.session_state.last_prompt.split()) // 1.3)
+        ms_tokens = int(len(last_user_message.split()) // 1.3)
+        aws_tokens = int(len(last_user_message.split()) // 1.3)
+        sds_tokens = int(len(last_user_message.split()) // 1.3)
         answers = [dummy_ms, dummy_aws, dummy_sds]
         label_list = ["1번 답변 👍", "2번 답변 👍", "3번 답변 👍"]
 
@@ -213,9 +199,6 @@ def render_chat_interface(model: str):
             </div>
             """
             # st.markdown(selected_card_html, unsafe_allow_html=True)
-
-    st.write(f"함수 진입! selected_answer_idx: {st.session_state.get('selected_answer_idx', None)}")
-    print(f"함수 진입! selected_answer_idx: {st.session_state.get('selected_answer_idx', None)}")
 
 def generate_tab_name(role, character):
     """전문 역할, 캐릭터, 날짜, 시간을 조합하여 탭 이름을 생성하는 함수"""

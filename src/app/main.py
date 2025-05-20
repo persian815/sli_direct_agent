@@ -1,7 +1,7 @@
 import streamlit as st
 from src.app.config import initialize_app, load_js
 from src.app.components import render_sidebar, render_chat_interface
-from src.app.components.user_detail import render_user_select, USER_DETAILS
+from src.app.components.user_select import render_user_select
 from src.data.personas_roles import PERSONAS
 from src.data.services_roles import SERVICES
 import json
@@ -23,19 +23,21 @@ def main():
     # Initialize the application
     initialize_app()
 
-    # 1. 사용자 선택
+    # 1. 사용자 선택 화면
     if 'selected_user' not in st.session_state:
         render_user_select()
         return
 
-    # 2. (이전 상세화면 분기 삭제)
-    # 바로 다음 단계로 이동
+    # 2. 채팅 인터페이스
     model, role, character, _ = render_sidebar()
-    # 현재 선택된 캐릭터 정보 표시 제거
     render_chat_interface(model)
     load_js()
+
+    # 3. 채팅 메시지 초기화
     if 'chat_messages' not in st.session_state:
         st.session_state.chat_messages = []
+    
+    # 4. 이전 캐릭터 정보 저장
     if 'character' in st.session_state:
         st.session_state.previous_character = st.session_state.character
 
