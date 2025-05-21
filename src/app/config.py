@@ -36,33 +36,13 @@ def initialize_app():
         st.session_state.character = "친절한 미영씨"
     if 'persona_info' not in st.session_state:
         from src.data.personas_roles import PERSONAS
-        welcome_message = PERSONAS.get("친절한 미영씨", {}).get("welcome_message", "안녕하세요! 무엇을 도와드릴까요?")
         st.session_state.persona_info = {
-            "description": welcome_message
+            "description": PERSONAS.get("친절한 미영씨", {}).get("welcome_message", "안녕하세요! 무엇을 도와드릴까요?")
         }
     
     # Initialize messages in session state
     if 'messages' not in st.session_state:
         st.session_state.messages = []
-        # 초기 환영 메시지 추가
-        agent_name = st.session_state.character
-        agent_role = st.session_state.role
-        persona_info = st.session_state.persona_info
-        
-        # 역할별 맞춤 환영 메시지 생성
-        from src.utils.utils import get_role_specific_message
-        role_specific_message = get_role_specific_message(agent_role)
-
-        st.session_state.messages.append({
-            "role": "assistant",
-            "content": f"""안녕하세요! 저는 {agent_name}이에요. {agent_role}로서 고객님을 만나게 되어 정말 반가워요.\n\n{persona_info.get('description', '').replace('[', '').replace(']', '')}\n\n{role_specific_message} 편하게 말씀해 주세요! 😊""",
-            "metrics": {
-                "request_time": 0,
-                "response_time": 0,
-                "input_tokens": 0,
-                "output_tokens": 0
-            }
-        })
 
     if 'function_logs' not in st.session_state:
         st.session_state.function_logs = []

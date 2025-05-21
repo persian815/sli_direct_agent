@@ -27,17 +27,49 @@ from src.utils.utils import (
     get_quality_level_color,
     evaluate_user_temperature,
     get_temperature_color,
-    send_chat_log_to_api
+    send_chat_log_to_api,
+    get_role_specific_message
 )
 from src.llm.ms_functions import query_ms_agent
 from src.llm.aws_functions import query_bedrock_agent, aws_credentials_available
 from src.data.personas_roles import PERSONAS
+from src.data.dummy_data import RECOMMENDED_QUESTIONS
 
 def load_css():
     """CSS 파일을 로드하는 함수"""
     css_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../static/css/styles.css"))
     with open(css_file) as f:
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+        
+    # 스크롤 제어를 위한 JavaScript 추가
+    st.markdown("""
+    <script>
+        // 스크롤 위치를 조정하는 함수
+        function adjustScroll() {
+            // 채팅 컨테이너 찾기
+            const chatContainer = document.querySelector('.stChatMessageContent');
+            if (chatContainer) {
+                // 마지막 사용자 메시지 찾기
+                const userMessages = document.querySelectorAll('.stChatMessageContent [data-testid="stChatMessage"]');
+                const lastUserMessage = Array.from(userMessages).find(msg => 
+                    msg.querySelector('.stChatMessageContent [data-testid="stChatMessage"]')?.textContent.includes('user')
+                );
+                
+                if (lastUserMessage) {
+                    // 사용자 메시지가 보이도록 스크롤 조정
+                    lastUserMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        }
+        
+        // DOM이 로드된 후 스크롤 조정
+        document.addEventListener('DOMContentLoaded', adjustScroll);
+        
+        // Streamlit의 메시지가 업데이트될 때마다 스크롤 조정
+        const observer = new MutationObserver(adjustScroll);
+        observer.observe(document.body, { childList: true, subtree: true });
+    </script>
+    """, unsafe_allow_html=True)
 
 def get_character_icon(character_name: str) -> str:
     """
@@ -167,23 +199,49 @@ def render_chat_interface(model: str):
         st.session_state.selected_answer_content = None
     if "cached_responses" not in st.session_state:
         st.session_state.cached_responses = {}
+    if "last_user_message_id" not in st.session_state:
+        st.session_state.last_user_message_id = None
+    if "dummy_mode" not in st.session_state:
+        st.session_state.dummy_mode = True
 
     user_icon = get_user_icon()
     character = st.session_state.get("character", "논리적인 테스형")
     character_icon = get_character_icon(character)
 
+    # 스크롤 위치를 위한 빈 컨테이너
+    scroll_container = st.empty()
+
     # PERSONAS에서 웰컴 메시지 가져오기
     welcome_message = PERSONAS.get(character, {}).get("welcome_message", "안녕하세요! 무엇을 도와드릴까요?")
+    agent_role = st.session_state.get("role", "통합 전문가")
+    role_specific_message = get_role_specific_message(agent_role)
+    full_welcome_message = f"""안녕하세요! 저는 {character}이에요. {agent_role}로서 고객님을 만나게 되어 정말 반가워요.
+
+{welcome_message}
+
+{role_specific_message} 편하게 말씀해 주세요! 😊"""
 
     # 웰컴 메시지가 채팅 히스토리에 없는 경우에만 표시
     welcome_message_exists = any(
-        msg["role"] == "assistant" and msg["content"] == welcome_message 
+        msg["role"] == "assistant" and msg["content"] == full_welcome_message 
         for msg in st.session_state.messages
     )
 
+    # 추천 질문이 선택되었는지 확인
+    recommended_question_selected = any(
+        msg["role"] == "user" and msg["content"] in [
+            "보험을 분석해서 상품을 추천해줘",
+            "뇌졸중을 예방하는 방법을 알려줘",
+            "검진 데이터를 기반으로 위험을 예측해줘"
+        ]
+        for msg in st.session_state.messages
+    )
+
+    # 웰컴 메시지와 추천 질문 표시
     if not welcome_message_exists:
+        # 웰컴 메시지와 추천 질문을 한 번에 표시
         with st.chat_message("assistant", avatar=character_icon):
-            st.markdown(welcome_message)
+            st.markdown(full_welcome_message)
             
             # 추천 질문 버튼들
             st.markdown("### 추천 질문")
@@ -191,6 +249,13 @@ def render_chat_interface(model: str):
             
             with col1:
                 if st.button("보험을 분석해서 상품을 추천해줘", key="q1"):
+                    # 웰컴 메시지를 먼저 추가
+                    if not welcome_message_exists:
+                        st.session_state.messages.append({
+                            "role": "assistant",
+                            "content": full_welcome_message
+                        })
+                    # 사용자 메시지 추가
                     st.session_state.messages.append({
                         "role": "user",
                         "content": "보험을 분석해서 상품을 추천해줘",
@@ -200,10 +265,17 @@ def render_chat_interface(model: str):
                     st.rerun()
             
             with col2:
-                if st.button("뇌졸중를 예방하는 방법을 알려줘", key="q2"):
+                if st.button("뇌졸중을 예방하는 방법을 알려줘", key="q2"):
+                    # 웰컴 메시지를 먼저 추가
+                    if not welcome_message_exists:
+                        st.session_state.messages.append({
+                            "role": "assistant",
+                            "content": full_welcome_message
+                        })
+                    # 사용자 메시지 추가
                     st.session_state.messages.append({
                         "role": "user",
-                        "content": "뇌졸중를 예방하는 방법을 알려줘",
+                        "content": "뇌졸중을 예방하는 방법을 알려줘",
                         "knowledge_level": 20,  # 초급 수준
                         "temperature": 36.5
                     })
@@ -211,6 +283,13 @@ def render_chat_interface(model: str):
             
             with col3:
                 if st.button("검진 데이터를 기반으로 위험을 예측해줘", key="q3"):
+                    # 웰컴 메시지를 먼저 추가
+                    if not welcome_message_exists:
+                        st.session_state.messages.append({
+                            "role": "assistant",
+                            "content": full_welcome_message
+                        })
+                    # 사용자 메시지 추가
                     st.session_state.messages.append({
                         "role": "user",
                         "content": "검진 데이터를 기반으로 위험을 예측해줘",
@@ -220,13 +299,17 @@ def render_chat_interface(model: str):
                     st.rerun()
 
     # 2. 채팅 히스토리 표시 (user/assistant 모두)
-    for message in st.session_state.messages:
-        # 웰컴 메시지와 동일한 assistant 메시지는 건너뜀
-        if message["role"] == "assistant" and message["content"] == welcome_message:
-            continue
+    for idx, message in enumerate(st.session_state.messages):
         if message["role"] == "user":
+            # 사용자 메시지에 고유 ID 추가
+            message_id = f"user_message_{idx}"
+            st.session_state.last_user_message_id = message_id
+            
             with st.chat_message("user", avatar=user_icon):
-                st.markdown(message["content"])
+                st.markdown(
+                    f'<div id="{message_id}" style="background-color: #e3f2fd !important; padding: 10px; border-radius: 8px;">{message["content"]}</div>',
+                    unsafe_allow_html=True
+                )
                 # 사용자 메시지의 경우 지식레벨과 온도 표시
                 if "knowledge_level" in message:
                     knowledge_level = message["knowledge_level"]
@@ -240,7 +323,10 @@ def render_chat_interface(model: str):
                         st.markdown(f"<div style='color: {temperature_color}; font-size: 0.8em;'>사용자 온도: {temperature:.1f}°C</div>", unsafe_allow_html=True)
         elif message["role"] == "assistant":
             with st.chat_message("assistant", avatar=character_icon):
-                st.markdown(message["content"])
+                st.markdown(
+                    f'<div style="background-color: #f5f5f5 !important; padding: 10px; border-radius: 8px;">{message["content"]}</div>',
+                    unsafe_allow_html=True
+                )
                 # 어시스턴트 메시지의 경우 응답 품질 표시 (개발자 모드 활성화 시에만)
                 if "quality_score" in message and st.session_state.get('developer_mode', False):
                     quality_score = message["quality_score"]
@@ -266,7 +352,10 @@ def render_chat_interface(model: str):
         })
         
         with st.chat_message("user", avatar=user_icon):
-            st.markdown(prompt)
+            st.markdown(
+                f'<div style="background-color: #e3f2fd !important; padding: 10px; border-radius: 8px;">{prompt}</div>',
+                unsafe_allow_html=True
+            )
             # 개발자 모드가 활성화된 경우에만 지식레벨과 온도 표시
             if st.session_state.get('developer_mode', False):
                 knowledge_color = get_knowledge_level_color(knowledge_level)
@@ -276,15 +365,39 @@ def render_chat_interface(model: str):
 
     # 답변 생성 및 카드/버튼 렌더링은 오직 여기서만!
     if st.session_state.messages and st.session_state.messages[-1]["role"] == "user" and st.session_state.selected_answer_idx is None:
+        last_user_message_id = st.session_state.last_user_message_id
+        if last_user_message_id:
+            scroll_container.markdown(f"""
+            <script>
+                const element = document.getElementById('{last_user_message_id}');
+                if (element) {{
+                    element.scrollIntoView({{ behavior: 'smooth', block: 'center' }});
+                }}
+            </script>
+            """, unsafe_allow_html=True)
+
         last_user_message = st.session_state.messages[-1]["content"]
         
         # 더미 모드가 활성화된 경우 더미 답변 사용
-        if st.session_state.get('dummy_mode', True):
-            # 답변 3개 생성
-            dummy_ms = "안녕하세요, 곰철수님! 다시 만나 뵙게 되어 반갑습니다.\n고객님의 건강 상태와 보험 가입 상황을 바탕으로 아래와 같은 분석을 제공합니다.\n\n예상 응답:\n- Azure Foundry  AI는 MS의 완전 관리형 서비스로, 다양한 파운데이션 모델을 제공합니다.\n- 현재 API 연동 작업이 진행 중이며, 곧 서비스가 시작될 예정입니다.\n- 더 자세한 정보는 Azure Foundry AI 공식 문서를 참조하세요."
-            dummy_aws = "안녕하세요, 곰철수님! 다시 만나 뵙게 되어 반갑습니다.\n고객님의 건강 상태와 보험 가입 상황을 바탕으로 아래와 같은 분석을 제공합니다.\n\n예상 응답:\n- AWS Bedrock은 Amazon의 완전 관리형 서비스로, 다양한 파운데이션 모델을 제공합니다.\n- 현재 API 연동 작업이 진행 중이며, 곧 서비스가 시작될 예정입니다.\n- 더 자세한 정보는 AWS Bedrock 공식 문서를 참조하세요."
-            dummy_sds = "안녕하세요, 곰철수님! 다시 만나 뵙게 되어 반갑습니다.\n고객님의 건강 상태와 보험 가입 상황을 바탕으로 아래와 같은 분석을 제공합니다.\n\n예상 응답:\n- SDS AI는 삼성 SDS의 AI 플랫폼으로, 다양한 비즈니스 솔루션을 제공합니다.\n- 현재 API 연동 작업이 진행 중이며, 곧 서비스가 시작될 예정입니다.\n- 더 자세한 정보는 SDS AI 공식 문서를 참조하세요."
-            answers = [dummy_ms, dummy_aws, dummy_sds]
+        if st.session_state.dummy_mode:
+            # 사용자 메시지가 추천 질문인지 확인
+            is_recommended_question = False
+            for question_data in RECOMMENDED_QUESTIONS.values():
+                if last_user_message == question_data["question"]:
+                    is_recommended_question = True
+                    answers = [
+                        question_data["answers"]["ms"],
+                        question_data["answers"]["aws"],
+                        question_data["answers"]["sds"]
+                    ]
+                    break
+            
+            # 추천 질문이 아닌 경우 기본 더미 답변 사용
+            if not is_recommended_question:
+                dummy_ms = "안녕하세요, 곰철수님! 다시 만나 뵙게 되어 반갑습니다.\n고객님의 건강 상태와 보험 가입 상황을 바탕으로 아래와 같은 분석을 제공합니다.\n\n예상 응답:\n- Azure Foundry  AI는 MS의 완전 관리형 서비스로, 다양한 파운데이션 모델을 제공합니다.\n- 현재 API 연동 작업이 진행 중이며, 곧 서비스가 시작될 예정입니다.\n- 더 자세한 정보는 Azure Foundry AI 공식 문서를 참조하세요."
+                dummy_aws = "안녕하세요, 곰철수님! 다시 만나 뵙게 되어 반갑습니다.\n고객님의 건강 상태와 보험 가입 상황을 바탕으로 아래와 같은 분석을 제공합니다.\n\n예상 응답:\n- AWS Bedrock은 Amazon의 완전 관리형 서비스로, 다양한 파운데이션 모델을 제공합니다.\n- 현재 API 연동 작업이 진행 중이며, 곧 서비스가 시작될 예정입니다.\n- 더 자세한 정보는 AWS Bedrock 공식 문서를 참조하세요."
+                dummy_sds = "안녕하세요, 곰철수님! 다시 만나 뵙게 되어 반갑습니다.\n고객님의 건강 상태와 보험 가입 상황을 바탕으로 아래와 같은 분석을 제공합니다.\n\n예상 응답:\n- SDS AI는 삼성 SDS의 AI 플랫폼으로, 다양한 비즈니스 솔루션을 제공합니다.\n- 현재 API 연동 작업이 진행 중이며, 곧 서비스가 시작될 예정입니다.\n- 더 자세한 정보는 SDS AI 공식 문서를 참조하세요."
+                answers = [dummy_ms, dummy_aws, dummy_sds]
         else:
             # 더미 모드가 비활성화된 경우 실제 AI 플랫폼 호출
             try:
@@ -292,30 +405,31 @@ def render_chat_interface(model: str):
                 if last_user_message in st.session_state.cached_responses:
                     answers = st.session_state.cached_responses[last_user_message]
                 else:
-                    
-                    # 최종 메시지 구성
-                    final_message = _prepare_message(last_user_message)
-                    logger.info(f"Prepared message: {final_message}")
-                    
-                    # MS Agent 호출
-                    response = query_ms_agent(final_message)
-                    if isinstance(response, tuple):
-                        ms_response = response[0]  # 첫 번째 값만 사용
-                    else:
-                        ms_response = response
+                    # 로딩 메시지 표시
+                    with st.spinner("답변을 생성하고 있습니다..."):
+                        # 최종 메시지 구성
+                        final_message = _prepare_message(last_user_message)
+                        logger.info(f"Prepared message: {final_message}")
+                        
+                        # MS Agent 호출
+                        response = query_ms_agent(final_message)
+                        if isinstance(response, tuple):
+                            ms_response = response[0]  # 첫 번째 값만 사용
+                        else:
+                            ms_response = response
 
-                    # AWS Agent 호출
-                    if aws_credentials_available():
-                        aws_response, _, _, _, _, _ = query_bedrock_agent(final_message)
-                    else:
-                        aws_response = "AWS Bedrock 서비스를 사용하기 위해서는 AWS 자격 증명이 필요합니다.\n\n자격 증명 설정 방법:\n1. AWS CLI 설치\n2. `aws configure` 명령어로 자격 증명 설정\n3. AWS_ACCESS_KEY_ID와 AWS_SECRET_ACCESS_KEY 환경 변수 설정"
+                        # AWS Agent 호출
+                        if aws_credentials_available():
+                            aws_response, _, _, _, _, _ = query_bedrock_agent(final_message)
+                        else:
+                            aws_response = "AWS Bedrock 서비스를 사용하기 위해서는 AWS 자격 증명이 필요합니다.\n\n자격 증명 설정 방법:\n1. AWS CLI 설치\n2. `aws configure` 명령어로 자격 증명 설정\n3. AWS_ACCESS_KEY_ID와 AWS_SECRET_ACCESS_KEY 환경 변수 설정"
 
-                    # SDS Agent 호출 (구현 필요)
-                    sds_response = "SDS AI 응답 준비 중..."
-                    
-                    answers = [ms_response, aws_response, sds_response]
-                    # 응답 캐싱
-                    st.session_state.cached_responses[last_user_message] = answers
+                        # SDS Agent 호출 (구현 필요)
+                        sds_response = "SDS AI 응답 준비 중..."
+                        
+                        answers = [ms_response, aws_response, sds_response]
+                        # 응답 캐싱
+                        st.session_state.cached_responses[last_user_message] = answers
             except Exception as e:
                 st.error(f"AI 플랫폼 호출 중 오류 발생: {str(e)}")
                 return
@@ -367,4 +481,7 @@ def render_chat_interface(model: str):
               </div>
             </div>
             """
-            # st.markdown(selected_card_html, unsafe_allow_html=True) 
+            st.markdown(selected_card_html, unsafe_allow_html=True)
+
+            
+

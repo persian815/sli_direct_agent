@@ -52,7 +52,9 @@ def render_sidebar():
     
     # 더미 모드 토글 (기본값: 활성화)
     st.sidebar.subheader("더미 모드")
-    is_dummy_mode = st.sidebar.toggle("더미 모드 활성화", key="dummy_mode", value=False)
+    is_dummy_mode = st.sidebar.toggle("더미 모드 활성화", key="dummy_mode", value=st.session_state.get('dummy_mode', True))
+    if 'dummy_mode' not in st.session_state:
+        st.session_state.dummy_mode = is_dummy_mode
     
     # 개발자 모드가 활성화된 경우에만 사이드바 내용 표시
     if is_developer_mode:
@@ -95,25 +97,8 @@ def render_sidebar():
             st.session_state.persona_info = {
                 "description": welcome_message
             }
-            # 채팅 메시지 초기화 및 새로운 웰컴 메시지 추가
+            # 채팅 메시지 초기화
             st.session_state.messages = []
-            agent_name = character
-            agent_role = st.session_state.get("role", "통합 전문가")
-            role_specific_message = get_role_specific_message(agent_role)
-            st.session_state.messages.append({
-                "role": "assistant",
-                "content": f"""안녕하세요! 저는 {agent_name}이에요. {agent_role}로서 고객님을 만나게 되어 정말 반가워요.
-
-{welcome_message}
-
-{role_specific_message} 편하게 말씀해 주세요! 😊""",
-                "metrics": {
-                    "request_time": 0,
-                    "response_time": 0,
-                    "input_tokens": 0,
-                    "output_tokens": 0
-                }
-            })
             st.rerun()
         
         # 채팅 히스토리 표시

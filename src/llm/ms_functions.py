@@ -249,28 +249,3 @@ def test_ms_agent_connection():
     except Exception as e:
         logger.error(f"Azure AI Foundry 에이전트 연결 실패: {str(e)}")
         return False, f"Azure AI Foundry 에이전트 연결 실패: {str(e)}"
-
-def main():
-    # 순환참조 방지: 필요한 시점에만 import
-    from ..app.components.character_select import render_character_select
-    from ..app.components.chat import render_chat_interface
-
-    # 세션 상태 초기화 (필요한 상태만 초기화)
-    if "selected_character" not in st.session_state:
-        st.session_state.selected_character = None
-    
-    if "role" not in st.session_state:
-        st.session_state.role = "통합 전문가"  # 기본 역할 설정
-    
-    if "character" not in st.session_state:
-        st.session_state.character = "친절한 미영씨"  # 기본 캐릭터 설정
-
-    # user 세션 상태는 초기화하지 않음 (선택된 사용자 정보 유지)
-
-    if st.session_state.selected_character is None:
-        render_character_select()
-    else:
-        render_chat_interface(model="Azure AI Foundry (GPT-4.0)")
-
-if __name__ == "__main__":
-    main()
