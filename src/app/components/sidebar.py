@@ -52,7 +52,7 @@ def render_sidebar():
     
     # 더미 모드 토글 (기본값: 활성화)
     st.sidebar.subheader("더미 모드")
-    is_dummy_mode = st.sidebar.toggle("더미 모드 활성화", key="dummy_mode", value=st.session_state.get('dummy_mode', True))
+    is_dummy_mode = st.sidebar.toggle("더미 모드 활성화", key="dummy_mode", value=st.session_state.get('dummy_mode', False))
     if 'dummy_mode' not in st.session_state:
         st.session_state.dummy_mode = is_dummy_mode
     

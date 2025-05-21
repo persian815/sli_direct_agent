@@ -32,6 +32,7 @@ from src.utils.utils import (
 )
 from src.llm.ms_functions import query_ms_agent
 from src.llm.aws_functions import query_bedrock_agent, aws_credentials_available
+from src.llm.sds_functions import query_sds_agent
 from src.data.personas_roles import PERSONAS
 from src.data.dummy_data import RECOMMENDED_QUESTIONS
 
@@ -424,8 +425,10 @@ def render_chat_interface(model: str):
                         else:
                             aws_response = "AWS Bedrock 서비스를 사용하기 위해서는 AWS 자격 증명이 필요합니다.\n\n자격 증명 설정 방법:\n1. AWS CLI 설치\n2. `aws configure` 명령어로 자격 증명 설정\n3. AWS_ACCESS_KEY_ID와 AWS_SECRET_ACCESS_KEY 환경 변수 설정"
 
-                        # SDS Agent 호출 (구현 필요)
-                        sds_response = "SDS AI 응답 준비 중..."
+                        # ms_response ="11"
+                        # aws_response ="22"
+                        # SDS Agent 호출
+                        sds_response = query_sds_agent(final_message)
                         
                         answers = [ms_response, aws_response, sds_response]
                         # 응답 캐싱
