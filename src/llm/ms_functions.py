@@ -105,44 +105,6 @@ def get_agent_config(service: Optional[str] = None) -> Dict[str, str]:
     logger.info(f"캐릭터 '{character}'에 대한 에이전트 설정: agent_id={agent_id}, thread_id={thread_id}")
     return {"agent_id": agent_id, "thread_id": thread_id}
 
-def _format_user_info(user_info: Dict) -> str:
-    """사용자 정보를 문자열로 포맷팅합니다."""
-    if not user_info:
-        return ""
-        
-    user_data = []
-    
-    # 기본정보
-    basic_info = user_info.get('기본정보', {})
-    if basic_info:
-        user_data.append("사용자 기본정보:")
-        for key, value in basic_info.items():
-            user_data.append(f"- {key}: {value}")
-    
-    # 건강검진정보
-    health_info = user_info.get('건강검진정보', {})
-    if health_info:
-        user_data.append("\n건강검진정보:")
-        for key, value in health_info.items():
-            user_data.append(f"- {key}: {value}")
-    
-    # 보험가입내역
-    insurance_info = user_info.get('보험가입내역', [])
-    if isinstance(insurance_info, list) and insurance_info:
-        user_data.append("\n보험가입내역:")
-        for item in insurance_info:
-            user_data.append(
-                f"- {item.get('상품명', '')} / {item.get('보장급부', '')} / "
-                f"{item.get('보장내용', '')} / 보장금액: {item.get('보장금액(만원)', '')}만원 / "
-                f"보험료: {item.get('보험료(만원)', '')}만원\n  설명: {item.get('설명', '')}"
-            )
-    elif isinstance(insurance_info, dict):
-        user_data.append("\n보험가입내역:")
-        for key, value in insurance_info.items():
-            user_data.append(f"- {key}: {value}")
-    
-    return "\n".join(user_data)
-
 def _extract_response_text(messages) -> str:
     """메시지 객체에서 응답 텍스트를 추출합니다."""
     if not messages or not hasattr(messages, 'text_messages') or not messages.text_messages:

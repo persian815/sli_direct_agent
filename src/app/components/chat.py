@@ -30,6 +30,7 @@ from src.utils.utils import (
     send_chat_log_to_api
 )
 from src.llm.ms_functions import query_ms_agent
+from src.llm.aws_functions import query_bedrock_agent, aws_credentials_available
 from src.data.personas_roles import PERSONAS
 
 def load_css():
@@ -174,6 +175,50 @@ def render_chat_interface(model: str):
     # PERSONAS에서 웰컴 메시지 가져오기
     welcome_message = PERSONAS.get(character, {}).get("welcome_message", "안녕하세요! 무엇을 도와드릴까요?")
 
+    # 웰컴 메시지가 채팅 히스토리에 없는 경우에만 표시
+    welcome_message_exists = any(
+        msg["role"] == "assistant" and msg["content"] == welcome_message 
+        for msg in st.session_state.messages
+    )
+
+    if not welcome_message_exists:
+        with st.chat_message("assistant", avatar=character_icon):
+            st.markdown(welcome_message)
+            
+            # 추천 질문 버튼들
+            st.markdown("### 추천 질문")
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                if st.button("보험을 분석해서 상품을 추천해줘", key="q1"):
+                    st.session_state.messages.append({
+                        "role": "user",
+                        "content": "보험을 분석해서 상품을 추천해줘",
+                        "knowledge_level": 50,  # 중급 수준
+                        "temperature": 36.5
+                    })
+                    st.rerun()
+            
+            with col2:
+                if st.button("뇌졸중를 예방하는 방법을 알려줘", key="q2"):
+                    st.session_state.messages.append({
+                        "role": "user",
+                        "content": "뇌졸중를 예방하는 방법을 알려줘",
+                        "knowledge_level": 20,  # 초급 수준
+                        "temperature": 36.5
+                    })
+                    st.rerun()
+            
+            with col3:
+                if st.button("검진 데이터를 기반으로 위험을 예측해줘", key="q3"):
+                    st.session_state.messages.append({
+                        "role": "user",
+                        "content": "검진 데이터를 기반으로 위험을 예측해줘",
+                        "knowledge_level": 70,  # 중급 수준
+                        "temperature": 36.5
+                    })
+                    st.rerun()
+
     # 2. 채팅 히스토리 표시 (user/assistant 모두)
     for message in st.session_state.messages:
         # 웰컴 메시지와 동일한 assistant 메시지는 건너뜀
@@ -259,15 +304,13 @@ def render_chat_interface(model: str):
                     else:
                         ms_response = response
 
-                    # AWS Bedrock 호출
-                    from src.llm.aws_functions import query_bedrock_agent, aws_credentials_available
-                    
+                    # AWS Agent 호출
                     if aws_credentials_available():
                         aws_response, _, _, _, _, _ = query_bedrock_agent(final_message)
                     else:
                         aws_response = "AWS Bedrock 서비스를 사용하기 위해서는 AWS 자격 증명이 필요합니다.\n\n자격 증명 설정 방법:\n1. AWS CLI 설치\n2. `aws configure` 명령어로 자격 증명 설정\n3. AWS_ACCESS_KEY_ID와 AWS_SECRET_ACCESS_KEY 환경 변수 설정"
 
-                    # SDS AI 호출 (구현 필요)
+                    # SDS Agent 호출 (구현 필요)
                     sds_response = "SDS AI 응답 준비 중..."
                     
                     answers = [ms_response, aws_response, sds_response]
