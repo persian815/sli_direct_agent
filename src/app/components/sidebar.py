@@ -1,13 +1,21 @@
+"""
+사이드바 컴포넌트를 정의하는 모듈입니다.
+"""
+
 import streamlit as st
 import pandas as pd
 import logging
+from typing import Dict, List, Optional
+import json
+import os
+from pathlib import Path
 from src.data.personas_roles import PERSONAS
 from src.data.services_roles import SERVICES
 from src.data.users_data import USERS
 from src.llm import aws_credentials_available, ms_credentials_available
 from src.llm.ms_functions import test_ms_agent_connection, get_agent_config
 from src.utils.utils import get_temperature_color, get_chat_history_from_api, get_role_specific_message, evaluate_user_knowledge_level, evaluate_user_temperature
-from src.app.components.chat import get_character_icon
+from src.app.components.chat_interface import get_character_icon
 from src.visualization.visualization import create_knowledge_distribution_graph, create_temperature_distribution_graph
 import time
 

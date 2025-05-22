@@ -1,24 +1,48 @@
-import streamlit as st
-import time
-import os
-import re
+"""
+채팅 인터페이스 컴포넌트를 정의하는 모듈입니다.
+"""
+
 import logging
+import streamlit as st
+from typing import Dict, List, Optional, Tuple
+import json
+import time
+from datetime import datetime
+import os
 import sys
-from typing import Dict
+import traceback
+from pathlib import Path
+
+# 현재 파일의 디렉토리를 기준으로 상위 디렉토리를 sys.path에 추가
+current_dir = Path(__file__).resolve().parent
+src_dir = current_dir.parent.parent
+sys.path.append(str(src_dir))
+
+from src.data.dummy_data import USER_RECOMMENDED_QUESTIONS, RECOMMENDED_QUESTIONS
+from src.utils.utils import send_chat_log_to_api
+from src.services.chat_service import is_recommended_question
 
 # 로깅 설정
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(sys.stdout)  # 터미널에만 출력
-    ]
-)
-logger = logging.getLogger(__name__)
-
-# 로그 레벨 설정 확인
+logger = logging.getLogger("src.app.components.chat_interface")
 logger.setLevel(logging.INFO)
-logger.info("Chat application started")  # 시작 로그 추가
+
+# 로그 포맷 설정
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+# 파일 핸들러 설정
+log_dir = Path("logs")
+log_dir.mkdir(exist_ok=True)
+file_handler = logging.FileHandler(log_dir / "chat_interface.log", encoding='utf-8')
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
+
+# 스트림 핸들러 설정
+stream_handler = logging.StreamHandler()
+stream_handler.setFormatter(formatter)
+logger.addHandler(stream_handler)
+
+import re
+from typing import Dict
 
 from src.llm import (
     evaluate_user_knowledge_level, get_knowledge_level_color
@@ -28,14 +52,14 @@ from src.utils.utils import (
     get_quality_level_color,
     evaluate_user_temperature,
     get_temperature_color,
-    send_chat_log_to_api,
     get_role_specific_message
 )
 from src.llm.ms_functions import query_ms_agent
 from src.llm.aws_functions import query_bedrock_agent, aws_credentials_available
 from src.llm.sds_functions import query_sds_agent
 from src.data.personas_roles import PERSONAS
-from src.data.dummy_data import RECOMMENDED_QUESTIONS, DAILY_CONVERSATIONS
+from src.data.dummy_data import DAILY_CONVERSATIONS
+from src.data.users_data import USERS
 
 def load_css():
     """CSS 파일을 로드하는 함수"""
@@ -232,9 +256,9 @@ def render_chat_interface(model: str):
     # 추천 질문이 선택되었는지 확인
     recommended_question_selected = any(
         msg["role"] == "user" and msg["content"] in [
-            "보험을 분석해서 상품을 추천해줘",
-            "뇌졸중을 예방하는 방법을 알려줘",
-            "검진 데이터를 기반으로 위험을 예측해줘"
+            "내 보험 가입 현황을 분석해줘",
+            "뇌졸중 예방법 알려줘",
+            "내 건강 위험도를 분석해줘"
         ]
         for msg in st.session_state.messages
     )
@@ -250,7 +274,7 @@ def render_chat_interface(model: str):
             col1, col2, col3 = st.columns(3)
             
             with col1:
-                if st.button("보험을 분석해서 상품을 추천해줘", key="q1"):
+                if st.button("내 보험 가입 현황을 분석해줘", key="q1"):
                     # 웰컴 메시지를 먼저 추가
                     if not welcome_message_exists:
                         st.session_state.messages.append({
@@ -260,14 +284,14 @@ def render_chat_interface(model: str):
                     # 사용자 메시지 추가
                     st.session_state.messages.append({
                         "role": "user",
-                        "content": "보험을 분석해서 상품을 추천해줘",
+                        "content": "내 보험 가입 현황을 분석해줘",
                         "knowledge_level": 50,  # 중급 수준
                         "temperature": 36.5
                     })
                     st.rerun()
             
             with col2:
-                if st.button("뇌졸중을 예방하는 방법을 알려줘", key="q2"):
+                if st.button("뇌졸중 예방법 알려줘", key="q2"):
                     # 웰컴 메시지를 먼저 추가
                     if not welcome_message_exists:
                         st.session_state.messages.append({
@@ -277,14 +301,14 @@ def render_chat_interface(model: str):
                     # 사용자 메시지 추가
                     st.session_state.messages.append({
                         "role": "user",
-                        "content": "뇌졸중을 예방하는 방법을 알려줘",
+                        "content": "뇌졸중 예방법 알려줘",
                         "knowledge_level": 20,  # 초급 수준
                         "temperature": 36.5
                     })
                     st.rerun()
             
             with col3:
-                if st.button("검진 데이터를 기반으로 위험을 예측해줘", key="q3"):
+                if st.button("내 건강 위험도를 분석해줘", key="q3"):
                     # 웰컴 메시지를 먼저 추가
                     if not welcome_message_exists:
                         st.session_state.messages.append({
@@ -294,7 +318,7 @@ def render_chat_interface(model: str):
                     # 사용자 메시지 추가
                     st.session_state.messages.append({
                         "role": "user",
-                        "content": "검진 데이터를 기반으로 위험을 예측해줘",
+                        "content": "내 건강 위험도를 분석해줘",
                         "knowledge_level": 70,  # 중급 수준
                         "temperature": 36.5
                     })
@@ -341,39 +365,39 @@ def render_chat_interface(model: str):
                     col1, col2, col3 = st.columns(3)
                     
                     with col1:
-                        if st.button("보험을 분석해서 상품을 추천해줘", key=f"q1_{idx}_{len(st.session_state.messages)}"):
+                        if st.button("내 보험 가입 현황을 분석해줘", key=f"q1_{idx}_{len(st.session_state.messages)}"):
                             # 선택된 답변 초기화
                             st.session_state.selected_answer_idx = None
                             st.session_state.selected_answer_content = None
                             st.session_state.messages.append({
                                 "role": "user",
-                                "content": "보험을 분석해서 상품을 추천해줘",
+                                "content": "내 보험 가입 현황을 분석해줘",
                                 "knowledge_level": 50,  # 중급 수준
                                 "temperature": 36.5
                             })
                             st.rerun()
                     
                     with col2:
-                        if st.button("뇌졸중을 예방하는 방법을 알려줘", key=f"q2_{idx}_{len(st.session_state.messages)}"):
+                        if st.button("뇌졸중 예방법 알려줘", key=f"q2_{idx}_{len(st.session_state.messages)}"):
                             # 선택된 답변 초기화
                             st.session_state.selected_answer_idx = None
                             st.session_state.selected_answer_content = None
                             st.session_state.messages.append({
                                 "role": "user",
-                                "content": "뇌졸중을 예방하는 방법을 알려줘",
+                                "content": "뇌졸중 예방법 알려줘",
                                 "knowledge_level": 20,  # 초급 수준
                                 "temperature": 36.5
                             })
                             st.rerun()
                     
                     with col3:
-                        if st.button("검진 데이터를 기반으로 위험을 예측해줘", key=f"q3_{idx}_{len(st.session_state.messages)}"):
+                        if st.button("내 건강 위험도를 분석해줘", key=f"q3_{idx}_{len(st.session_state.messages)}"):
                             # 선택된 답변 초기화
                             st.session_state.selected_answer_idx = None
                             st.session_state.selected_answer_content = None
                             st.session_state.messages.append({
                                 "role": "user",
-                                "content": "검진 데이터를 기반으로 위험을 예측해줘",
+                                "content": "내 건강 위험도를 분석해줘",
                                 "knowledge_level": 70,  # 중급 수준
                                 "temperature": 36.5
                             })
@@ -424,25 +448,30 @@ def render_chat_interface(model: str):
 
         last_user_message = st.session_state.messages[-1]["content"]
         
+        # 현재 사용자 ID 가져오기
+        current_user_id = st.session_state.get("user", "User1")
+        
         # 추천 질문인지 확인
-        is_recommended_question = False
-        for question_data in RECOMMENDED_QUESTIONS.values():
-            if last_user_message == question_data["question"]:
-                is_recommended_question = True
-                break
+        recommended_question_id = is_recommended_question(current_user_id, last_user_message)
+        is_recommended = recommended_question_id is not None
         
         # 더미 모드가 활성화된 경우 더미 답변 사용
         if st.session_state.dummy_mode:
             # 추천 질문인 경우 더미 데이터 사용
-            if is_recommended_question:
-                for question_data in RECOMMENDED_QUESTIONS.values():
-                    if last_user_message == question_data["question"]:
-                        answers = [
-                            question_data["answers"].get("ms", ""),
-                            question_data["answers"].get("aws", ""),
-                            question_data["answers"].get("sds", "")
-                        ]
-                        break
+            if is_recommended:
+                current_user_id = st.session_state.get("user", "User1")
+                user_info = USERS.get(current_user_id, {}).get("info", {})
+                user_name = user_info.get("기본정보", {}).get("이름", "곰철수")
+                user_questions = USER_RECOMMENDED_QUESTIONS.get(user_name, {})
+                if recommended_question_id in user_questions:
+                    answers = [
+                        user_questions[recommended_question_id]["answers"].get("ms", ""),
+                        user_questions[recommended_question_id]["answers"].get("aws", ""),
+                        user_questions[recommended_question_id]["answers"].get("sds", "")
+                    ]
+                else:
+                    logger.error(f"추천질문 ID '{recommended_question_id}'가 사용자 '{user_name}'의 데이터에 없습니다.")
+                    answers = [f"추천질문 데이터가 없습니다. (user: {user_name}, id: {recommended_question_id})"] * 3
             else:
                 # 일상 대화 패턴 확인
                 matched_conversation = None
@@ -472,14 +501,7 @@ def render_chat_interface(model: str):
                         final_message = _prepare_message(last_user_message)
                         logger.info(f"Prepared message: {final_message}")
                         
-                        # 추천 질문인지 확인
-                        is_recommended_question = False
-                        for question_data in RECOMMENDED_QUESTIONS.values():
-                            if last_user_message == question_data["question"]:
-                                is_recommended_question = True
-                                break
-                        
-                        if is_recommended_question:
+                        if is_recommended:
                             # 추천 질문인 경우 모든 AI 플랫폼 호출
                             # MS Agent 호출
                             response = query_ms_agent(final_message)
@@ -533,7 +555,7 @@ def render_chat_interface(model: str):
 
         if st.session_state.selected_answer_idx is None:
             # 카드/버튼 렌더링 (여기서만!)
-            if is_recommended_question:
+            if is_recommended:
                 # 추천 질문인 경우 세 개의 카드 표시
                 cards_html = f"""
                 <div class="answer-scroll-row">
@@ -631,5 +653,29 @@ def render_chat_interface(model: str):
             </div>
             """
             st.markdown(selected_card_html, unsafe_allow_html=True)
+
+def get_recommended_answer(question_id: str) -> str:
+    """추천 질문에 대한 답변을 반환합니다."""
+    # 현재 선택된 사용자 가져오기
+    current_user = st.session_state.get("user", "User1")
+    
+    # 사용자별 추천 질문 답변 가져오기
+    user_questions = USER_RECOMMENDED_QUESTIONS.get(current_user, {})
+    question_data = user_questions.get(question_id, {})
+    
+    # 현재 선택된 서비스 가져오기
+    current_service = st.session_state.get("service", "1")
+    
+    # 서비스별 답변 선택
+    if current_service == "1":  # 통합 전문가
+        answer = question_data.get("answer", {}).get("ms", "")
+    elif current_service == "2":  # 질병 전문가
+        answer = question_data.get("answer", {}).get("aws", "")
+    elif current_service == "3":  # 라이프 전문가
+        answer = question_data.get("answer", {}).get("sds", "")
+    else:
+        answer = question_data.get("answer", {}).get("ms", "")  # 기본값
+    
+    return answer
 
    
