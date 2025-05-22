@@ -26,7 +26,6 @@ DEFAULT_AGENT_ID = "asst_YVPGAmrKz41p7l5LlsBhJ661"
 DEFAULT_THREAD_ID = "thread_M7udZoEMzmXQJDoHfleNS5ng"
 DEFAULT_ROLE = "통합 전문가"
 DEFAULT_CHARACTER = "친절한 미영씨"
-DEFAULT_USER = "User1"
 
 # 캐싱을 위한 전역 변수
 _cached_agent = None
@@ -145,6 +144,7 @@ def query_ms_agent(input_text: str, tab_id: Optional[str] = None, system_prompt:
         st.session_state.character = DEFAULT_CHARACTER
 
     start_time = time.time()
+    elapsed_time = 0  # 변수 초기화
 
     try:
         # 에이전트와 스레드 준비
@@ -181,16 +181,19 @@ def query_ms_agent(input_text: str, tab_id: Optional[str] = None, system_prompt:
                     if hasattr(run_status, 'last_error'):
                         error_msg += f"\n마지막 에러: {run_status.last_error}"
                     logger.error(error_msg)
+                    elapsed_time = time.time() - start_time
                     return f"응답 생성 중 오류가 발생했습니다. (상태: {run_status.status})", [], elapsed_time, 0, 0, start_time
                 
                 # 타임아웃 체크
                 if time.time() - wait_start > max_wait_time:
                     logger.error("실행 시간 초과")
+                    elapsed_time = time.time() - start_time
                     return "응답 생성 시간이 초과되었습니다.", [], elapsed_time, 0, 0, start_time
                 
                 time.sleep(1)
             except Exception as e:
                 logger.error(f"실행 상태 확인 중 오류 발생: {str(e)}")
+                elapsed_time = time.time() - start_time
                 return f"실행 상태 확인 중 오류가 발생했습니다: {str(e)}", [], elapsed_time, 0, 0, start_time
         
         # 최신 메시지 가져오기
@@ -199,11 +202,13 @@ def query_ms_agent(input_text: str, tab_id: Optional[str] = None, system_prompt:
             response_text = _extract_response_text(messages)
             if not response_text:
                 logger.error("응답 텍스트를 추출할 수 없습니다.")
+                elapsed_time = time.time() - start_time
                 return "응답을 생성할 수 없습니다.", [], elapsed_time, 0, 0, start_time
                 
             logger.info(f"응답 생성 완료 (response_text: {response_text})")
         except Exception as e:
             logger.error(f"메시지 가져오기 실패: {str(e)}")
+            elapsed_time = time.time() - start_time
             return f"응답을 가져오는 중 오류가 발생했습니다: {str(e)}", [], elapsed_time, 0, 0, start_time
         
         # 결과 계산

@@ -34,7 +34,7 @@ from src.llm.ms_functions import query_ms_agent
 from src.llm.aws_functions import query_bedrock_agent, aws_credentials_available
 from src.llm.sds_functions import query_sds_agent
 from src.data.personas_roles import PERSONAS
-from src.data.dummy_data import RECOMMENDED_QUESTIONS
+from src.data.dummy_data import RECOMMENDED_QUESTIONS, DAILY_CONVERSATIONS
 
 def load_css():
     """CSS 파일을 로드하는 함수"""
@@ -333,6 +333,50 @@ def render_chat_interface(model: str):
                     quality_score = message["quality_score"]
                     quality_color = get_quality_level_color(quality_score)
                     st.markdown(f"<div style='color: {quality_color}; font-size: 0.8em;'>응답 품질: {quality_score}</div>", unsafe_allow_html=True)
+                
+                # 마지막 어시스턴트 메시지인 경우에만 추천 질문 표시
+                if idx == len(st.session_state.messages) - 1:
+                    st.markdown("### 추천 질문")
+                    col1, col2, col3 = st.columns(3)
+                    
+                    with col1:
+                        if st.button("보험을 분석해서 상품을 추천해줘", key=f"q1_{idx}_{len(st.session_state.messages)}"):
+                            # 선택된 답변 초기화
+                            st.session_state.selected_answer_idx = None
+                            st.session_state.selected_answer_content = None
+                            st.session_state.messages.append({
+                                "role": "user",
+                                "content": "보험을 분석해서 상품을 추천해줘",
+                                "knowledge_level": 50,  # 중급 수준
+                                "temperature": 36.5
+                            })
+                            st.rerun()
+                    
+                    with col2:
+                        if st.button("뇌졸중을 예방하는 방법을 알려줘", key=f"q2_{idx}_{len(st.session_state.messages)}"):
+                            # 선택된 답변 초기화
+                            st.session_state.selected_answer_idx = None
+                            st.session_state.selected_answer_content = None
+                            st.session_state.messages.append({
+                                "role": "user",
+                                "content": "뇌졸중을 예방하는 방법을 알려줘",
+                                "knowledge_level": 20,  # 초급 수준
+                                "temperature": 36.5
+                            })
+                            st.rerun()
+                    
+                    with col3:
+                        if st.button("검진 데이터를 기반으로 위험을 예측해줘", key=f"q3_{idx}_{len(st.session_state.messages)}"):
+                            # 선택된 답변 초기화
+                            st.session_state.selected_answer_idx = None
+                            st.session_state.selected_answer_content = None
+                            st.session_state.messages.append({
+                                "role": "user",
+                                "content": "검진 데이터를 기반으로 위험을 예측해줘",
+                                "knowledge_level": 70,  # 중급 수준
+                                "temperature": 36.5
+                            })
+                            st.rerun()
 
     # 입력창 항상 하나만 표시
     prompt = st.chat_input("질문을 입력하세요")
@@ -379,29 +423,46 @@ def render_chat_interface(model: str):
 
         last_user_message = st.session_state.messages[-1]["content"]
         
+        # 추천 질문인지 확인
+        is_recommended_question = False
+        for question_data in RECOMMENDED_QUESTIONS.values():
+            if last_user_message == question_data["question"]:
+                is_recommended_question = True
+                break
+        
         # 더미 모드가 활성화된 경우 더미 답변 사용
         if st.session_state.dummy_mode:
-            # 사용자 메시지가 추천 질문인지 확인
-            is_recommended_question = False
-            for question_data in RECOMMENDED_QUESTIONS.values():
-                if last_user_message == question_data["question"]:
-                    is_recommended_question = True
-                    answers = [
-                        question_data["answers"]["ms"],
-                        question_data["answers"]["aws"],
-                        question_data["answers"]["sds"]
-                    ]
-                    break
-            
-            # 추천 질문이 아닌 경우 기본 더미 답변 사용
-            if not is_recommended_question:
-                dummy_ms = "안녕하세요, 곰철수님! 다시 만나 뵙게 되어 반갑습니다.\n고객님의 건강 상태와 보험 가입 상황을 바탕으로 아래와 같은 분석을 제공합니다.\n\n예상 응답:\n- Azure Foundry  AI는 MS의 완전 관리형 서비스로, 다양한 파운데이션 모델을 제공합니다.\n- 현재 API 연동 작업이 진행 중이며, 곧 서비스가 시작될 예정입니다.\n- 더 자세한 정보는 Azure Foundry AI 공식 문서를 참조하세요."
-                dummy_aws = "안녕하세요, 곰철수님! 다시 만나 뵙게 되어 반갑습니다.\n고객님의 건강 상태와 보험 가입 상황을 바탕으로 아래와 같은 분석을 제공합니다.\n\n예상 응답:\n- AWS Bedrock은 Amazon의 완전 관리형 서비스로, 다양한 파운데이션 모델을 제공합니다.\n- 현재 API 연동 작업이 진행 중이며, 곧 서비스가 시작될 예정입니다.\n- 더 자세한 정보는 AWS Bedrock 공식 문서를 참조하세요."
-                dummy_sds = "안녕하세요, 곰철수님! 다시 만나 뵙게 되어 반갑습니다.\n고객님의 건강 상태와 보험 가입 상황을 바탕으로 아래와 같은 분석을 제공합니다.\n\n예상 응답:\n- SDS AI는 삼성 SDS의 AI 플랫폼으로, 다양한 비즈니스 솔루션을 제공합니다.\n- 현재 API 연동 작업이 진행 중이며, 곧 서비스가 시작될 예정입니다.\n- 더 자세한 정보는 SDS AI 공식 문서를 참조하세요."
-                answers = [dummy_ms, dummy_aws, dummy_sds]
+            # 추천 질문인 경우 더미 데이터 사용
+            if is_recommended_question:
+                for question_data in RECOMMENDED_QUESTIONS.values():
+                    if last_user_message == question_data["question"]:
+                        answers = [
+                            question_data["answers"]["ms"],
+                            question_data["answers"]["aws"],
+                            question_data["answers"]["sds"]
+                        ]
+                        break
+            else:
+                # 일상 대화 패턴 확인
+                matched_conversation = None
+                for conv_type, conv_data in DAILY_CONVERSATIONS.items():
+                    if any(pattern in last_user_message.lower() for pattern in conv_data["patterns"]):
+                        matched_conversation = conv_data
+                        break
+                
+                if matched_conversation:
+                    # 일상 대화에 매칭된 경우 MS 답변만 사용
+                    ms_response = matched_conversation["answers"]["ms"]
+                    answers = [ms_response, ms_response, ms_response]
+                else:
+                    # 매칭되지 않은 경우 기본 더미 답변 사용
+                    dummy_ms = "안녕하세요, 곰철수님! 다시 만나 뵙게 되어 반갑습니다.\n고객님의 건강 상태와 보험 가입 상황을 바탕으로 아래와 같은 분석을 제공합니다.\n\n예상 응답:\n- Azure Foundry  AI는 MS의 완전 관리형 서비스로, 다양한 파운데이션 모델을 제공합니다.\n- 현재 API 연동 작업이 진행 중이며, 곧 서비스가 시작될 예정입니다.\n- 더 자세한 정보는 Azure Foundry AI 공식 문서를 참조하세요."
+                    answers = [dummy_ms, dummy_ms, dummy_ms]
         else:
             # 더미 모드가 비활성화된 경우 실제 AI 플랫폼 호출
             try:
+                start_time = time.time()
+                elapsed_time = 0  # 변수 초기화
                 # 캐시된 응답이 있는지 확인
                 if last_user_message in st.session_state.cached_responses:
                     answers = st.session_state.cached_responses[last_user_message]
@@ -412,27 +473,59 @@ def render_chat_interface(model: str):
                         final_message = _prepare_message(last_user_message)
                         logger.info(f"Prepared message: {final_message}")
                         
-                        # MS Agent 호출
-                        response = query_ms_agent(final_message)
-                        if isinstance(response, tuple):
-                            ms_response = response[0]  # 첫 번째 값만 사용
-                        else:
-                            ms_response = response
-
-                        # AWS Agent 호출
-                        if aws_credentials_available():
-                            aws_response, _, _, _, _, _ = query_bedrock_agent(final_message)
-                        else:
-                            aws_response = "AWS Bedrock 서비스를 사용하기 위해서는 AWS 자격 증명이 필요합니다.\n\n자격 증명 설정 방법:\n1. AWS CLI 설치\n2. `aws configure` 명령어로 자격 증명 설정\n3. AWS_ACCESS_KEY_ID와 AWS_SECRET_ACCESS_KEY 환경 변수 설정"
-
-                        # ms_response ="11"
-                        # aws_response ="22"
-                        # SDS Agent 호출
-                        sds_response = query_sds_agent(final_message)
+                        # 추천 질문인지 확인
+                        is_recommended_question = False
+                        for question_data in RECOMMENDED_QUESTIONS.values():
+                            if last_user_message == question_data["question"]:
+                                is_recommended_question = True
+                                break
                         
-                        answers = [ms_response, aws_response, sds_response]
+                        if is_recommended_question:
+                            # 추천 질문인 경우 모든 AI 플랫폼 호출
+                            # MS Agent 호출
+                            response = query_ms_agent(final_message)
+                            if isinstance(response, tuple):
+                                ms_response = response[0]  # 첫 번째 값만 사용
+                            else:
+                                ms_response = response
+
+                            # AWS Agent 호출
+                            if aws_credentials_available():
+                                aws_response, _, _, _, _, _ = query_bedrock_agent(final_message)
+                            else:
+                                aws_response = "AWS Bedrock 서비스를 사용하기 위해서는 AWS 자격 증명이 필요합니다.\n\n자격 증명 설정 방법:\n1. AWS CLI 설치\n2. `aws configure` 명령어로 자격 증명 설정\n3. AWS_ACCESS_KEY_ID와 AWS_SECRET_ACCESS_KEY 환경 변수 설정"
+
+                            # SDS Agent 호출
+                            sds_response = query_sds_agent(final_message)
+                            
+                            answers = [ms_response, aws_response, sds_response]
+                        else:
+                            # 추천 질문이 아닌 경우 일상 대화 패턴 확인
+                            matched_conversation = None
+                            for conv_type, conv_data in DAILY_CONVERSATIONS.items():
+                                if any(pattern in last_user_message.lower() for pattern in conv_data["patterns"]):
+                                    matched_conversation = conv_data
+                                    break
+                            
+                            if matched_conversation:
+                                # 일상 대화에 매칭된 경우 더미 데이터 사용
+                                ms_response = matched_conversation["answers"]["ms"]
+                                answers = [ms_response, ms_response, ms_response]
+                            else:
+                                # 매칭되지 않은 경우 MS Agent만 호출
+                                response = query_ms_agent(final_message)
+                                if isinstance(response, tuple):
+                                    ms_response = response[0]  # 첫 번째 값만 사용
+                                else:
+                                    ms_response = response
+                                
+                                # MS 응답을 세 번 반복하여 UI 일관성 유지
+                                answers = [ms_response, ms_response, ms_response]
+                        
                         # 응답 캐싱
                         st.session_state.cached_responses[last_user_message] = answers
+
+                elapsed_time = time.time() - start_time
             except Exception as e:
                 st.error(f"AI 플랫폼 호출 중 오류 발생: {str(e)}")
                 return
@@ -441,38 +534,61 @@ def render_chat_interface(model: str):
 
         if st.session_state.selected_answer_idx is None:
             # 카드/버튼 렌더링 (여기서만!)
-            cards_html = f"""
-            <div class="answer-scroll-row">
-                <div class="answer-card">
-                    <div>{answers[0]}</div>
+            if is_recommended_question:
+                # 추천 질문인 경우 세 개의 카드 표시
+                cards_html = f"""
+                <div class="answer-scroll-row">
+                    <div class="answer-card">
+                        <div>{answers[0]}</div>
+                    </div>
+                    <div class="answer-card">
+                        <div>{answers[1]}</div>
+                    </div>
+                    <div class="answer-card">
+                        <div>{answers[2]}</div>
+                    </div>
                 </div>
-                <div class="answer-card">
-                    <div>{answers[1]}</div>
+                """
+                st.markdown(cards_html, unsafe_allow_html=True)
+                
+                cols = st.columns(3)
+                for idx, col in enumerate(cols):
+                    with col:
+                        if st.button(label_list[idx], key=f"like_{idx}"):
+                            st.session_state.selected_answer_idx = idx
+                            st.session_state.selected_answer_content = answers[idx]
+                            
+                            # 답변의 품질 평가
+                            quality_score, quality_reason = evaluate_response_quality(answers[idx])
+                            
+                            # 답변을 messages에 저장
+                            st.session_state.messages.append({
+                                "role": "assistant",
+                                "content": answers[idx],
+                                "quality_score": quality_score
+                            })
+                            st.rerun()
+            else:
+                # 추천 질문이 아닌 경우 하나의 카드만 표시하고 바로 답변 저장
+                cards_html = f"""
+                <div class="answer-scroll-row">
+                    <div class="answer-card">
+                        <div>{answers[0]}</div>
+                    </div>
                 </div>
-                <div class="answer-card">
-                    <div>{answers[2]}</div>
-                </div>
-            </div>
-            """
-            st.markdown(cards_html, unsafe_allow_html=True)
-            
-            cols = st.columns(3)
-            for idx, col in enumerate(cols):
-                with col:
-                    if st.button(label_list[idx], key=f"like_{idx}"):
-                        st.session_state.selected_answer_idx = idx
-                        st.session_state.selected_answer_content = answers[idx]
-                        
-                        # 답변의 품질 평가
-                        quality_score, quality_reason = evaluate_response_quality(answers[idx])
-                        
-                        # 답변을 messages에 저장
-                        st.session_state.messages.append({
-                            "role": "assistant",
-                            "content": answers[idx],
-                            "quality_score": quality_score
-                        })
-                        st.rerun()
+                """
+                st.markdown(cards_html, unsafe_allow_html=True)
+                
+                # 답변의 품질 평가
+                quality_score, quality_reason = evaluate_response_quality(answers[0])
+                
+                # 답변을 messages에 저장
+                st.session_state.messages.append({
+                    "role": "assistant",
+                    "content": answers[0],
+                    "quality_score": quality_score
+                })
+                st.rerun()
         else:
             # 선택된 답변만 노출 (히스토리에 이미 있으므로 별도 출력하지 않음)
             idx = st.session_state.selected_answer_idx
