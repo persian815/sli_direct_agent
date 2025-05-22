@@ -11,13 +11,14 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.StreamHandler(sys.stdout)  # 터미널에 출력
+        logging.StreamHandler(sys.stdout)  # 터미널에만 출력
     ]
 )
 logger = logging.getLogger(__name__)
 
 # 로그 레벨 설정 확인
 logger.setLevel(logging.INFO)
+logger.info("Chat application started")  # 시작 로그 추가
 
 from src.llm import (
     evaluate_user_knowledge_level, get_knowledge_level_color
@@ -437,9 +438,9 @@ def render_chat_interface(model: str):
                 for question_data in RECOMMENDED_QUESTIONS.values():
                     if last_user_message == question_data["question"]:
                         answers = [
-                            question_data["answers"]["ms"],
-                            question_data["answers"]["aws"],
-                            question_data["answers"]["sds"]
+                            question_data["answers"].get("ms", ""),
+                            question_data["answers"].get("aws", ""),
+                            question_data["answers"].get("sds", "")
                         ]
                         break
             else:
@@ -451,12 +452,10 @@ def render_chat_interface(model: str):
                         break
                 
                 if matched_conversation:
-                    # 일상 대화에 매칭된 경우 MS 답변만 사용
                     ms_response = matched_conversation["answers"]["ms"]
                     answers = [ms_response, ms_response, ms_response]
                 else:
-                    # 매칭되지 않은 경우 기본 더미 답변 사용
-                    dummy_ms = "안녕하세요, 곰철수님! 다시 만나 뵙게 되어 반갑습니다.\n고객님의 건강 상태와 보험 가입 상황을 바탕으로 아래와 같은 분석을 제공합니다.\n\n예상 응답:\n- Azure Foundry  AI는 MS의 완전 관리형 서비스로, 다양한 파운데이션 모델을 제공합니다.\n- 현재 API 연동 작업이 진행 중이며, 곧 서비스가 시작될 예정입니다.\n- 더 자세한 정보는 Azure Foundry AI 공식 문서를 참조하세요."
+                    dummy_ms = "안녕하세요! 궁금하신 점이 있으시면 언제든 말씀해 주세요."
                     answers = [dummy_ms, dummy_ms, dummy_ms]
         else:
             # 더미 모드가 비활성화된 경우 실제 AI 플랫폼 호출
@@ -567,6 +566,22 @@ def render_chat_interface(model: str):
                                 "content": answers[idx],
                                 "quality_score": quality_score
                             })
+
+                            # DB에 로그 저장
+                            try:
+                                platform = "ms" if idx == 0 else "aws" if idx == 1 else "sds"
+                                formatted_question = f"추천질문 | {last_user_message}"
+                                formatted_answer = f"{platform} | {answers[idx]}"
+                                logger.info(f"Sending chat log to API - Question: {formatted_question}")
+                                logger.info(f"Sending chat log to API - Answer: {formatted_answer}")
+                                success = send_chat_log_to_api(formatted_question, formatted_answer)
+                                if success:
+                                    logger.info("Chat log successfully saved to API")
+                                else:
+                                    logger.error("Failed to save chat log to API")
+                            except Exception as e:
+                                logger.error(f"Error while saving chat log: {str(e)}")
+                            
                             st.rerun()
             else:
                 # 추천 질문이 아닌 경우 하나의 카드만 표시하고 바로 답변 저장
@@ -588,6 +603,21 @@ def render_chat_interface(model: str):
                     "content": answers[0],
                     "quality_score": quality_score
                 })
+
+                # DB에 로그 저장
+                try:
+                    formatted_question = f"일반질문 | {last_user_message}"
+                    formatted_answer = f"ms | {answers[0]}"
+                    logger.info(f"Sending chat log to API - Question: {formatted_question}")
+                    logger.info(f"Sending chat log to API - Answer: {formatted_answer}")
+                    success = send_chat_log_to_api(formatted_question, formatted_answer)
+                    if success:
+                        logger.info("Chat log successfully saved to API")
+                    else:
+                        logger.error("Failed to save chat log to API")
+                except Exception as e:
+                    logger.error(f"Error while saving chat log: {str(e)}")
+                
                 st.rerun()
         else:
             # 선택된 답변만 노출 (히스토리에 이미 있으므로 별도 출력하지 않음)
@@ -602,5 +632,4 @@ def render_chat_interface(model: str):
             """
             st.markdown(selected_card_html, unsafe_allow_html=True)
 
-            
-
+   

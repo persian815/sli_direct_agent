@@ -1,6 +1,23 @@
 import random
 import streamlit as st
 from typing import Dict, List, Tuple, Any, Optional
+import logging
+import sys
+
+# 로깅 설정
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout),  # 터미널에 출력
+        logging.FileHandler('utils.log')    # 파일에도 출력
+    ]
+)
+logger = logging.getLogger(__name__)
+
+# 로그 레벨 설정 확인
+logger.setLevel(logging.INFO)
+logger.info("Utils module initialized")  # 시작 로그 추가
 
 def evaluate_response_quality(response):
     """응답의 품질을 1~100 사이의 점수로 평가하는 함수"""
@@ -351,6 +368,8 @@ def send_chat_log_to_api(question, answer):
     }
     
     try:
+        logger.info(f"Preparing to send chat log to API: {data}")
+        
         # API 호출
         response = requests.post(api_url, json=data)
         
@@ -360,6 +379,7 @@ def send_chat_log_to_api(question, answer):
             response_text = response.text
             if "Response headers:" in response_text:
                 response_text = response_text.split("Response headers:")[0].strip()
+            logger.info(f"Chat log sent successfully: {response_text}")
             add_function_log(f"채팅 로그 전송 성공: {response_text}")
             return True
         else:
@@ -367,9 +387,11 @@ def send_chat_log_to_api(question, answer):
             response_text = response.text
             if "Response headers:" in response_text:
                 response_text = response_text.split("Response headers:")[0].strip()
+            logger.error(f"Failed to send chat log: {response.status_code} - {response_text}")
             add_function_log(f"채팅 로그 전송 실패: {response.status_code} - {response_text}")
             return False
     except Exception as e:
+        logger.error(f"Error while sending chat log: {str(e)}")
         add_function_log(f"채팅 로그 전송 중 오류 발생: {str(e)}")
         return False
 
