@@ -29,17 +29,17 @@ logger.setLevel(logging.INFO)
 # 로그 포맷 설정
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-# 파일 핸들러 설정
-log_dir = Path("logs")
-log_dir.mkdir(exist_ok=True)
-file_handler = logging.FileHandler(log_dir / "chat_interface.log", encoding='utf-8')
-file_handler.setFormatter(formatter)
-logger.addHandler(file_handler)
-
-# 스트림 핸들러 설정
+# 스트림 핸들러 설정 (콘솔 출력만)
 stream_handler = logging.StreamHandler()
 stream_handler.setFormatter(formatter)
 logger.addHandler(stream_handler)
+
+# 파일 핸들러 제거
+# log_dir = Path("logs")
+# log_dir.mkdir(exist_ok=True)
+# file_handler = logging.FileHandler(log_dir / "chat_interface.log", encoding='utf-8')
+# file_handler.setFormatter(formatter)
+# logger.addHandler(file_handler)
 
 import re
 from typing import Dict

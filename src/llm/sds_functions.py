@@ -64,7 +64,7 @@ def get_json_events(header, body):
         
         logger.info(f"총 처리된 청크 수: {count}")
         logger.info(f"최종 응답 길이: {len(res)}")
-        return res
+        return res                
     except Exception as e:
         logger.error(f"API 호출 중 예외 발생: {str(e)}")
         return f"API 호출 중 오류 발생: {str(e)}"
