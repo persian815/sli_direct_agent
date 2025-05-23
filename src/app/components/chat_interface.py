@@ -67,6 +67,19 @@ def load_css():
     with open(css_file) as f:
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
         
+    # 아바타 이미지 크기 조정
+    st.markdown("""
+    <style>
+        .stChatMessage img {
+            width: 32px !important;
+            height: 48px !important;
+        }
+        .stChatMessageContent p {
+            margin-bottom: 0 !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+        
     # 스크롤 제어를 위한 JavaScript 추가
     st.markdown("""
     <script>
@@ -333,7 +346,23 @@ def render_chat_interface(model: str):
             
             with st.chat_message("user", avatar=user_icon):
                 st.markdown(
-                    f'<div id="{message_id}" style="background-color: #e3f2fd !important; padding: 10px; border-radius: 8px;">{message["content"]}</div>',
+                    f"""
+                    <div style="
+                        display: flex;
+                        align-items: flex-start;
+                        gap: 10px;
+                    ">
+                        <div style="
+                            background-color: transparent;
+                            padding: 10px 15px;
+                            border-radius: 15px;
+                            max-width: 80%;
+                            word-wrap: break-word;
+                        ">
+                            {message["content"]}
+                        </div>
+                    </div>
+                    """,
                     unsafe_allow_html=True
                 )
                 # 사용자 메시지의 경우 지식레벨과 온도 표시
@@ -423,7 +452,23 @@ def render_chat_interface(model: str):
         
         with st.chat_message("user", avatar=user_icon):
             st.markdown(
-                f'<div style="background-color: #e3f2fd !important; padding: 10px; border-radius: 8px;">{prompt}</div>',
+                f"""
+                <div style="
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 10px;
+                ">
+                    <div style="
+                        background-color: transparent;
+                        padding: 10px 15px;
+                        border-radius: 15px;
+                        max-width: 80%;
+                        word-wrap: break-word;
+                    ">
+                        {prompt}
+                    </div>
+                </div>
+                """,
                 unsafe_allow_html=True
             )
             # 개발자 모드가 활성화된 경우에만 지식레벨과 온도 표시
