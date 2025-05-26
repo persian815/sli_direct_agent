@@ -88,6 +88,30 @@ DAILY_CONVERSATIONS = {
 곰영희_product_recommendation_aws = load_markdown_content("곰영희_product_recommendation_aws.md")
 곰영희_product_recommendation_sds = load_markdown_content("곰영희_product_recommendation_sds.md")
 
+곰순이_insurance_analysis_ms = load_markdown_content("곰순이_insurance_analysis_ms.md")
+곰순이_insurance_analysis_aws = load_markdown_content("곰순이_insurance_analysis_aws.md")
+곰순이_insurance_analysis_sds = load_markdown_content("곰순이_insurance_analysis_sds.md")
+
+곰순이_health_risk_prediction_ms = load_markdown_content("곰순이_health_risk_prediction_ms.md")
+곰순이_health_risk_prediction_aws = load_markdown_content("곰순이_health_risk_prediction_aws.md")
+곰순이_health_risk_prediction_sds = load_markdown_content("곰순이_health_risk_prediction_sds.md")
+
+곰순이_product_recommendation_ms = load_markdown_content("곰순이_product_recommendation_ms.md")
+곰순이_product_recommendation_aws = load_markdown_content("곰순이_product_recommendation_aws.md")
+곰순이_product_recommendation_sds = load_markdown_content("곰순이_product_recommendation_sds.md")
+
+곰돌이_insurance_analysis_ms = load_markdown_content("곰돌이_insurance_analysis_ms.md")
+곰돌이_insurance_analysis_aws = load_markdown_content("곰돌이_insurance_analysis_aws.md")
+곰돌이_insurance_analysis_sds = load_markdown_content("곰돌이_insurance_analysis_sds.md")
+
+곰돌이_health_risk_prediction_ms = load_markdown_content("곰돌이_health_risk_prediction_ms.md")
+곰돌이_health_risk_prediction_aws = load_markdown_content("곰돌이_health_risk_prediction_aws.md")
+곰돌이_health_risk_prediction_sds = load_markdown_content("곰돌이_health_risk_prediction_sds.md")
+
+곰돌이_product_recommendation_ms = load_markdown_content("곰돌이_product_recommendation_ms.md")
+곰돌이_product_recommendation_aws = load_markdown_content("곰돌이_product_recommendation_aws.md")
+곰돌이_product_recommendation_sds = load_markdown_content("곰돌이_product_recommendation_sds.md")
+
 
 # 사용자별 추천 질문 데이터
 USER_RECOMMENDED_QUESTIONS = {
@@ -148,26 +172,25 @@ USER_RECOMMENDED_QUESTIONS = {
         "insurance_analysis": {
             "question": "내 보험을 분석해서 상품을 추천해줘",
             "answers": {
-                "ms": "곰순이님의 현재 보험 가입 현황을 분석해보았습니다.\n\n1. 현재 가입 중인 보험:\n- 실손의료보험 (월 보험료 3만원)\n  * 입원/통원 진료비 보장\n  * 수술비 보장\n  * 특약: 암진단비 500만원\n- 종합보험 (월 보험료 6만원)\n  * 사망/상해 보장\n  * 질병 입원 보장\n  * 특약: 운전자 상해보험\n\n2. 보험 갭 분석:\n- 노후 대비 보험 부족\n  * 현재 연금보험 미가입\n  * 노후 생활비 대비 필요\n- 치매/뇌졸중 보험 미가입\n  * 가족력 고려 시 필요\n  * 장기 요양비용 대비 필요\n\n3. 추천 상품:\n- 치매보험 (월 보험료 2만원)\n  * 치매진단비 1,000만원\n  * 요양보험금 월 60만원\n  * 특약: 뇌혈관질환 진단비\n- 연금보험 (월 보험료 5만원)\n  * 65세부터 월 30만원 수령\n  * 10년 보증기간\n  * 특약: 장기요양보험",
-                "aws": "곰순이님의 보험 가입 현황을 분석한 결과입니다.\n\n1. 현재 보험 현황:\n- 실손의료보험 (월 3만원)\n  * 입원/통원 진료비 보장\n  * 수술비 보장\n  * 특약: 암진단비 500만원\n- 종합보험 (월 6만원)\n  * 사망/상해 보장\n  * 질병 입원 보장\n  * 특약: 운전자 상해보험\n\n2. 보험 필요성 분석:\n- 노후 대비 필요\n  * 현재 연금보험 미가입\n  * 노후 생활비 대비 필요\n- 치매/뇌졸중 보험 필요\n  * 가족력 고려 시 필요\n  * 장기 요양비용 대비 필요\n\n3. 추천 상품:\n- 치매보험 (월 2만원)\n  * 치매진단비 1,000만원\n  * 요양보험금 월 60만원\n  * 특약: 뇌혈관질환 진단비\n- 연금보험 (월 5만원)\n  * 65세부터 월 30만원 수령\n  * 10년 보증기간\n  * 특약: 장기요양보험",
-                "sds": "곰순이님의 보험 가입 현황을 분석했습니다.\n\n1. 현재 가입 보험:\n- 실손의료보험 (월 3만원)\n  * 입원/통원 진료비 보장\n  * 수술비 보장\n  * 특약: 암진단비 500만원\n- 종합보험 (월 6만원)\n  * 사망/상해 보장\n  * 질병 입원 보장\n  * 특약: 운전자 상해보험\n\n2. 보험 필요성:\n- 노후 대비 필요\n  * 현재 연금보험 미가입\n  * 노후 생활비 대비 필요\n- 치매/뇌졸중 보험 필요\n  * 가족력 고려 시 필요\n  * 장기 요양비용 대비 필요\n\n3. 추천 상품:\n- 치매보험 (월 2만원)\n  * 치매진단비 1,000만원\n  * 요양보험금 월 60만원\n  * 특약: 뇌혈관질환 진단비\n- 연금보험 (월 5만원)\n  * 65세부터 월 30만원 수령\n  * 10년 보증기간\n  * 특약: 장기요양보험"
+                "ms": 곰순이_insurance_analysis_ms,
+                "aws": 곰순이_insurance_analysis_aws,
+                "sds": 곰순이_insurance_analysis_sds
             }
         },
-
         "health_risk_prediction": {
             "question": "건강검진 결과를 분석해줘",
             "answers": {
-                "ms": "곰순이님의 건강 위험도를 분석했습니다.\n\n1. 현재 건강 상태:\n- 혈압: 115/75 mmHg (정상)\n  * 정상 혈압: 120/80mmHg 이하\n  * 주 1회 이상 혈압 측정 필요\n  * 저염식 식단 권장\n- 혈당: 90 mg/dL (정상)\n  * 정상 공복혈당: 100mg/dL 이하\n  * 당뇨병 전단계 가능성\n  * 식후 혈당 측정 필요\n- 콜레스테롤: 180 mg/dL (정상)\n  * 정상 총콜레스테롤: 200mg/dL 이하\n  * LDL 콜레스테롤 측정 필요\n  * HDL 콜레스테롤 측정 필요",
-                "aws": "곰순이님의 건강 위험도 분석 결과입니다.\n\n1. 건강 상태:\n- 혈압: 115/75 mmHg (정상)\n  * 정상 혈압: 120/80mmHg 이하\n  * 주 1회 이상 혈압 측정 필요\n  * 저염식 식단 권장\n- 혈당: 90 mg/dL (정상)\n  * 정상 공복혈당: 100mg/dL 이하\n  * 당뇨병 전단계 가능성\n  * 식후 혈당 측정 필요\n- 콜레스테롤: 180 mg/dL (정상)\n  * 정상 총콜레스테롤: 200mg/dL 이하\n  * LDL 콜레스테롤 측정 필요\n  * HDL 콜레스테롤 측정 필요",
-                "sds": "곰순이님의 건강 위험도 분석 결과입니다.\n\n1. 건강 상태:\n- 혈압: 115/75 mmHg (정상)\n  * 정상 혈압: 120/80mmHg 이하\n  * 주 1회 이상 혈압 측정 필요\n  * 저염식 식단 권장\n- 혈당: 90 mg/dL (정상)\n  * 정상 공복혈당: 100mg/dL 이하\n  * 당뇨병 전단계 가능성\n  * 식후 혈당 측정 필요\n- 콜레스테롤: 180 mg/dL (정상)\n  * 정상 총콜레스테롤: 200mg/dL 이하\n  * LDL 콜레스테롤 측정 필요\n  * HDL 콜레스테롤 측정 필요"
+                "ms": 곰순이_health_risk_prediction_ms,
+                "aws": 곰순이_health_risk_prediction_aws,
+                "sds": 곰순이_health_risk_prediction_sds
             }
         },
-                "product_recommendation": {
+        "product_recommendation": {
             "question": "나에게 맞는 상품을 추천해줘",
             "answers": {
-                "ms": "곰순이님을 위한 뇌졸중 예방 방법을 알려드리겠습니다.\n\n1. 생활습관 개선:\n- 규칙적인 운동 (주 3회 이상)\n  * 유산소 운동: 걷기, 수영, 자전거\n  * 근력 운동: 스쿼트, 플랭크\n  * 스트레칭: 목, 어깨, 허리\n- 금연 및 절주\n  * 하루 1갑 이상 흡연 시 위험도 2배 증가\n  * 하루 2잔 이상 음주 시 위험도 증가\n- 건강한 식습관 유지\n  * 저염식 식단\n  * 신선한 채소와 과일 섭취\n  * 가공식품 섭취 제한",
-                "aws": "곰순이님을 위한 뇌졸중 예방 방법입니다.\n\n1. 생활습관:\n- 규칙적인 운동\n  * 유산소 운동: 걷기, 수영, 자전거\n  * 근력 운동: 스쿼트, 플랭크\n  * 스트레칭: 목, 어깨, 허리\n- 금연 및 절주\n  * 하루 1갑 이상 흡연 시 위험도 2배 증가\n  * 하루 2잔 이상 음주 시 위험도 증가\n- 건강한 식습관\n  * 저염식 식단\n  * 신선한 채소와 과일 섭취\n  * 가공식품 섭취 제한",
-                "sds": "곰순이님을 위한 뇌졸중 예방 방법입니다.\n\n1. 생활습관:\n- 규칙적인 운동\n  * 유산소 운동: 걷기, 수영, 자전거\n  * 근력 운동: 스쿼트, 플랭크\n  * 스트레칭: 목, 어깨, 허리\n- 금연 및 절주\n  * 하루 1갑 이상 흡연 시 위험도 2배 증가\n  * 하루 2잔 이상 음주 시 위험도 증가\n- 건강한 식습관\n  * 저염식 식단\n  * 신선한 채소와 과일 섭취\n  * 가공식품 섭취 제한"
+                "ms": 곰순이_product_recommendation_ms,
+                "aws": 곰순이_product_recommendation_aws,
+                "sds": 곰순이_product_recommendation_sds
             }
         }
     },
@@ -175,27 +198,27 @@ USER_RECOMMENDED_QUESTIONS = {
         "insurance_analysis": {
             "question": "내 보험을 분석해서 상품을 추천해줘",
             "answers": {
-                "ms": "곰돌이님의 현재 보험 가입 현황을 분석해보았습니다.\n\n1. 현재 가입 중인 보험:\n- 실손의료보험 (월 보험료 6만원)\n  * 입원/통원 진료비 보장\n  * 수술비 보장\n  * 특약: 암진단비 1,500만원\n- 종합보험 (월 보험료 12만원)\n  * 사망/상해 보장\n  * 질병 입원 보장\n  * 특약: 운전자 상해보험\n\n2. 보험 갭 분석:\n- 노후 대비 보험 부족\n  * 현재 연금보험 미가입\n  * 노후 생활비 대비 필요\n- 치매/뇌졸중 보험 미가입\n  * 가족력 고려 시 필요\n  * 장기 요양비용 대비 필요\n\n3. 추천 상품:\n- 치매보험 (월 보험료 4만원)\n  * 치매진단비 3,000만원\n  * 요양보험금 월 150만원\n  * 특약: 뇌혈관질환 진단비\n- 연금보험 (월 보험료 8만원)\n  * 65세부터 월 70만원 수령\n  * 10년 보증기간\n  * 특약: 장기요양보험",
-                "aws": "곰돌이님의 보험 가입 현황을 분석한 결과입니다.\n\n1. 현재 보험 현황:\n- 실손의료보험 (월 6만원)\n  * 입원/통원 진료비 보장\n  * 수술비 보장\n  * 특약: 암진단비 1,500만원\n- 종합보험 (월 12만원)\n  * 사망/상해 보장\n  * 질병 입원 보장\n  * 특약: 운전자 상해보험\n\n2. 보험 필요성 분석:\n- 노후 대비 필요\n  * 현재 연금보험 미가입\n  * 노후 생활비 대비 필요\n- 치매/뇌졸중 보험 필요\n  * 가족력 고려 시 필요\n  * 장기 요양비용 대비 필요\n\n3. 추천 상품:\n- 치매보험 (월 4만원)\n  * 치매진단비 3,000만원\n  * 요양보험금 월 150만원\n  * 특약: 뇌혈관질환 진단비\n- 연금보험 (월 8만원)\n  * 65세부터 월 70만원 수령\n  * 10년 보증기간\n  * 특약: 장기요양보험",
-                "sds": "곰돌이님의 보험 가입 현황을 분석했습니다.\n\n1. 현재 가입 보험:\n- 실손의료보험 (월 6만원)\n  * 입원/통원 진료비 보장\n  * 수술비 보장\n  * 특약: 암진단비 1,500만원\n- 종합보험 (월 12만원)\n  * 사망/상해 보장\n  * 질병 입원 보장\n  * 특약: 운전자 상해보험\n\n2. 보험 필요성:\n- 노후 대비 필요\n  * 현재 연금보험 미가입\n  * 노후 생활비 대비 필요\n- 치매/뇌졸중 보험 필요\n  * 가족력 고려 시 필요\n  * 장기 요양비용 대비 필요\n\n3. 추천 상품:\n- 치매보험 (월 4만원)\n  * 치매진단비 3,000만원\n  * 요양보험금 월 150만원\n  * 특약: 뇌혈관질환 진단비\n- 연금보험 (월 8만원)\n  * 65세부터 월 70만원 수령\n  * 10년 보증기간\n  * 특약: 장기요양보험"
+                "ms": 곰돌이_insurance_analysis_ms,
+                "aws": 곰돌이_insurance_analysis_aws,
+                "sds": 곰돌이_insurance_analysis_sds
             }
         },
         "health_risk_prediction": {
             "question": "건강검진 결과를 분석해줘",
             "answers": {
-                "ms": "곰돌이님의 건강 위험도를 분석했습니다.\n\n1. 현재 건강 상태:\n- 혈압: 140/90 mmHg (고혈압)\n  * 정상 혈압: 120/80mmHg 이하\n  * 주 1회 이상 혈압 측정 필요\n  * 저염식 식단 권장\n- 혈당: 120 mg/dL (당뇨병 전단계)\n  * 정상 공복혈당: 100mg/dL 이하\n  * 당뇨병 전단계 가능성\n  * 식후 혈당 측정 필요\n- 콜레스테롤: 240 mg/dL (고지혈증)\n  * 정상 총콜레스테롤: 200mg/dL 이하\n  * LDL 콜레스테롤 측정 필요\n  * HDL 콜레스테롤 측정 필요",
-                "aws": "곰돌이님의 건강 위험도 분석 결과입니다.\n\n1. 건강 상태:\n- 혈압: 140/90 mmHg (고혈압)\n  * 정상 혈압: 120/80mmHg 이하\n  * 주 1회 이상 혈압 측정 필요\n  * 저염식 식단 권장\n- 혈당: 120 mg/dL (당뇨병 전단계)\n  * 정상 공복혈당: 100mg/dL 이하\n  * 당뇨병 전단계 가능성\n  * 식후 혈당 측정 필요\n- 콜레스테롤: 240 mg/dL (고지혈증)\n  * 정상 총콜레스테롤: 200mg/dL 이하\n  * LDL 콜레스테롤 측정 필요\n  * HDL 콜레스테롤 측정 필요",
-                "sds": "곰돌이님의 건강 위험도 분석 결과입니다.\n\n1. 건강 상태:\n- 혈압: 140/90 mmHg (고혈압)\n  * 정상 혈압: 120/80mmHg 이하\n  * 주 1회 이상 혈압 측정 필요\n  * 저염식 식단 권장\n- 혈당: 120 mg/dL (당뇨병 전단계)\n  * 정상 공복혈당: 100mg/dL 이하\n  * 당뇨병 전단계 가능성\n  * 식후 혈당 측정 필요\n- 콜레스테롤: 240 mg/dL (고지혈증)\n  * 정상 총콜레스테롤: 200mg/dL 이하\n  * LDL 콜레스테롤 측정 필요\n  * HDL 콜레스테롤 측정 필요"
+                "ms": 곰돌이_health_risk_prediction_ms,
+                "aws": 곰돌이_health_risk_prediction_aws,
+                "sds": 곰돌이_health_risk_prediction_sds
             }
         },
         "product_recommendation": {
             "question": "나에게 맞는 상품을 추천해줘",
             "answers": {
-                "ms": "곰돌이님을 위한 뇌졸중 예방 방법을 알려드리겠습니다.\n\n1. 생활습관 개선:\n- 규칙적인 운동 (주 3회 이상)\n  * 유산소 운동: 걷기, 수영, 자전거\n  * 근력 운동: 스쿼트, 플랭크\n  * 스트레칭: 목, 어깨, 허리\n- 금연 및 절주\n  * 하루 1갑 이상 흡연 시 위험도 2배 증가\n  * 하루 2잔 이상 음주 시 위험도 증가\n- 건강한 식습관 유지\n  * 저염식 식단\n  * 신선한 채소와 과일 섭취\n  * 가공식품 섭취 제한",
-                "aws": "곰돌이님을 위한 뇌졸중 예방 방법입니다.\n\n1. 생활습관:\n- 규칙적인 운동\n  * 유산소 운동: 걷기, 수영, 자전거\n  * 근력 운동: 스쿼트, 플랭크\n  * 스트레칭: 목, 어깨, 허리\n- 금연 및 절주\n  * 하루 1갑 이상 흡연 시 위험도 2배 증가\n  * 하루 2잔 이상 음주 시 위험도 증가\n- 건강한 식습관\n  * 저염식 식단\n  * 신선한 채소와 과일 섭취\n  * 가공식품 섭취 제한",
-                "sds": "곰돌이님을 위한 뇌졸중 예방 방법입니다.\n\n1. 생활습관:\n- 규칙적인 운동\n  * 유산소 운동: 걷기, 수영, 자전거\n  * 근력 운동: 스쿼트, 플랭크\n  * 스트레칭: 목, 어깨, 허리\n- 금연 및 절주\n  * 하루 1갑 이상 흡연 시 위험도 2배 증가\n  * 하루 2잔 이상 음주 시 위험도 증가\n- 건강한 식습관\n  * 저염식 식단\n  * 신선한 채소와 과일 섭취\n  * 가공식품 섭취 제한"
+                "ms": 곰돌이_product_recommendation_ms,
+                "aws": 곰돌이_product_recommendation_aws,
+                "sds": 곰돌이_product_recommendation_sds
             }
-        }
+        },
  
     }
 }
