@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 def load_markdown_content(filename: str) -> str:
     """마크다운 파일의 내용을 읽어오는 함수"""
     try:
-        file_path = Path(__file__).parent / filename
+        file_path = Path(__file__).parent / "md" / filename
         with open(file_path, 'r', encoding='utf-8') as f:
             return f.read()
     except Exception as e:
