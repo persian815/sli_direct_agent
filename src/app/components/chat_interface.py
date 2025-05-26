@@ -269,9 +269,10 @@ def render_chat_interface(model: str):
     # 추천 질문이 선택되었는지 확인
     recommended_question_selected = any(
         msg["role"] == "user" and msg["content"] in [
-            "내 보험 가입 현황을 분석해줘",
-            "뇌졸중 예방법 알려줘",
-            "내 건강 위험도를 분석해줘"
+            "내 보험을 분석해서 상품을 추천해줘",
+            "건강검진 결과를 분석해줘",
+            "나에게 맞는 상품을 추천해줘"
+
         ]
         for msg in st.session_state.messages
     )
@@ -287,7 +288,7 @@ def render_chat_interface(model: str):
             col1, col2, col3 = st.columns(3)
             
             with col1:
-                if st.button("내 보험 가입 현황을 분석해줘", key="q1"):
+                if st.button("내 보험을 분석해서 상품을 추천해줘", key="q1"):
                     # 웰컴 메시지를 먼저 추가
                     if not welcome_message_exists:
                         st.session_state.messages.append({
@@ -297,14 +298,15 @@ def render_chat_interface(model: str):
                     # 사용자 메시지 추가
                     st.session_state.messages.append({
                         "role": "user",
-                        "content": "내 보험 가입 현황을 분석해줘",
+                        "content": "내 보험을 분석해서 상품을 추천해줘",
                         "knowledge_level": 50,  # 중급 수준
                         "temperature": 36.5
                     })
                     st.rerun()
             
+         
             with col2:
-                if st.button("뇌졸중 예방법 알려줘", key="q2"):
+                if st.button("건강검진 결과를 분석해줘", key="q3"):
                     # 웰컴 메시지를 먼저 추가
                     if not welcome_message_exists:
                         st.session_state.messages.append({
@@ -314,28 +316,29 @@ def render_chat_interface(model: str):
                     # 사용자 메시지 추가
                     st.session_state.messages.append({
                         "role": "user",
-                        "content": "뇌졸중 예방법 알려줘",
+                        "content": "건강검진 결과를 분석해줘",
+                        "knowledge_level": 70,  # 중급 수준
+                        "temperature": 36.5
+                    })
+                    st.rerun()
+
+            with col3:
+                if st.button("나에게 맞는 상품을 추천해줘", key="q2"):
+                    # 웰컴 메시지를 먼저 추가
+                    if not welcome_message_exists:
+                        st.session_state.messages.append({
+                            "role": "assistant",
+                            "content": full_welcome_message
+                        })
+                    # 사용자 메시지 추가
+                    st.session_state.messages.append({
+                        "role": "user",
+                        "content": "나에게 맞는 상품을 추천해줘",
                         "knowledge_level": 20,  # 초급 수준
                         "temperature": 36.5
                     })
                     st.rerun()
             
-            with col3:
-                if st.button("내 건강 위험도를 분석해줘", key="q3"):
-                    # 웰컴 메시지를 먼저 추가
-                    if not welcome_message_exists:
-                        st.session_state.messages.append({
-                            "role": "assistant",
-                            "content": full_welcome_message
-                        })
-                    # 사용자 메시지 추가
-                    st.session_state.messages.append({
-                        "role": "user",
-                        "content": "내 건강 위험도를 분석해줘",
-                        "knowledge_level": 70,  # 중급 수준
-                        "temperature": 36.5
-                    })
-                    st.rerun()
 
     # 2. 채팅 히스토리 표시 (user/assistant 모두)
     for idx, message in enumerate(st.session_state.messages):
@@ -394,43 +397,43 @@ def render_chat_interface(model: str):
                     col1, col2, col3 = st.columns(3)
                     
                     with col1:
-                        if st.button("내 보험 가입 현황을 분석해줘", key=f"q1_{idx}_{len(st.session_state.messages)}"):
+                        if st.button("내 보험을 분석해서 상품을 추천해줘", key=f"q1_{idx}_{len(st.session_state.messages)}"):
                             # 선택된 답변 초기화
                             st.session_state.selected_answer_idx = None
                             st.session_state.selected_answer_content = None
                             st.session_state.messages.append({
                                 "role": "user",
-                                "content": "내 보험 가입 현황을 분석해줘",
+                                "content": "내 보험을 분석해서 상품을 추천해줘",
                                 "knowledge_level": 50,  # 중급 수준
                                 "temperature": 36.5
                             })
                             st.rerun()
-                    
                     with col2:
-                        if st.button("뇌졸중 예방법 알려줘", key=f"q2_{idx}_{len(st.session_state.messages)}"):
+                        if st.button("건강검진 결과를 분석해줘", key=f"q3_{idx}_{len(st.session_state.messages)}"):
                             # 선택된 답변 초기화
                             st.session_state.selected_answer_idx = None
                             st.session_state.selected_answer_content = None
                             st.session_state.messages.append({
                                 "role": "user",
-                                "content": "뇌졸중 예방법 알려줘",
+                                "content": "건강검진 결과를 분석해줘",
+                                "knowledge_level": 70,  # 중급 수준
+                                "temperature": 36.5
+                            })
+                            st.rerun()                    
+                    with col3:
+                        if st.button("나에게 맞는 상품을 추천해줘", key=f"q2_{idx}_{len(st.session_state.messages)}"):
+                            # 선택된 답변 초기화
+                            st.session_state.selected_answer_idx = None
+                            st.session_state.selected_answer_content = None
+                            st.session_state.messages.append({
+                                "role": "user",
+                                "content": "나에게 맞는 상품을 추천해줘",
                                 "knowledge_level": 20,  # 초급 수준
                                 "temperature": 36.5
                             })
                             st.rerun()
                     
-                    with col3:
-                        if st.button("내 건강 위험도를 분석해줘", key=f"q3_{idx}_{len(st.session_state.messages)}"):
-                            # 선택된 답변 초기화
-                            st.session_state.selected_answer_idx = None
-                            st.session_state.selected_answer_content = None
-                            st.session_state.messages.append({
-                                "role": "user",
-                                "content": "내 건강 위험도를 분석해줘",
-                                "knowledge_level": 70,  # 중급 수준
-                                "temperature": 36.5
-                            })
-                            st.rerun()
+
 
     # 입력창 항상 하나만 표시
     prompt = st.chat_input("질문을 입력하세요")
