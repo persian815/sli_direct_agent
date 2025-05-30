@@ -10,7 +10,6 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(sys.stdout),  # 터미널에 출력
-        logging.FileHandler('utils.log')    # 파일에도 출력
     ]
 )
 logger = logging.getLogger(__name__)
