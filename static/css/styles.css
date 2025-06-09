@@ -1,0 +1,371 @@
+/* Chat input area styles */
+.chat-input-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: #1e1e1e;
+  padding: 1rem;
+  z-index: 1000;
+  transition: left 0.3s ease !important;
+  border-top: 1px solid #3d3d3d;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 채팅 화면 상단 여백 조정 */
+.stVerticalBlock.st-emotion-cache-o3een2.eu6p4el3 {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+/* 메인 블록 컨테이너 상단 패딩 조정 */
+.stMainBlockContainer {
+  padding-top: 1rem !important;
+}
+
+/* 채팅 메시지 컨테이너 상단 여백 조정 */
+.chat-messages-container {
+  margin-bottom: 120px;
+  margin-top: -2rem !important;
+  padding-top: 0;
+  overflow-y: auto;
+  max-height: calc(100vh - 250px);
+}
+
+/* 채팅 탭 비활성화 시 스타일 */
+.chat-messages-container:not(:has(.stTabs)) {
+  margin-top: -2rem !important;
+  padding-top: 0 !important;
+  border-top: 1px solid #3d3d3d;
+}
+
+/* Form-based chat input styles */
+.chat-input-container form {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.chat-input-container .stTextArea {
+  width: 100%;
+}
+
+.chat-input-container .stTextArea textarea {
+  background-color: #2d2d2d !important;
+  color: #ffffff !important;
+  border: 1px solid #3d3d3d !important;
+  border-radius: 8px !important;
+  padding: 12px !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  resize: none !important;
+  min-height: 60px !important;
+  max-height: 200px !important;
+  width: 100% !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.chat-input-container .stTextArea textarea:focus {
+  border-color: transparent !important;
+  box-shadow: 0 0 0 2px rgba(128, 128, 128, 0.3) !important;
+}
+
+.chat-input-container .stTextArea textarea:focus-visible {
+  outline: none !important;
+}
+
+.chat-input-container .stTextArea textarea:-webkit-autofill {
+  -webkit-text-fill-color: #ffffff !important;
+  -webkit-box-shadow: 0 0 0 30px #2d2d2d inset !important;
+}
+
+/* Submit button styles */
+.chat-input-container .stButton button {
+  background-color: #4caf50 !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 4px !important;
+  padding: 8px 16px !important;
+  font-weight: bold !important;
+  margin-top: 8px !important;
+  float: right !important;
+}
+
+.chat-input-container .stButton button:hover {
+  background-color: #45a049 !important;
+}
+
+/* Add bottom margin to the main content area to prevent overlap with the fixed input */
+.main .block-container {
+  padding-bottom: 120px !important;
+  padding-top: 1rem !important;
+}
+
+/* Chat messages container */
+.chat-messages-container {
+  margin-bottom: 120px;
+  margin-top: 0;
+  padding-top: 0;
+  overflow-y: auto;
+  max-height: calc(100vh - 250px);
+}
+
+/* 채팅 메시지 영역 패딩 조정 */
+.stChatMessage {
+  padding: 0.5rem !important;
+  margin-bottom: 0.25rem !important;
+}
+
+.stChatMessageContent {
+  padding: 0.25rem !important;
+}
+
+/* 사용자 메시지 아바타 오른쪽 정렬 */
+.stChatMessage[data-testid="stChatMessage"] .stChatMessageContent[aria-label="Chat message from user"] {
+  flex-direction: row-reverse !important;
+}
+
+.stChatMessage[data-testid="stChatMessage"] .stChatMessageContent[aria-label="Chat message from user"] img {
+  order: 2 !important;
+}
+
+.stChatMessage[data-testid="stChatMessage"] .stChatMessageContent[aria-label="Chat message from user"] > div {
+  order: 1 !important;
+}
+
+/* Knowledge level styles */
+.knowledge-level {
+  margin-top: 8px;
+  padding: 8px;
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.knowledge-level-bar {
+  height: 6px;
+  border-radius: 3px;
+  margin-top: 4px;
+}
+
+.knowledge-level-text {
+  font-size: 12px;
+  margin-top: 4px;
+  text-align: right;
+}
+
+/* Message container styles */
+.message-container {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.user-message {
+  background-color: #0d60b8;
+}
+
+.assistant-message {
+  background-color: #1e1e1e;
+}
+
+/* Metrics display styles */
+.metrics {
+  font-size: 12px;
+  color: #888;
+  margin-top: 4px;
+}
+
+/* Tab styles */
+.stTabs [data-baseweb="tab-list"] {
+  gap: 2px;
+}
+
+.stTabs [data-baseweb="tab"] {
+  height: 50px;
+  white-space: pre-wrap;
+  background-color: #2d2d2d;
+  border-radius: 4px 4px 0px 0px;
+  gap: 1px;
+  padding-top: 10px;
+  padding-bottom: 0px;
+}
+
+.stTabs [aria-selected="true"] {
+  background-color: #1e1e1e;
+  border-bottom: 2px solid #4caf50;
+}
+
+/* Sidebar styles */
+.sidebar-content {
+  padding: 1rem;
+}
+
+/* Knowledge level distribution graph styles */
+.knowledge-distribution {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: #2d2d2d;
+  border-radius: 8px;
+}
+
+/* Developer mode styles */
+.developer-mode {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: #2d2d2d;
+  border-radius: 8px;
+}
+
+.function-log {
+  font-family: monospace;
+  font-size: 12px;
+  padding: 4px;
+  margin: 2px 0;
+  background-color: #1e1e1e;
+  border-radius: 4px;
+}
+
+/* 모바일 환경에서 링크 클릭 가능하도록 스타일 추가 */
+.message-content a {
+  color: #4caf50;
+  text-decoration: underline;
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  -webkit-tap-highlight-color: rgba(76, 175, 80, 0.3);
+  touch-action: manipulation;
+  position: relative;
+  z-index: 10;
+}
+
+/* 모바일 웹뷰에서 링크 클릭 가능하도록 추가 스타일 */
+.mobile-link {
+  display: inline-block !important;
+  padding: 8px 0 !important;
+  margin: -8px 0 !important;
+  min-height: 44px !important; /* iOS 권장 최소 터치 영역 */
+  min-width: 44px !important;
+  position: relative !important;
+  z-index: 100 !important;
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  touch-action: manipulation !important;
+}
+
+/* 모바일 웹뷰에서 링크 활성화 상태 */
+.mobile-link:active {
+  background-color: rgba(76, 175, 80, 0.2) !important;
+  color: #3d8b40 !important;
+}
+
+/* 모바일 웹뷰에서 링크 포커스 상태 */
+.mobile-link:focus {
+  outline: 2px solid rgba(76, 175, 80, 0.5) !important;
+  outline-offset: 2px !important;
+}
+
+/* 모바일 환경에서 링크 터치 영역 확대 */
+.message-content a {
+  padding: 5px 0;
+  margin: -5px 0;
+  display: inline-block;
+}
+
+/* 모바일 환경에서 링크 호버 효과 */
+.message-content a:hover {
+  color: #45a049;
+}
+
+/* 모바일 환경에서 링크 활성화 상태 */
+.message-content a:active {
+  color: #3d8b40;
+}
+
+/* 모바일 환경에서 링크 포커스 상태 */
+.message-content a:focus {
+  outline: 2px solid rgba(76, 175, 80, 0.5);
+  outline-offset: 2px;
+}
+
+/* 답변 카드 스타일 (최신/통합) */
+.answer-scroll-row {
+  display: flex;
+  overflow-x: auto;
+  gap: 10px;
+  padding: 20px 40px 20px 12px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #888 #f1f1f1;
+  scroll-padding-right: 60px;
+}
+.answer-scroll-row::-webkit-scrollbar {
+  height: 8px;
+}
+.answer-scroll-row::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+.answer-scroll-row::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+.answer-scroll-row::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+.answer-card {
+  flex: 0 0 75vw;
+  max-width: 340px;
+  min-width: 260px;
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  scroll-snap-align: start;
+  border: 1px solid #e0e0e0;
+  margin-right: 0;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.answer-card:not(:last-child) {
+  margin-right: 24px;
+}
+.answer-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px) scale(1.03);
+}
+.like-btn {
+  margin-top: 12px;
+  padding: 6px 18px;
+  border-radius: 16px;
+  border: none;
+  background: #3b82f6;
+  color: #fff;
+  font-weight: 600;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.like-btn:disabled {
+  background: #e0e0e0;
+  color: #aaa;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .answer-scroll-row {
+    gap: 8px;
+    padding: 12px 24px 12px 8px;
+    scroll-padding-right: 32px;
+  }
+  .answer-card {
+    flex: 0 0 82vw;
+    max-width: 94vw;
+    min-width: 180px;
+  }
+  .answer-card:not(:last-child) {
+    margin-right: 8px;
+  }
+}

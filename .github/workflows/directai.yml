@@ -1,0 +1,93 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+# GitHub recommends pinning actions to a commit SHA.
+# To get a newer version, you will need to update the SHA.
+# You can also reference a tag or branch, but the action may change without warning.
+
+name: Build and deploy a container to an Azure Web App
+
+env:
+  AZURE_WEBAPP_NAME: directai   # set this to your application's name
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: 'read'
+  packages: 'write'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Azure Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: directai.azurecr.io
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+          ecr: false
+          logout: true
+
+      - name: Lowercase the repo name
+        run: echo "REPO=${GITHUB_REPOSITORY,,}" >>${GITHUB_ENV}
+        shell: bash
+
+      - name: build and push image to ACR
+        uses: docker/build-push-action@v5
+        with:
+          push: true          
+          tags: directai.azurecr.io/persian815/sli_direct_agent:${{ github.sha }},directai.azurecr.io/persian815/sli_direct_agent:latest
+          file: ./Dockerfile
+
+  deploy:
+    runs-on: ubuntu-latest
+
+    needs: build
+    environment:
+      name: 'production'
+
+    steps:
+      - name: Lowercase the repo name
+        run: echo "REPO=${GITHUB_REPOSITORY,,}" >>${GITHUB_ENV}
+        shell: bash
+
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: directai
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          images: directai.azurecr.io/persian815/sli_direct_agent:latest
+          
+      - name: Set Azure AI Foundry API credentials using service principal
+        uses: azure/CLI@v1
+        with:
+          inlineScript: |
+            # Login with service principal
+            az login --service-principal \
+              --username "${{ secrets.AZURE_CLIENT_ID }}" \
+              --password "${{ secrets.AZURE_CLIENT_SECRET }}" \
+              --tenant "${{ secrets.AZURE_TENANT_ID }}"
+            
+            # Set subscription
+            az account set --subscription "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+            
+            # Restart the Web App
+            az webapp restart \
+              --name directai \
+              --resource-group slihackathon-2025-team2-rg
+
+              
+

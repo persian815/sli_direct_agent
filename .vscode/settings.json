@@ -1,0 +1,5 @@
+{
+    "git.ignoreLimitWarning": true,
+    "appService.defaultWebAppToDeploy": "/subscriptions/2326c76a-5eab-44b6-808b-1978f2ffee0e/resourceGroups/slihackathon-2025-team2-rg/providers/Microsoft.Web/sites/aifit",
+    "appService.deploySubpath": "."
+}
