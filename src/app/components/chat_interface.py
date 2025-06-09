@@ -244,7 +244,6 @@ def render_chat_interface(model: str):
         
         if aws_credentials_available():
             logger.info("AWS Bedrock 서비스 초기화 성공")
-            st.success("AWS Bedrock 서비스가 정상적으로 초기화되었습니다.")
         else:
             error_messages = []
             if not access_key:
